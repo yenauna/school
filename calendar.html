@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학년 달력</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div><h1>학년 달력</h1><p>날짜별 업무 일정과 전체 학급 시간표 입력</p></div>
+    <nav><a href="index.html">메인</a><a class="active" href="calendar.html">학년 달력</a><a href="reservation.html">예약</a><a href="settings.html">설정</a></nav>
+  </header>
+
+  <main class="layout">
+    <section class="toolbar card">
+      <button id="prevWeek">이전 주</button>
+      <input id="weekPicker" type="date" />
+      <button id="nextWeek">다음 주</button>
+      <button id="saveTimetable">시간표 저장</button>
+      <button id="addEventBtn">업무 일정 추가</button>
+    </section>
+
+    <section class="card scroll-card">
+      <div id="calendarGrid" class="week-grid"></div>
+    </section>
+  </main>
+
+  <dialog id="eventDialog">
+    <form method="dialog" id="eventForm" class="grid-form dialog-form">
+      <h2>업무 일정</h2>
+      <input name="title" placeholder="일정명" required />
+      <input name="event_date" type="date" required />
+      <input name="event_time" type="time" />
+      <input name="place" placeholder="장소" />
+      <textarea name="content" placeholder="내용"></textarea>
+      <menu><button value="cancel" type="button" id="closeDialog">취소</button><button value="default">저장</button></menu>
+    </form>
+  </dialog>
+
+  <script src="js/config.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/calendar.js"></script>
+</body>
+</html>

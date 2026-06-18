@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>설정</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div><h1>설정</h1><p>학급 수, 교시 수, 과목 색, 겹침 규칙 설정</p></div>
+    <nav><a href="index.html">메인</a><a href="calendar.html">학년 달력</a><a href="reservation.html">예약</a><a class="active" href="settings.html">설정</a></nav>
+  </header>
+
+  <main class="layout two-col">
+    <section class="card">
+      <h2>기본 설정</h2>
+      <form id="settingForm" class="grid-form">
+        <label>학급 수 <input name="class_count" type="number" min="1" max="12" value="6" /></label>
+        <label>교시 수 <input name="period_count" type="number" min="1" max="8" value="6" /></label>
+        <button>저장</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>색/겹침 단어</h2>
+      <form id="subjectForm" class="grid-form">
+        <input name="code" placeholder="표시 단어 예: E, 과2, 국L" required />
+        <input name="label" placeholder="설명 예: 영어교과" />
+        <input name="color" type="color" value="#dbeafe" />
+        <label><input name="conflict_group" type="checkbox" /> 겹치면 안 되는 수업/장소</label>
+        <button>추가</button>
+      </form>
+      <div id="subjectList" class="legend-list"></div>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/settings.js"></script>
+</body>
+</html>

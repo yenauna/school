@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학년 공유</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>학년 공유</h1>
+      <p>기본정보 · 공지 · 학년달력 · 예약 · 정보</p>
+    </div>
+    <nav>
+      <button data-page="main" class="active">메인</button>
+      <button data-page="calendar">학년달력</button>
+      <button data-page="reservation">예약</button>
+      <button data-page="info">정보</button>
+      <button data-page="settings">설정</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="main" class="page active grid-main">
+      <div class="left-col">
+        <details open class="card">
+          <summary>기본정보</summary>
+          <div class="toolbar">
+            <button id="addClassInfoBtn">학급 정보 추가</button>
+          </div>
+          <table id="classInfoTable"></table>
+        </details>
+
+        <section class="card">
+          <h2>공지사항</h2>
+          <form id="noticeForm" class="form-grid">
+            <input name="title" placeholder="제목" required />
+            <input name="place" placeholder="장소" />
+            <input name="time" type="datetime-local" />
+            <textarea name="content" placeholder="내용" required></textarea>
+            <button>공지 추가</button>
+          </form>
+          <div id="noticeList" class="list"></div>
+        </section>
+      </div>
+
+      <aside class="right-col">
+        <section class="card today-card">
+          <h2>오늘의 업무일정</h2>
+          <div id="todayWorkList" class="list compact"></div>
+        </section>
+        <section class="card today-card">
+          <h2>오늘의 수업시간표</h2>
+          <div id="todayTimetable"></div>
+        </section>
+      </aside>
+    </section>
+
+    <section id="calendar" class="page">
+      <section class="card">
+        <div class="calendar-head">
+          <button id="prevWeek">이전 주</button>
+          <h2 id="weekTitle"></h2>
+          <button id="nextWeek">다음 주</button>
+        </div>
+        <div class="toolbar">
+          <button id="addWorkBtn">업무 일정 추가</button>
+          <button id="addLessonBtn">수업 입력</button>
+        </div>
+        <div id="weekCalendar" class="week-calendar"></div>
+      </section>
+    </section>
+
+    <section id="reservation" class="page">
+      <section class="card">
+        <h2>예약</h2>
+        <form id="resourceForm" class="inline-form">
+          <input name="name" placeholder="장소/물건 이름 예: 음악실, 지구본" required />
+          <button>등록</button>
+        </form>
+        <form id="reservationForm" class="form-grid">
+          <select name="resourceId" required></select>
+          <input name="date" type="date" required />
+          <select name="period" required></select>
+          <input name="teacher" placeholder="예약자" required />
+          <input name="memo" placeholder="메모" />
+          <button>예약 추가</button>
+        </form>
+        <div id="reservationList" class="list"></div>
+      </section>
+    </section>
+
+    <section id="info" class="page">
+      <section class="card">
+        <h2>정보</h2>
+        <form id="infoForm" class="form-grid">
+          <input name="title" placeholder="제목" required />
+          <input name="url" placeholder="링크 URL 또는 비워두기" />
+          <textarea name="content" placeholder="공유할 정보, 절차, 계정 안내 등" required></textarea>
+          <button>정보 추가</button>
+        </form>
+        <div id="infoList" class="list"></div>
+      </section>
+    </section>
+
+    <section id="settings" class="page">
+      <section class="card">
+        <h2>설정</h2>
+        <div class="settings-grid">
+          <label>학급 수 <input id="classCount" type="number" min="1" max="12" /></label>
+          <label>교시 수 <input id="periodCount" type="number" min="1" max="9" /></label>
+        </div>
+        <h3>수업 코드/색</h3>
+        <form id="subjectForm" class="inline-form">
+          <input name="code" placeholder="예: E, 과2, 국L" required />
+          <input name="name" placeholder="설명" required />
+          <input name="color" type="color" value="#dbeafe" />
+          <label><input name="exclusive" type="checkbox" /> 겹치면 안 됨</label>
+          <button>추가</button>
+        </form>
+        <div id="subjectList" class="chip-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="entryDialog">
+    <form method="dialog" id="entryForm" class="dialog-form">
+      <h2 id="dialogTitle"></h2>
+      <input type="hidden" name="type" />
+      <label>날짜 <input name="date" type="date" required /></label>
+      <label class="lesson-only">반 <select name="classNo"></select></label>
+      <label>교시 <select name="period"></select></label>
+      <label class="work-only">제목 <input name="title" /></label>
+      <label class="lesson-only">수업 코드 <select name="subjectCode"></select></label>
+      <label>내용/메모 <textarea name="memo"></textarea></label>
+      <div class="dialog-actions">
+        <button value="cancel" type="button" id="cancelDialog">취소</button>
+        <button value="ok">저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

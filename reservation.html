@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>예약</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div><h1>예약</h1><p>장소와 물건을 날짜·교시 단위로 예약</p></div>
+    <nav><a href="index.html">메인</a><a href="calendar.html">학년 달력</a><a class="active" href="reservation.html">예약</a><a href="settings.html">설정</a></nav>
+  </header>
+
+  <main class="layout two-col">
+    <section class="card">
+      <h2>예약 자원 등록</h2>
+      <form id="resourceForm" class="inline-form">
+        <input name="name" placeholder="예: 음악실, 지구본" required />
+        <select name="type"><option>장소</option><option>물건</option></select>
+        <button>등록</button>
+      </form>
+      <div id="resourceList" class="chip-list"></div>
+    </section>
+
+    <section class="card">
+      <h2>예약하기</h2>
+      <form id="reservationForm" class="grid-form">
+        <select name="resource_id" required></select>
+        <input name="reserved_date" type="date" required />
+        <select name="period" required></select>
+        <input name="class_name" placeholder="사용 학급/사용자" />
+        <input name="memo" placeholder="메모" />
+        <button>예약</button>
+      </form>
+      <div id="reservationList" class="mini-list"></div>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/reservation.js"></script>
+</body>
+</html>
