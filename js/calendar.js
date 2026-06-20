@@ -2,6 +2,7 @@ let weekStart = startOfWeek(new Date());
 let editingLesson = null;
 let editingEventId = null;
 let calendarSubjects = [];
+let slotClickTimer = null;
 
 function startOfWeek(date) {
   const d = new Date(date);
@@ -10,8 +11,18 @@ function startOfWeek(date) {
   return d;
 }
 
-function weekDates() {
-  return Array.from({ length: 5 }, (_, i) => { const d = new Date(weekStart); d.setDate(weekStart.getDate() + i); return d; });
+function addDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function visibleWeeks() {
+  return Array.from({ length: 4 }, (_, i) => addDays(weekStart, i * 7));
+}
+
+function weekDates(start = weekStart) {
+  return Array.from({ length: 5 }, (_, i) => addDays(start, i));
 }
 
 function slotId(date, period, classNo) {
@@ -96,7 +107,7 @@ async function renderCalendar() {
         html += `<div class="cell">${slots}${dayEvents.map(e => `<button type="button" class="event-strip" data-event-id="${esc(e.id)}">${esc(hm(e.event_time))} ${esc(e.title)}</button>`).join('')}</div>`;
       }
     }
-  }});
+  });
   grid.innerHTML = html;
   markConflicts();
 }
