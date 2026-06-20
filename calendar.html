@@ -26,20 +26,12 @@
     </section>
   </main>
 
-  <dialog id="lessonDialog">
-    <form method="dialog" id="lessonForm" class="dialog-form lesson-dialog-form">
-      <h2>시간표 입력</h2>
-      <p id="lessonMeta" class="lesson-meta"></p>
-      <label>과목/활동명 <input id="lessonSubject" name="subject_code" list="subjectOptions" placeholder="예: E, 과학실, 학급활동" required /></label>
-      <datalist id="subjectOptions"></datalist>
-      <label>메모 <textarea id="lessonMemo" name="memo" placeholder="필요한 메모를 입력하세요."></textarea></label>
-      <menu>
-        <button value="delete" type="button" id="deleteLesson" class="danger-button">삭제</button>
-        <span class="dialog-spacer"></span>
-        <button value="cancel" type="button" id="lessonCancel" class="secondary">취소</button>
-        <button value="default">저장</button>
-      </menu>
-    </form>
+  <dialog id="lessonDialog" class="quick-dialog">
+    <div id="lessonSubjectButtons" class="subject-button-grid" aria-label="과목 선택"></div>
+  </dialog>
+
+  <dialog id="memoDialog" class="quick-dialog">
+    <textarea id="memoText" class="memo-editor" placeholder="메모를 입력하세요."></textarea>
   </dialog>
 
   <dialog id="eventDialog">
