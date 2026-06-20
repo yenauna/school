@@ -37,14 +37,14 @@
           <div id="noticeList" class="list"></div>
           <dialog id="noticeDialog">
             <form id="noticeForm" class="form-grid dialog-form">
-              <h3 class="full-field">공지사항 추가</h3>
+              <h3 class="full-field notice-dialog-title">공지사항 추가</h3>
               <input name="title" placeholder="제목" required />
               <input name="place" placeholder="장소" />
               <input class="full-field" name="time" type="datetime-local"/>
               <textarea name="content" placeholder="내용" required></textarea>
               <menu>
                 <button id="closeNoticeDialogBtn" class="secondary" type="button">취소</button>
-                <button type="submit">공지 추가</button>
+                <button class="notice-submit-button" type="submit">공지 추가</button>
               </menu>
             </form>
           </dialog>
