@@ -238,6 +238,12 @@ th {
   background:#f8fafc
 }
 
+#noticeList {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:10px
+}
+
 .notice-item,
 .mini-item {
   border:1px solid var(--line);
@@ -247,8 +253,27 @@ th {
   background:#fff
 }
 
+.notice-item {
+  margin-top:0
+}
+
+.notice-title-row {
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:flex-start
+}
+
 .notice-title {
   font-weight:700
+}
+
+.notice-delete-button {
+  flex:0 0 auto;
+  padding:4px 8px;
+  border-radius:8px;
+  font-size:12px;
+  line-height:1.2
 }
 
 .muted {
