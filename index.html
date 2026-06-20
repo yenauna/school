@@ -37,14 +37,14 @@
 
         <section class="card">
           <h2>공지사항</h2>
+          <div id="noticeList" class="list"></div>
           <form id="noticeForm" class="form-grid">
             <input name="title" placeholder="제목" required />
             <input name="place" placeholder="장소" />
-            <input name="time" type="datetime-local" />
+            <label class="full-field">마감일(선택) <input name="time" type="datetime-local" /></label>
             <textarea name="content" placeholder="내용" required></textarea>
             <button>공지 추가</button>
           </form>
-          <div id="noticeList" class="list"></div>
         </section>
       </div>
 
