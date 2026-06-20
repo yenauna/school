@@ -141,6 +141,18 @@ h2 {
   margin:0
 }
 
+.section-header {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+  margin-bottom:14px
+}
+
+.section-header h2 {
+  margin:0
+}
+
 .hidden {
   display:none!important
 }
@@ -359,7 +371,12 @@ th {
 dialog {
   border:0;
   border-radius:18px;
-  padding:20px
+  padding:20px;
+  box-shadow:0 24px 70px rgba(20,30,60,.24)
+}
+
+dialog::backdrop {
+  background:rgba(15,23,42,.35)
 }
 
 menu {
