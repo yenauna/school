@@ -20,8 +20,11 @@ async function renderNotices() {
   const list = $('#noticeList');
   if (!list) return;
   const notices = await selectRows('notices');
-  list.innerHTML = notices.map(n => `<article class="notice-item"><div class="notice-title">${n.title}</div><div class="muted">${ymd(n.time)} ${hm(n.time)} ${n.place || ''}</div><p>${n.content || ''}</p><button class="secondary" data-delete-notice="${n.id}">삭제</button></article>`).join('') || '<p class="muted">등록된 공지가 없습니다.</p>';
-}
+  list.innerHTML = notices.map(n => {
+    const deadline = n.time ? `마감일: ${ymd(n.time)} ${hm(n.time)}` : '마감일 없음';
+    const meta = [deadline, n.place].filter(Boolean).join(' · ');
+    return `<article class="notice-item"><div class="notice-title">${n.title}</div><div class="muted">${meta}</div><p>${n.content || ''}</p><button class="secondary" data-delete-notice="${n.id}">삭제</button></article>`;
+  }).join('') || '<p class="muted">등록된 공지가 없습니다.</p>';}
 
 async function renderToday() {
   const workList = $('#todayWorkList');
@@ -52,7 +55,7 @@ $$('nav button[data-page]').forEach(button => button.addEventListener('click', (
 $('#noticeForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   const data = formData(e.currentTarget);
-  await insertRow('notices', { title: data.title, place: data.place, time: data.time, content: data.content });
+  await insertRow('notices', { title: data.title, place: data.place, time: data.time || null, content: data.content });
   e.currentTarget.reset();
   await renderNotices();
   await renderToday();
