@@ -18,7 +18,6 @@
       <button id="prevWeek">이전 주</button>
       <input id="weekPicker" type="date" />
       <button id="nextWeek">다음 주</button>
-      <button id="saveTimetable">시간표 저장</button>
       <button id="addEventBtn">업무 일정 추가</button>
     </section>
 
@@ -26,6 +25,22 @@
       <div id="calendarGrid" class="week-grid"></div>
     </section>
   </main>
+
+  <dialog id="lessonDialog">
+    <form method="dialog" id="lessonForm" class="dialog-form lesson-dialog-form">
+      <h2>시간표 입력</h2>
+      <p id="lessonMeta" class="lesson-meta"></p>
+      <label>과목/활동명 <input id="lessonSubject" name="subject_code" list="subjectOptions" placeholder="예: E, 과학실, 학급활동" required /></label>
+      <datalist id="subjectOptions"></datalist>
+      <label>메모 <textarea id="lessonMemo" name="memo" placeholder="필요한 메모를 입력하세요."></textarea></label>
+      <menu>
+        <button value="delete" type="button" id="deleteLesson" class="danger-button">삭제</button>
+        <span class="dialog-spacer"></span>
+        <button value="cancel" type="button" id="lessonCancel" class="secondary">취소</button>
+        <button value="default">저장</button>
+      </menu>
+    </form>
+  </dialog>
 
   <dialog id="eventDialog">
     <form method="dialog" id="eventForm" class="grid-form dialog-form">
