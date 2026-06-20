@@ -281,13 +281,6 @@ th {
   font-size:13px
 }
 
-.toolbar {
-  display:flex;
-  gap:10px;
-  align-items:center;
-  margin-bottom:16px
-}
-
 .scroll-card {
   overflow:auto
 }
