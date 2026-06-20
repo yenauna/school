@@ -10,12 +10,11 @@
   <header class="topbar">
     <div>
       <h1>학년 공유</h1>
-      <p>기본정보 · 공지 · 학년달력 · 예약 · 정보</p>
+      <p>기본정보 · 공지 · 달력 · 예약 · 정보</p>
     </div>
     <nav>
       <button data-page="main" class="active">메인</button>
-      <button data-page="calendar">학년달력</button>
-      <a href="calendar.html">달력 페이지</a>
+      <a href="calendar.html">달력</a>
       <button data-page="reservation">예약</button>
       <a href="reservation.html">예약 페이지</a>
       <button data-page="info">정보</button>
@@ -58,21 +57,6 @@
           <div id="todayTimetable"></div>
         </section>
       </aside>
-    </section>
-
-    <section id="calendar" class="page">
-      <section class="card">
-        <div class="calendar-head">
-          <button id="prevWeek">이전 주</button>
-          <h2 id="weekTitle"></h2>
-          <button id="nextWeek">다음 주</button>
-        </div>
-        <div class="toolbar">
-          <button id="addWorkBtn">업무 일정 추가</button>
-          <button id="addLessonBtn">수업 입력</button>
-        </div>
-        <div id="weekCalendar" class="week-calendar"></div>
-      </section>
     </section>
 
     <section id="reservation" class="page">
@@ -126,23 +110,6 @@
       </section>
     </section>
   </main>
-
-  <dialog id="entryDialog">
-    <form method="dialog" id="entryForm" class="dialog-form">
-      <h2 id="dialogTitle"></h2>
-      <input type="hidden" name="type" />
-      <label>날짜 <input name="date" type="date" required /></label>
-      <label class="lesson-only">반 <select name="classNo"></select></label>
-      <label>교시 <select name="period"></select></label>
-      <label class="work-only">제목 <input name="title" /></label>
-      <label class="lesson-only">수업 코드 <select name="subjectCode"></select></label>
-      <label>내용/메모 <textarea name="memo"></textarea></label>
-      <div class="dialog-actions">
-        <button value="cancel" type="button" id="cancelDialog">취소</button>
-        <button value="ok">저장</button>
-      </div>
-    </form>
-  </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
