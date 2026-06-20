@@ -464,8 +464,4 @@ menu {
   .inline-form,.grid-form,.form-grid {
     grid-template-columns:1fr
   }
-
-  .toolbar {
-    flex-wrap:wrap
-  }
 }
