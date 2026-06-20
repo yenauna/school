@@ -37,17 +37,11 @@ function periodRows(periodCount) {
   return [0, ...Array.from({ length: periodCount }, (_, i) => i + 1), periodCount + 1];
 }
 
-function fillSubjectOptions(subjects) {
-  const options = $('#subjectOptions');
-  if (!options) return;
-  options.innerHTML = subjects.map(s => `<option value="${esc(s.code)}">${esc(s.label || s.code)}</option>`).join('');
-}
-
 function markConflicts() {
   $$('.slot').forEach(slot => slot.classList.remove('conflict'));
   const groups = new Map();
   $$('.slot').forEach(slot => {
-    const code = slot.textContent.trim();
+    const code = slot.dataset.subject || slot.textContent.trim();
     const subject = calendarSubjects.find(s => s.code === code);
     if (!code || !subject?.conflict_group) return;
     const key = `${slot.dataset.date}-${slot.dataset.period}-${code}`;
@@ -75,57 +69,71 @@ async function renderCalendar() {
   const classCount = Number(settings.class_count) || 6;
   const subjects = await getSubjects();
   calendarSubjects = subjects;
-  fillSubjectOptions(subjects);
   renderEventPeriodButtons(periodCount, Number($('[name="period"]', $('#eventForm'))?.value) || periodCount + 1);
   const events = await selectRows('events');
   const timetables = await selectRows('timetables');
   document.documentElement.style.setProperty('--class-count', classCount);
   $('#weekPicker').value = iso(weekStart);
-  const dates = weekDates();
-  let html = '<div class="cell head">교시</div>' + dates.map(d => `<div class="cell head">${ymd(iso(d))}</div>`).join('');
-  for (const p of periodRows(periodCount)) {
-    html += `<div class="cell period-head">${periodLabel(p, periodCount)}</div>`;
-    for (const d of dates) {
-      const date = iso(d);
-      const dayEvents = events.filter(e => e.event_date === date && eventPeriodValue(e, periodCount) === p);
-      const slots = p === 0 || p === periodCount + 1 ? '' : `<div class="daybox">${Array.from({ length: classCount }, (_, i) => {
-      const classNo = i + 1;
-        const saved = timetables.find(t => (t.date || t.lesson_date) === date && Number(t.period) === p && Number(t.class_no || t.classNo) === classNo);
-        const code = saved?.subject_code || saved?.subjectCode || '';
-        const memo = saved?.memo || '';
-        const color = subjects.find(s => s.code === code)?.color || '#fff';
-        return `<button type="button" class="slot" data-date="${date}" data-period="${p}" data-class-no="${classNo}" data-memo="${esc(memo)}" style="background:${color}">${esc(code)}</button>`;
-      }).join('')}</div>`;
-      html += `<div class="cell">${slots}${dayEvents.map(e => `<button type="button" class="event-strip" data-event-id="${esc(e.id)}">${esc(hm(e.event_time))} ${esc(e.title)}</button>`).join('')}</div>`;
+  let html = '';
+  visibleWeeks().forEach((week, index) => {
+    const dates = weekDates(week);
+    const weekTitle = `${ymd(iso(dates[0]))} ~ ${ymd(iso(dates[4]))}`;
+    html += `<div class="cell week-title">${index === 0 ? '이번 주' : `${index + 1}주차`} · ${weekTitle}</div>`;
+    html += '<div class="cell head">교시</div>' + dates.map(d => `<div class="cell head">${ymd(iso(d))}</div>`).join('');
+    for (const p of periodRows(periodCount)) {
+      html += `<div class="cell period-head">${periodLabel(p, periodCount)}</div>`;
+      for (const d of dates) {
+        const date = iso(d);
+        const dayEvents = events.filter(e => e.event_date === date && eventPeriodValue(e, periodCount) === p);
+        const slots = p === 0 || p === periodCount + 1 ? '' : `<div class="daybox">${Array.from({ length: classCount }, (_, i) => {
+          const classNo = i + 1;
+          const saved = timetables.find(t => (t.date || t.lesson_date) === date && Number(t.period) === p && Number(t.class_no || t.classNo) === classNo);
+          const code = saved?.subject_code || saved?.subjectCode || '';
+          const memo = saved?.memo || '';
+          const color = subjects.find(s => s.code === code)?.color || '#fff';
+          return `<button type="button" class="slot${memo ? ' has-memo' : ''}" data-date="${date}" data-period="${p}" data-class-no="${classNo}" data-subject="${esc(code)}" data-memo="${esc(memo)}" style="background:${color}" title="${esc(memo)}">${esc(code)}</button>`;
+        }).join('')}</div>`;
+        html += `<div class="cell">${slots}${dayEvents.map(e => `<button type="button" class="event-strip" data-event-id="${esc(e.id)}">${esc(hm(e.event_time))} ${esc(e.title)}</button>`).join('')}</div>`;
+      }
     }
-  }
+  }});
   grid.innerHTML = html;
   markConflicts();
 }
 
-async function saveTimetable() {
-  const rows = $$('.slot').map(el => ({ id: slotId(el.dataset.date, el.dataset.period, el.dataset.classNo), date: el.dataset.date, period: Number(el.dataset.period), class_no: Number(el.dataset.classNo), subject_code: el.textContent.trim(), memo: el.dataset.memo || '' })).filter(r => r.subject_code);
-  await upsertRows('timetables', rows);
+async function saveLessonRow(slot, subjectCode, memo = slot.dataset.memo || '') {
+  const row = { id: slotId(slot.dataset.date, slot.dataset.period, slot.dataset.classNo), date: slot.dataset.date, period: Number(slot.dataset.period), class_no: Number(slot.dataset.classNo), subject_code: subjectCode.trim(), memo: memo.trim() };
+  if (row.subject_code) await upsertRows('timetables', [row]);
+  else await deleteRow('timetables', row.id);
   await renderCalendar();
 }
 
 function openLessonDialog(slot) {
   editingLesson = slot;
-  $('#lessonMeta').textContent = `${slot.dataset.date} · ${slot.dataset.period}교시 · ${slot.dataset.classNo}반`;
-  $('#lessonSubject').value = slot.textContent.trim();
-  $('#lessonMemo').value = slot.dataset.memo || '';
+  const buttons = [
+    `<button type="button" class="lesson-choice delete-choice" data-subject-code="">삭제</button>`,
+    ...calendarSubjects.map(subject => `<button type="button" class="lesson-choice" data-subject-code="${esc(subject.code)}" style="background:${esc(subject.color || '#fff')}"><b>${esc(subject.code)}</b><span>${esc(subject.label || '')}</span></button>`)
+  ];
+  $('#lessonSubjectButtons').innerHTML = buttons.join('');
   $('#eventDialog')?.close();
+  $('#memoDialog')?.close();
   $('#lessonDialog').showModal();
 }
 
-async function saveLesson() {
+function openMemoDialog(slot) {
+  editingLesson = slot;
+  $('#memoText').value = slot.dataset.memo || '';
+  $('#lessonDialog')?.close();
+  $('#eventDialog')?.close();
+  $('#memoDialog').showModal();
+  $('#memoText').focus();
+}
+
+async function saveMemoAndClose() {
   if (!editingLesson) return;
-  const row = { id: slotId(editingLesson.dataset.date, editingLesson.dataset.period, editingLesson.dataset.classNo), date: editingLesson.dataset.date, period: Number(editingLesson.dataset.period), class_no: Number(editingLesson.dataset.classNo), subject_code: $('#lessonSubject').value.trim(), memo: $('#lessonMemo').value.trim() };
-  if (row.subject_code) await upsertRows('timetables', [row]);
-  else await deleteRow('timetables', row.id);
-  $('#lessonDialog').close();
+  await saveLessonRow(editingLesson, editingLesson.dataset.subject || editingLesson.textContent.trim(), $('#memoText').value);
+  $('#memoDialog').close();
   editingLesson = null;
-  await renderCalendar();
 }
 
 async function openEventDialog(eventId = '') {
@@ -142,18 +150,40 @@ async function openEventDialog(eventId = '') {
   $('#eventDialog').showModal();
 }
 
+function closeOnBackdrop(dialog, beforeClose) {
+  dialog?.addEventListener('click', async e => {
+    if (e.target !== dialog) return;
+    if (beforeClose) await beforeClose();
+    else dialog.close();
+  });
+}
 
-$('#prevWeek')?.addEventListener('click', () => { weekStart.setDate(weekStart.getDate() - 7); renderCalendar(); });
-$('#nextWeek')?.addEventListener('click', () => { weekStart.setDate(weekStart.getDate() + 7); renderCalendar(); });
+$('#prevWeek')?.addEventListener('click', () => { weekStart.setDate(weekStart.getDate() -28); renderCalendar(); });
+$('#nextWeek')?.addEventListener('click', () => { weekStart.setDate(weekStart.getDate() +28); renderCalendar(); });
 $('#weekPicker')?.addEventListener('change', e => { weekStart = startOfWeek(new Date(e.target.value)); renderCalendar(); });
-$('#saveTimetable')?.addEventListener('click', saveTimetable);
 $('#addEventBtn')?.addEventListener('click', () => openEventDialog());
 $('#closeDialog')?.addEventListener('click', () => $('#eventDialog').close());
 $('#calendarGrid')?.addEventListener('click', e => {
   const slot = e.target.closest('.slot');
   const eventStrip = e.target.closest('.event-strip');
-  if (slot) openLessonDialog(slot);
   if (eventStrip) openEventDialog(eventStrip.dataset.eventId);
+  if (slot) {
+    clearTimeout(slotClickTimer);
+    slotClickTimer = setTimeout(() => openLessonDialog(slot), 220);
+  }
+});
+$('#calendarGrid')?.addEventListener('dblclick', e => {
+  const slot = e.target.closest('.slot');
+  if (!slot) return;
+  clearTimeout(slotClickTimer);
+  openMemoDialog(slot);
+});
+$('#lessonSubjectButtons')?.addEventListener('click', async e => {
+  const button = e.target.closest('[data-subject-code]');
+  if (!button || !editingLesson) return;
+  await saveLessonRow(editingLesson, button.dataset.subjectCode, editingLesson.dataset.memo || '');
+  $('#lessonDialog').close();
+  editingLesson = null;
 });
 $('.event-period-buttons')?.addEventListener('click', e => {
   const button = e.target.closest('[data-event-period]');
@@ -161,15 +191,6 @@ $('.event-period-buttons')?.addEventListener('click', e => {
   $('[name="period"]', $('#eventForm')).value = button.dataset.eventPeriod;
   $$('.event-period-buttons button').forEach(btn => btn.classList.toggle('active', btn === button));
 });
-$('#lessonCancel')?.addEventListener('click', () => $('#lessonDialog').close());
-$('#deleteLesson')?.addEventListener('click', async () => {
-  if (!editingLesson) return;
-  await deleteRow('timetables', slotId(editingLesson.dataset.date, editingLesson.dataset.period, editingLesson.dataset.classNo));
-  $('#lessonDialog').close();
-  editingLesson = null;
-  await renderCalendar();
-});
-$('#lessonForm')?.addEventListener('submit', async e => { e.preventDefault(); await saveLesson(); });
 $('#eventForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   const row = formData(e.currentTarget);
@@ -178,6 +199,13 @@ $('#eventForm')?.addEventListener('submit', async e => {
   editingEventId = null;
   $('#eventDialog').close();
   await renderCalendar();
+});
+closeOnBackdrop($('#lessonDialog'));
+closeOnBackdrop($('#eventDialog'));
+closeOnBackdrop($('#memoDialog'), saveMemoAndClose);
+$('#memoDialog')?.addEventListener('cancel', async e => {
+  e.preventDefault();
+  await saveMemoAndClose();
 });
 
 renderCalendar();
