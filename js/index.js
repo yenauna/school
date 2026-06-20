@@ -3,6 +3,13 @@ function setActivePage(pageId) {
   $$('nav button[data-page]').forEach(button => button.classList.toggle('active', button.dataset.page === pageId));
 }
 
+function showNoticeForm() {
+  const form = $('#noticeForm');
+  if (!form) return;
+  form.classList.remove('hidden');
+  $('input[name="title"]', form)?.focus();
+}
+
 function fillSelect(select, count, suffix = '') {
   if (!select) return;
   select.innerHTML = Array.from({ length: Number(count) || 0 }, (_, i) => `<option value="${i + 1}">${i + 1}${suffix}</option>`).join('');
@@ -48,11 +55,14 @@ async function renderIndexControls() {
 
 $$('nav button[data-page]').forEach(button => button.addEventListener('click', () => setActivePage(button.dataset.page)));
 
+$('#showNoticeFormBtn')?.addEventListener('click', showNoticeForm);
+
 $('#noticeForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   const data = formData(e.currentTarget);
   await insertRow('notices', { title: data.title, place: data.place, time: data.time || null, content: data.content });
   e.currentTarget.reset();
+  e.currentTarget.classList.add('hidden');
   await renderNotices();
   await renderToday();
 });
