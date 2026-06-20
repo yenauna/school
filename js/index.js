@@ -3,6 +3,29 @@ function setActivePage(pageId) {
   $$('nav button[data-page]').forEach(button => button.classList.toggle('active', button.dataset.page === pageId));
 }
 
+function showNoticeDialog() {
+  const dialog = $('#noticeDialog');
+  const form = $('#noticeForm');
+  if (!dialog || !form) return;
+  form.reset();
+  if (typeof dialog.showModal === 'function') {
+    dialog.showModal();
+  } else {
+    dialog.setAttribute('open', '');
+  }
+  $('input[name="title"]', form)?.focus();
+}
+
+function closeNoticeDialog() {
+  const dialog = $('#noticeDialog');
+  if (!dialog) return;
+  if (typeof dialog.close === 'function') {
+    dialog.close();
+  } else {
+    dialog.removeAttribute('open');
+  }
+}
+
 function getInitialPage() {
   const pageId = window.location.hash.replace('#', '');
   return $$('.page').some(page => page.id === pageId) ? pageId : 'main';
@@ -63,6 +86,9 @@ $$('nav button[data-page]').forEach(button => button.addEventListener('click', (
   history.replaceState(null, '', button.dataset.page === 'main' ? window.location.pathname : `#${button.dataset.page}`);
 }));
 
+$('#showNoticeFormBtn')?.addEventListener('click', showNoticeDialog);
+$('#closeNoticeDialogBtn')?.addEventListener('click', closeNoticeDialog);
+
 window.addEventListener('hashchange', () => setActivePage(getInitialPage()));
 
 $('#showNoticeFormBtn')?.addEventListener('click', showNoticeForm);
@@ -72,7 +98,7 @@ $('#noticeForm')?.addEventListener('submit', async e => {
   const data = formData(e.currentTarget);
   await insertRow('notices', { title: data.title, place: data.place, time: data.time || null, content: data.content });
   e.currentTarget.reset();
-  e.currentTarget.classList.add('hidden');
+  closeNoticeDialog();
   await renderNotices();
   await renderToday();
 });
