@@ -44,10 +44,6 @@ async function renderToday() {
 async function renderIndexControls() {
   const settings = await getAppSettings();
   fillSelect($('select[name="period"]', $('#reservationForm')), settings.period_count, '교시');
-  fillSelect($('select[name="period"]', $('#entryForm')), settings.period_count, '교시');
-  fillSelect($('select[name="classNo"]', $('#entryForm')), settings.class_count, '반');
-  const subjectSelect = $('select[name="subjectCode"]', $('#entryForm'));
-  if (subjectSelect) subjectSelect.innerHTML = (await getSubjects()).map(s => `<option value="${s.code}">${s.code} - ${s.label || ''}</option>`).join('');
 }
 
 $$('nav button[data-page]').forEach(button => button.addEventListener('click', () => setActivePage(button.dataset.page)));
