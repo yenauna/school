@@ -268,12 +268,22 @@ th {
   font-weight:700
 }
 
-.notice-delete-button {
+.notice-actions {
+  display:flex;
   flex:0 0 auto;
+  gap:6px
+}
+
+.notice-edit-button,
+.notice-delete-button {
   padding:4px 8px;
   border-radius:8px;
   font-size:12px;
   line-height:1.2
+}
+
+.notice-content {
+  white-space:pre-line
 }
 
 .muted {
