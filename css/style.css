@@ -465,3 +465,74 @@ menu {
     grid-template-columns:1fr
   }
 }
+
+.week-title {
+  grid-column:1/-1;
+  background:#dbeafe;
+  font-weight:800;
+  text-align:left;
+  padding:8px 12px
+}
+
+.slot {
+  position:relative
+}
+
+.slot.has-memo::after {
+  content:"";
+  position:absolute;
+  top:3px;
+  right:3px;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#22c55e;
+  box-shadow:0 0 0 1px rgba(255,255,255,.9)
+}
+
+.quick-dialog {
+  padding:14px
+}
+
+.subject-button-grid {
+  display:grid;
+  grid-template-columns:repeat(5,minmax(88px,1fr));
+  gap:8px;
+  min-width:min(620px,calc(100vw - 48px))
+}
+
+.lesson-choice {
+  min-height:48px;
+  color:var(--text);
+  border-color:#cbd5e1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:2px;
+  padding:8px;
+  word-break:keep-all
+}
+
+.lesson-choice span {
+  font-size:12px;
+  color:#475569
+}
+
+.delete-choice {
+  background:var(--danger)!important;
+  border-color:var(--danger)!important;
+  color:#fff
+}
+
+.memo-editor {
+  width:min(520px,calc(100vw - 48px));
+  min-height:180px;
+  resize:vertical
+}
+
+@media(max-width:640px) {
+  .subject-button-grid {
+    grid-template-columns:repeat(3,minmax(78px,1fr))
+  }
+}
