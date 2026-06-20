@@ -219,4 +219,14 @@ $('#memoDialog')?.addEventListener('cancel', async e => {
   await saveMemoAndClose();
 });
 
-renderCalendar();
+async function refreshCalendar() {
+  try {
+    await renderCalendar();
+  } catch (error) {
+    console.error('달력을 불러오지 못했습니다.', error);
+    const grid = $('#calendarGrid');
+    if (grid) grid.innerHTML = `<section class="card error-card"><h2>달력을 불러오지 못했습니다</h2><p>${escapeHtml(error.message || error)}</p></section>`;
+  }
+}
+
+refreshCalendar();
