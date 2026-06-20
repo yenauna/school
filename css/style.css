@@ -129,6 +129,22 @@ h2 {
   font-size:20px
 }
 
+.section-header {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+  margin-bottom:14px
+}
+
+.section-header h2 {
+  margin:0
+}
+
+.hidden {
+  display:none!important
+}
+
 .inline-form,
 .grid-form,
 .form-grid {
