@@ -125,8 +125,15 @@ $('#noticeList')?.addEventListener('click', async e => {
   if (notice) showNoticeDialog(notice);
 });
 
-renderClassInfo();
-renderNotices();
-renderToday();
-renderIndexControls();
-setActivePage(getInitialPage());
+async function initIndexPage() {
+  try {
+    await Promise.all([renderClassInfo(), renderNotices(), renderToday(), renderIndexControls()]);
+    setActivePage(getInitialPage());
+  } catch (error) {
+    console.error('메인 화면을 불러오지 못했습니다.', error);
+    const main = $('#main');
+    if (main) main.insertAdjacentHTML('afterbegin', `<section class="card error-card"><h2>화면을 불러오지 못했습니다</h2><p>${escapeHtml(error.message || error)}</p></section>`);
+  }
+}
+
+initIndexPage();
