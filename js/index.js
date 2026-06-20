@@ -3,11 +3,20 @@ function setActivePage(pageId) {
   $$('nav button[data-page]').forEach(button => button.classList.toggle('active', button.dataset.page === pageId));
 }
 
-function showNoticeDialog() {
+function showNoticeDialog(notice = null) {
   const dialog = $('#noticeDialog');
   const form = $('#noticeForm');
   if (!dialog || !form) return;
   form.reset();
+  form.dataset.editingNoticeId = notice?.id || '';
+  if (notice) {
+    form.elements.title.value = notice.title || '';
+    form.elements.place.value = notice.place || '';
+    form.elements.time.value = notice.time ? String(notice.time).slice(0, 16) : '';
+    form.elements.content.value = notice.content || '';
+  }
+  $('.notice-dialog-title', form).textContent = notice ? '공지사항 수정' : '공지사항 추가';
+  $('.notice-submit-button', form).textContent = notice ? '공지 수정' : '공지 추가';
   if (typeof dialog.showModal === 'function') {
     dialog.showModal();
   } else {
@@ -31,13 +40,6 @@ function getInitialPage() {
   return $$('.page').some(page => page.id === pageId) ? pageId : 'main';
 }
 
-function showNoticeForm() {
-  const form = $('#noticeForm');
-  if (!form) return;
-  form.classList.remove('hidden');
-  $('input[name="title"]', form)?.focus();
-}
-
 function fillSelect(select, count, suffix = '') {
   if (!select) return;
   select.innerHTML = Array.from({ length: Number(count) || 0 }, (_, i) => `<option value="${i + 1}">${i + 1}${suffix}</option>`).join('');
@@ -56,10 +58,9 @@ async function renderNotices() {
   if (!list) return;
   const notices = await selectRows('notices');
   list.innerHTML = notices.map(n => {
-    const deadline = n.time ? `마감일: ${ymd(n.time)} ${hm(n.time)}` : '마감일 없음';
-    const meta = [deadline, n.place].filter(Boolean).join(' · ');
-    return `<article class="notice-item"><div class="notice-title-row"><div class="notice-title">${n.title}</div><button class="secondary notice-delete-button" data-delete-notice="${n.id}">삭제</button></div><div class="muted">${meta}</div><p>${n.content || ''}</p></article>`;
-}).join('') || '<p class="muted">등록된 공지가 없습니다.</p>';}
+    const deadline = n.time ? `마감일: ${ymd(n.time)} ${hm(n.time)}` : '';
+    const meta = [deadline, n.place].filter(Boolean).map(escapeHtml).join(' · ');
+    return `<article class="notice-item" data-notice-id="${escapeHtml(n.id)}"><div class="notice-title-row"><div class="notice-title">${escapeHtml(n.title)}</div><div class="notice-actions"><button class="secondary notice-edit-button" data-edit-notice="${escapeHtml(n.id)}" type="button">수정</button><button class="secondary notice-delete-button" data-delete-notice="${escapeHtml(n.id)}" type="button">삭제</button></div></div><div class="muted">${meta}</div><p class="notice-content">${escapeHtml(n.content || '')}</p></article>`;
 
 async function renderToday() {
   const workList = $('#todayWorkList');
@@ -86,17 +87,21 @@ $$('nav button[data-page]').forEach(button => button.addEventListener('click', (
   history.replaceState(null, '', button.dataset.page === 'main' ? window.location.pathname : `#${button.dataset.page}`);
 }));
 
-$('#showNoticeFormBtn')?.addEventListener('click', showNoticeDialog);
+$('#showNoticeFormBtn')?.addEventListener('click', () => showNoticeDialog());
 $('#closeNoticeDialogBtn')?.addEventListener('click', closeNoticeDialog);
 
 window.addEventListener('hashchange', () => setActivePage(getInitialPage()));
 
-$('#showNoticeFormBtn')?.addEventListener('click', showNoticeForm);
-
 $('#noticeForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   const data = formData(e.currentTarget);
-  await insertRow('notices', { title: data.title, place: data.place, time: data.time || null, content: data.content });
+  const notice = { title: data.title, place: data.place, time: data.time || null, content: data.content };
+  const editingNoticeId = e.currentTarget.dataset.editingNoticeId;
+  if (editingNoticeId) {
+    await updateRow('notices', editingNoticeId, notice);
+  } else {
+    await insertRow('notices', notice);
+  }
   e.currentTarget.reset();
   closeNoticeDialog();
   await renderNotices();
@@ -104,10 +109,18 @@ $('#noticeForm')?.addEventListener('submit', async e => {
 });
 
 $('#noticeList')?.addEventListener('click', async e => {
-  const id = e.target.dataset.deleteNotice;
-  if (!id) return;
-  await deleteRow('notices', id);
-  await renderNotices();
+  const deleteId = e.target.dataset.deleteNotice;
+  if (deleteId) {
+    await deleteRow('notices', deleteId);
+    await renderNotices();
+    return;
+  }
+
+  const editId = e.target.dataset.editNotice;
+  if (!editId) return;
+  const notices = await selectRows('notices');
+  const notice = notices.find(n => n.id === editId);
+  if (notice) showNoticeDialog(notice);
 });
 
 renderClassInfo();
