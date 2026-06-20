@@ -61,6 +61,8 @@ async function renderNotices() {
     const deadline = n.time ? `마감일: ${ymd(n.time)} ${hm(n.time)}` : '';
     const meta = [deadline, n.place].filter(Boolean).map(escapeHtml).join(' · ');
     return `<article class="notice-item" data-notice-id="${escapeHtml(n.id)}"><div class="notice-title-row"><div class="notice-title">${escapeHtml(n.title)}</div><div class="notice-actions"><button class="secondary notice-edit-button" data-edit-notice="${escapeHtml(n.id)}" type="button">수정</button><button class="secondary notice-delete-button" data-delete-notice="${escapeHtml(n.id)}" type="button">삭제</button></div></div><div class="muted">${meta}</div><p class="notice-content">${escapeHtml(n.content || '')}</p></article>`;
+    }).join('') || '<p class="muted">등록된 공지사항이 없습니다.</p>';
+}
 
 async function renderToday() {
   const workList = $('#todayWorkList');
