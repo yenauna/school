@@ -4,8 +4,12 @@ const $$ = (q, root=document) => [...root.querySelectorAll(q)];
 const iso = d => new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 const today = () => iso(new Date());
 const ymd = s => s ? new Date(s).toLocaleDateString('ko-KR') : '';
-const hm = s => s ? String(s).slice(0,5) : '';
-async function selectRows(table, order='created_at') { if(!db) return JSON.parse(localStorage.getItem(table)||'[]'); const {data,error}=await db.from(table).select('*').order(order,{ascending:true}); if(error) throw error; return data||[]; }
+const hm = s => {
+  if (!s) return '';
+  const value = String(s);
+  const timePart = value.includes('T') ? value.split('T')[1] : value;
+  return timePart.slice(0, 5);
+};async function selectRows(table, order='created_at') { if(!db) return JSON.parse(localStorage.getItem(table)||'[]'); const {data,error}=await db.from(table).select('*').order(order,{ascending:true}); if(error) throw error; return data||[]; }
 async function insertRow(table, row) { if(!db){ const rows=JSON.parse(localStorage.getItem(table)||'[]'); rows.push({...row,id:crypto.randomUUID(),created_at:new Date().toISOString()}); localStorage.setItem(table,JSON.stringify(rows)); return; } const {error}=await db.from(table).insert(row); if(error) throw error; }
 async function deleteRow(table, id) { if(!db){ const rows=JSON.parse(localStorage.getItem(table)||'[]').filter(r=>r.id!==id); localStorage.setItem(table,JSON.stringify(rows)); return; } const {error}=await db.from(table).delete().eq('id',id); if(error) throw error; }
 async function updateRow(table, id, row) { if(!db){ const rows=JSON.parse(localStorage.getItem(table)||'[]'); const i=rows.findIndex(r=>r.id===id); if(i>=0) rows[i]={...rows[i],...row}; localStorage.setItem(table,JSON.stringify(rows)); return; } const {error}=await db.from(table).update(row).eq('id',id); if(error) throw error; }
