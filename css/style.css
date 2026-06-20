@@ -546,3 +546,9 @@ menu {
     grid-template-columns:repeat(3,minmax(78px,1fr))
   }
 }
+
+.error-card {
+  border-color:#fecaca;
+  background:#fff1f2;
+  color:#991b1b
+}
