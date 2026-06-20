@@ -3,6 +3,11 @@ function setActivePage(pageId) {
   $$('nav button[data-page]').forEach(button => button.classList.toggle('active', button.dataset.page === pageId));
 }
 
+function getInitialPage() {
+  const pageId = window.location.hash.replace('#', '');
+  return $$('.page').some(page => page.id === pageId) ? pageId : 'main';
+}
+
 function showNoticeForm() {
   const form = $('#noticeForm');
   if (!form) return;
@@ -53,7 +58,12 @@ async function renderIndexControls() {
   fillSelect($('select[name="period"]', $('#reservationForm')), settings.period_count, '교시');
 }
 
-$$('nav button[data-page]').forEach(button => button.addEventListener('click', () => setActivePage(button.dataset.page)));
+$$('nav button[data-page]').forEach(button => button.addEventListener('click', () => {
+  setActivePage(button.dataset.page);
+  history.replaceState(null, '', button.dataset.page === 'main' ? window.location.pathname : `#${button.dataset.page}`);
+}));
+
+window.addEventListener('hashchange', () => setActivePage(getInitialPage()));
 
 $('#showNoticeFormBtn')?.addEventListener('click', showNoticeForm);
 
@@ -78,3 +88,4 @@ renderClassInfo();
 renderNotices();
 renderToday();
 renderIndexControls();
+setActivePage(getInitialPage());
