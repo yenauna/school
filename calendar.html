@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>학년 달력</title>
+  <title>달력</title>
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <header class="topbar">
-    <div><h1>학년 달력</h1><p>날짜별 업무 일정과 전체 학급 시간표 입력</p></div>
-    <nav><a href="index.html">메인</a><a class="active" href="calendar.html">학년 달력</a><a href="reservation.html">예약</a><a href="settings.html">설정</a></nav>
+  <div><h1>달력</h1><p>업무 일정과 수업시간표 입력</p></div>
+    <nav><a href="index.html">메인</a><a class="active" href="calendar.html">달력</a><a href="reservation.html">예약</a><a href="settings.html">설정</a></nav>
   </header>
 
   <main class="layout">
@@ -47,6 +47,17 @@
       <h2>업무 일정</h2>
       <input name="title" placeholder="일정명" required />
       <input name="event_date" type="date" required />
+      <div class="event-period-buttons" role="group" aria-label="업무 일정 위치">
+        <button type="button" data-event-period="0">아침</button>
+        <button type="button" data-event-period="1">1교시</button>
+        <button type="button" data-event-period="2">2교시</button>
+        <button type="button" data-event-period="3">3교시</button>
+        <button type="button" data-event-period="4">4교시</button>
+        <button type="button" data-event-period="5">5교시</button>
+        <button type="button" data-event-period="6">6교시</button>
+        <button type="button" data-event-period="7" class="active">방과후</button>
+      </div>
+      <input name="period" type="hidden" value="7" />
       <input name="event_time" type="time" />
       <input name="place" placeholder="장소" />
       <textarea name="content" placeholder="내용"></textarea>
