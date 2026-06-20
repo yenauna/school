@@ -58,8 +58,8 @@ async function renderNotices() {
   list.innerHTML = notices.map(n => {
     const deadline = n.time ? `마감일: ${ymd(n.time)} ${hm(n.time)}` : '마감일 없음';
     const meta = [deadline, n.place].filter(Boolean).join(' · ');
-    return `<article class="notice-item"><div class="notice-title">${n.title}</div><div class="muted">${meta}</div><p>${n.content || ''}</p><button class="secondary" data-delete-notice="${n.id}">삭제</button></article>`;
-  }).join('') || '<p class="muted">등록된 공지가 없습니다.</p>';}
+    return `<article class="notice-item"><div class="notice-title-row"><div class="notice-title">${n.title}</div><button class="secondary notice-delete-button" data-delete-notice="${n.id}">삭제</button></div><div class="muted">${meta}</div><p>${n.content || ''}</p></article>`;
+}).join('') || '<p class="muted">등록된 공지가 없습니다.</p>';}
 
 async function renderToday() {
   const workList = $('#todayWorkList');
