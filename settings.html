@@ -24,13 +24,14 @@
     </section>
 
     <section class="card">
-      <h2>색/겹침 단어</h2>
+      <h2 class="subject-form-title">색/겹침 단어</h2>
       <form id="subjectForm" class="grid-form">
         <input name="code" placeholder="표시 단어 예: E, 과2, 국L" required />
         <input name="label" placeholder="설명 예: 영어교과" />
-        <input name="color" type="color" value="#dbeafe" />
+        <label class="subject-color-field">색상 <input class="subject-color-input" name="color" type="color" value="#dbeafe" /></label>
         <label><input name="conflict_group" type="checkbox" /> 겹치면 안 되는 수업/장소</label>
-        <button>추가</button>
+        <button class="subject-submit-button">추가</button>
+        <button id="cancelSubjectEditBtn" class="secondary hidden" type="button">수정 취소</button>
       </form>
       <div id="subjectList" class="legend-list"></div>
     </section>
