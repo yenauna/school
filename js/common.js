@@ -29,9 +29,9 @@ function normalizeSupabaseError(error) {
   return `${error?.code || ''} ${error?.message || ''} ${error?.details || ''}`.toLowerCase();
 }
 
-function isMissingOrderColumnError(error) {
+function isMissingOrderColumnError(error, order = 'created_at') {
   const message = normalizeSupabaseError(error);
-  return message.includes('created_at') && (message.includes('column') || message.includes('schema cache') || message.includes('does not exist'));
+  return message.includes(order) && (message.includes('column') || message.includes('schema cache') || message.includes('does not exist'));
 }
 
 async function selectRows(table, order='created_at') {
@@ -44,7 +44,7 @@ async function selectRows(table, order='created_at') {
   if (order) query = query.order(order, { ascending: true });
   let { data, error } = await query;
 
-  if (error && order && isMissingOrderColumnError(error)) {
+  if (error && order && isMissingOrderColumnError(error, order)) {
     ({ data, error } = await db.from(table).select('*'));
   }
   if (error) throw error;
@@ -59,6 +59,5 @@ async function deleteRow(table, id) { if(!db){ const rows=readLocalRows(table).f
 async function updateRow(table, id, row) { if(!db){ const rows=readLocalRows(table); const i=rows.findIndex(r=>r.id===id); if(i>=0) rows[i]={...rows[i],...row}; writeLocalRows(table,rows); return; } const {error}=await db.from(table).update(row).eq('id',id); if(error) throw error; }
 async function upsertRows(table, rows) { if(!db){ const old=readLocalRows(table); rows.forEach(r=>{ const i=old.findIndex(o=>o.id===r.id); i>=0?old[i]={...old[i],...r}:old.push({...r,id:r.id||crypto.randomUUID(),created_at:new Date().toISOString()}); }); writeLocalRows(table,old); return; } const {error}=await db.from(table).upsert(rows); if(error) throw error; }
 async function getAppSettings(){ const rows=await selectRows('app_settings'); return Object.assign({class_count:6,period_count:6}, rows[0]||{}); }
-async function getSubjects(){ return selectRows('subject_rules'); }
-function formData(form){ return Object.fromEntries(new FormData(form).entries()); }
+async function getSubjects(){ return selectRows('subject_rules', 'sort_order'); }function formData(form){ return Object.fromEntries(new FormData(form).entries()); }
 function escapeHtml(value){ return String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char])); }function paintBySubject(el, subjects){ const v=el.textContent.trim(); const hit=subjects.find(s=>s.code===v); el.style.background=hit?.color||''; }
