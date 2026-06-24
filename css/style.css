@@ -6,7 +6,10 @@
   --muted:#6b7280;
   --main:#3563e9;
   --soft:#eef3ff;
-  --danger:#ef4444
+  --danger:#ef4444;
+  --topbar-title-width:160px;
+  --topbar-nav-item-width:72px;
+  --side-panel-width:380px
 }
 
 * {
@@ -21,8 +24,8 @@ body {
 }
 
 .topbar {
-  display:flex;
-  justify-content:space-between;
+  display:grid;
+  grid-template-columns:var(--topbar-title-width) minmax(0,1fr);
   gap:24px;
   align-items:center;
   padding:22px 34px;
@@ -35,7 +38,8 @@ body {
 
 .topbar h1 {
   margin:0;
-  font-size:24px
+  font-size:24px;
+  white-space:nowrap
 }
 
 .topbar p {
@@ -46,17 +50,21 @@ body {
 nav {
   display:flex;
   gap:8px;
-  flex-wrap:wrap
+  flex-wrap:nowrap;
+  justify-content:flex-end
 }
 
 nav a,
 nav button {
+  min-width:var(--topbar-nav-item-width);
   padding:10px 14px;
   border-radius:999px;
   text-decoration:none;
   color:var(--text);
   background:#f1f3f8;
-  border:1px solid transparent
+  border:1px solid transparent;
+  text-align:center;
+  line-height:1.2
 }
 
 nav a.active,
@@ -67,7 +75,7 @@ nav button.active {
 
 .grid-main {
   display:grid;
-  grid-template-columns:minmax(0,1fr) 360px;
+  grid-template-columns:minmax(0,1fr) var(--side-panel-width);
   gap:20px;
   padding:24px;
   max-width:1440px;
@@ -100,7 +108,7 @@ nav button.active {
 
 .two-col {
   display:grid;
-  grid-template-columns:minmax(0,1fr) 380px;
+  grid-template-columns:minmax(0,1fr) var(--side-panel-width);
   gap:20px
 }
 
@@ -467,6 +475,12 @@ menu {
     display:block
   }
 
+  nav {
+    justify-content:flex-start;
+    flex-wrap:wrap;
+    margin-top:16px
+  }
+  
   .right-stack,.right-col {
     margin-top:20px
   }
