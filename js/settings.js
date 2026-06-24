@@ -20,8 +20,8 @@ function resetSubjectForm() {
 async function renderSubjects() {
   const list = $('#subjectList');
   if (!list) return;
-  const subjects = await selectRows('subject_rules');
-  list.innerHTML = subjects.map(s => `<span class="legend-chip subject-chip"><span class="color-dot" style="background:${escapeHtml(s.color)}"></span><b>${escapeHtml(s.code)}</b> ${escapeHtml(s.label || '')} ${s.conflict_group ? '<small>겹침 제한</small>' : ''}<button class="secondary subject-edit-button" data-edit-subject="${escapeHtml(s.id)}" type="button">수정</button><button class="secondary subject-delete-button" data-delete-subject="${escapeHtml(s.id)}" type="button">삭제</button></span>`).join('') || '<p class="muted">등록된 과목이 없습니다. 과목을 추가해 주세요.</p>';
+  const subjects = await getSubjects();
+  list.innerHTML = subjects.map(s => `<span class="legend-chip subject-chip" draggable="true" data-subject-id="${escapeHtml(s.id)}" style="background:${escapeHtml(s.color || '#fff')}"><b>${escapeHtml(s.code)}</b> ${escapeHtml(s.label || '')} ${s.conflict_group ? '<small>겹침 제한</small>' : ''}<button class="secondary subject-edit-button" data-edit-subject="${escapeHtml(s.id)}" type="button">수정</button><button class="secondary subject-delete-button" data-delete-subject="${escapeHtml(s.id)}" type="button">삭제</button></span>`).join('') || '<p class="muted">등록된 과목이 없습니다. 과목을 추가해 주세요.</p>';
 }
 
 $('#settingForm')?.addEventListener('submit', async e => {
@@ -39,13 +39,47 @@ $('#subjectForm')?.addEventListener('submit', async e => {
   if (editingSubjectId) {
     await updateRow('subject_rules', editingSubjectId, subject);
   } else {
-    await insertRow('subject_rules', subject);
+    const subjects = await getSubjects();
+    await insertRow('subject_rules', { ...subject, sort_order: subjects.length });
   }
   resetSubjectForm();
   await renderSubjects();
 });
 
 $('#cancelSubjectEditBtn')?.addEventListener('click', resetSubjectForm);
+
+let draggedSubjectId = '';
+
+async function saveSubjectOrder() {
+  const chips = $$('.subject-chip[data-subject-id]', $('#subjectList'));
+  await Promise.all(chips.map((chip, index) => updateRow('subject_rules', chip.dataset.subjectId, { sort_order: index })));
+  await renderSubjects();
+}
+
+$('#subjectList')?.addEventListener('dragstart', e => {
+  const chip = e.target.closest('.subject-chip[data-subject-id]');
+  if (!chip || e.target.closest('button')) return;
+  draggedSubjectId = chip.dataset.subjectId;
+  chip.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+});
+
+$('#subjectList')?.addEventListener('dragover', e => {
+  const dragging = $('.subject-chip.dragging', $('#subjectList'));
+  const target = e.target.closest('.subject-chip[data-subject-id]');
+  if (!dragging || !target || target === dragging) return;
+  e.preventDefault();
+  const rect = target.getBoundingClientRect();
+  target.parentNode.insertBefore(dragging, e.clientX < rect.left + rect.width / 2 ? target : target.nextSibling);
+});
+
+$('#subjectList')?.addEventListener('dragend', async e => {
+  const chip = e.target.closest('.subject-chip[data-subject-id]');
+  chip?.classList.remove('dragging');
+  if (!draggedSubjectId) return;
+  draggedSubjectId = '';
+  await saveSubjectOrder();
+});
 
 $('#subjectList')?.addEventListener('click', async e => {
   const deleteId = e.target.dataset.deleteSubject;
@@ -58,7 +92,7 @@ $('#subjectList')?.addEventListener('click', async e => {
 
   const editId = e.target.dataset.editSubject;
   if (!editId) return;
-  const subjects = await selectRows('subject_rules');
+  const subjects = await getSubjects();
   const subject = subjects.find(s => s.id === editId);
   const form = $('#subjectForm');
   if (!subject || !form) return;
