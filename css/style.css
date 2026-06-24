@@ -552,3 +552,33 @@ menu {
   background:#fff1f2;
   color:#991b1b
 }
+
+.subject-color-field {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:var(--muted);
+  font-size:13px
+}
+
+.subject-color-input {
+  width:44px;
+  height:44px;
+  padding:0;
+  border-radius:10px;
+  cursor:pointer
+}
+
+.subject-color-input::-webkit-color-swatch-wrapper {
+  padding:4px
+}
+
+.subject-color-input::-webkit-color-swatch {
+  border:0;
+  border-radius:7px
+}
+
+.subject-color-input::-moz-color-swatch {
+  border:0;
+  border-radius:7px
+}
