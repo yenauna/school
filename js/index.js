@@ -97,7 +97,7 @@ window.addEventListener('hashchange', () => setActivePage(getInitialPage()));
 $('#noticeForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   const data = formData(e.currentTarget);
-  const notice = { title: data.title, place: data.place, time: data.time || null, content: data.content };
+  const notice = { title: data.title, place: data.place, time: data.time || null, content: data.content || '' };
   const editingNoticeId = e.currentTarget.dataset.editingNoticeId;
   if (editingNoticeId) {
     await updateRow('notices', editingNoticeId, notice);
