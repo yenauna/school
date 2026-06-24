@@ -506,13 +506,13 @@ menu {
 
 .subject-button-grid {
   display:grid;
-  grid-template-columns:repeat(5,minmax(88px,1fr));
+  grid-template-columns:repeat(4,minmax(72px,1fr));
   gap:8px;
-  min-width:min(620px,calc(100vw - 48px))
+  min-width:min(420px,calc(100vw - 56px))
 }
 
 .lesson-choice {
-  min-height:48px;
+  min-height:44px;
   color:var(--text);
   border-color:#cbd5e1;
   display:flex;
@@ -520,7 +520,7 @@ menu {
   justify-content:center;
   align-items:center;
   gap:2px;
-  padding:8px;
+  padding:7px;
   word-break:keep-all
 }
 
@@ -581,4 +581,14 @@ menu {
 .subject-color-input::-moz-color-swatch {
   border:0;
   border-radius:7px
+}
+
+.subject-chip {
+  cursor:grab;
+  border-color:rgba(15,23,42,.14)
+}
+
+.subject-chip.dragging {
+  cursor:grabbing;
+  opacity:.58
 }
