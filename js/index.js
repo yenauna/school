@@ -64,6 +64,18 @@ async function renderNotices() {
     }).join('') || '<p class="muted">등록된 공지사항이 없습니다.</p>';
 }
 
+function lessonDateValue(lesson) {
+  return String(lesson.date || lesson.lesson_date || lesson.lessonDate || '').slice(0, 10);
+}
+
+function lessonSubjectCode(lesson) {
+  return lesson.subject_code || lesson.subjectCode || lesson.subject || '';
+}
+
+function lessonClassNo(lesson) {
+  return lesson.class_no ?? lesson.classNo ?? lesson.class_number ?? lesson.classNumber ?? '';
+}
+
 async function renderToday() {
   const workList = $('#todayWorkList');
   const timetable = $('#todayTimetable');
@@ -71,10 +83,19 @@ async function renderToday() {
   const now = today();
   if (workList) {
     const events = (await selectRows('events')).filter(e => e.event_date === now || e.date === now || (e.time || '').slice(0, 10) === now);
-    workList.innerHTML = events.map(e => `<div class="mini-item"><b>${e.title}</b><div class="muted">${hm(e.event_time || e.time)} ${e.place || ''}</div></div>`).join('') || '<p class="muted">오늘 업무일정이 없습니다.</p>';
+    workList.innerHTML = events.map(e => `<div class="mini-item"><b>${escapeHtml(e.title)}</b><div class="muted">${escapeHtml(hm(e.event_time || e.time))} ${escapeHtml(e.place || '')}</div></div>`).join('') || '<p class="muted">오늘 업무일정이 없습니다.</p>';
   }
   if (timetable) {
-    const lessons = (await selectRows('timetables')).filter(t => t.date === now || t.lesson_date === now);
+    const lessons = (await selectRows('timetables'))
+      .filter(lesson => lessonDateValue(lesson) === now && lessonSubjectCode(lesson))
+      .sort((a, b) => Number(a.period || 0) - Number(b.period || 0) || Number(lessonClassNo(a) || 0) - Number(lessonClassNo(b) || 0));
+
+    timetable.innerHTML = lessons.map(lesson => {
+      const subjectCode = lessonSubjectCode(lesson);
+      const subject = subjects.find(s => s.code === subjectCode);
+      const memo = lesson.memo ? ` <small class="muted">${escapeHtml(lesson.memo)}</small>` : '';
+      return `<span class="legend-chip" title="${escapeHtml(lesson.memo || '')}"><span class="color-dot" style="background:${escapeHtml(subject?.color || '#fff')}"></span>${escapeHtml(lessonClassNo(lesson))}반 ${escapeHtml(lesson.period || '')}교시 ${escapeHtml(subjectCode)}${memo}</span>`;
+    }).join('') || '<p class="muted">오늘 수업시간표가 없습니다.</p>';
     timetable.innerHTML = lessons.map(l => `<span class="legend-chip"><span class="color-dot" style="background:${subjects.find(s => s.code === (l.subject_code || l.subjectCode))?.color || '#fff'}"></span>${l.class_no || l.classNo || ''}반 ${l.period}교시 ${l.subject_code || l.subjectCode || ''}</span>`).join('') || '<p class="muted">오늘 수업시간표가 없습니다.</p>';
   }
 }
