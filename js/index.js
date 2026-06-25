@@ -1,3 +1,49 @@
+const NOTICE_CHECKLIST_STORAGE_KEY = 'noticeChecklistState';
+
+function readNoticeChecklistState() {
+  try {
+    const state = JSON.parse(localStorage.getItem(NOTICE_CHECKLIST_STORAGE_KEY) || '{}');
+    return state && typeof state === 'object' && !Array.isArray(state) ? state : {};
+  } catch (error) {
+    console.error('공지사항 체크리스트 상태를 읽을 수 없습니다.', error);
+    return {};
+  }
+}
+
+function writeNoticeChecklistState(state) {
+  localStorage.setItem(NOTICE_CHECKLIST_STORAGE_KEY, JSON.stringify(state));
+}
+
+function noticeChecklistEntry(noticeId) {
+  const state = readNoticeChecklistState();
+  const entry = state[noticeId] || {};
+  return { enabled: Boolean(entry.enabled), completed: Array.isArray(entry.completed) ? entry.completed.map(Number) : [] };
+}
+
+function saveNoticeChecklistEntry(noticeId, entry) {
+  const state = readNoticeChecklistState();
+  state[noticeId] = { enabled: Boolean(entry.enabled), completed: [...new Set((entry.completed || []).map(Number))].sort((a, b) => a - b) };
+  writeNoticeChecklistState(state);
+}
+
+function removeNoticeChecklistEntry(noticeId) {
+  const state = readNoticeChecklistState();
+  delete state[noticeId];
+  writeNoticeChecklistState(state);
+}
+
+function renderNoticeChecklist(noticeId, classCount) {
+  const entry = noticeChecklistEntry(noticeId);
+  if (!entry.enabled) return '';
+  const completed = new Set(entry.completed);
+  const buttons = Array.from({ length: classCount }, (_, i) => {
+    const classNo = i + 1;
+    const isDone = completed.has(classNo);
+    return `<button class="notice-check-button${isDone ? ' completed' : ''}" data-toggle-notice-check="${escapeHtml(noticeId)}" data-class-no="${classNo}" type="button" aria-pressed="${isDone}">${classNo}반</button>`;
+  }).join('');
+  return `<div class="notice-checklist" aria-label="공지사항 완료 체크리스트">${buttons}</div>`;
+}
+
 function setActivePage(pageId) {
   $$('.page').forEach(page => page.classList.toggle('active', page.id === pageId));
   $$('nav button[data-page]').forEach(button => button.classList.toggle('active', button.dataset.page === pageId));
@@ -14,6 +60,7 @@ function showNoticeDialog(notice = null) {
     form.elements.place.value = notice.place || '';
     form.elements.time.value = notice.time ? String(notice.time).slice(0, 16) : '';
     form.elements.content.value = notice.content || '';
+    form.elements.checklist.checked = noticeChecklistEntry(notice.id).enabled;
   }
   $('.notice-dialog-title', form).textContent = notice ? '공지사항 수정' : '공지사항 추가';
   $('.notice-submit-button', form).textContent = notice ? '공지 수정' : '공지 추가';
@@ -76,12 +123,14 @@ async function renderClassInfo() {
 async function renderNotices() {
   const list = $('#noticeList');
   if (!list) return;
+  const settings = await getAppSettings();
+  const classCount = Number(settings.class_count) || 6;
   const notices = await selectRows('notices');
   list.innerHTML = notices.map(n => {
     const deadline = n.time ? `마감일: ${ymd(n.time)} ${hm(n.time)}` : '';
     const meta = [deadline, n.place].filter(Boolean).map(escapeHtml).join(' · ');
-    return `<article class="notice-item" data-notice-id="${escapeHtml(n.id)}"><div class="notice-title-row"><div class="notice-title">${escapeHtml(n.title)}</div><div class="notice-actions"><button class="secondary notice-edit-button" data-edit-notice="${escapeHtml(n.id)}" type="button">수정</button><button class="secondary notice-delete-button" data-delete-notice="${escapeHtml(n.id)}" type="button">삭제</button></div></div><div class="muted">${meta}</div><p class="notice-content">${escapeHtml(n.content || '')}</p></article>`;
-    }).join('') || '<p class="muted">등록된 공지사항이 없습니다.</p>';
+    return `<article class="notice-item" data-notice-id="${escapeHtml(n.id)}"><div class="notice-title-row"><div class="notice-title">${escapeHtml(n.title)}</div><div class="notice-actions"><button class="secondary notice-edit-button" data-edit-notice="${escapeHtml(n.id)}" type="button">수정</button><button class="secondary notice-delete-button" data-delete-notice="${escapeHtml(n.id)}" type="button">삭제</button></div></div><div class="muted">${meta}</div><p class="notice-content">${escapeHtml(n.content || '')}</p>${renderNoticeChecklist(n.id, classCount)}</article>`;
+  }).join('') || '<p class="muted">등록된 공지사항이 없습니다.</p>';
 }
 
 function lessonDateValue(lesson) {
@@ -153,8 +202,11 @@ $('#noticeForm')?.addEventListener('submit', async e => {
   const editingNoticeId = e.currentTarget.dataset.editingNoticeId;
   if (editingNoticeId) {
     await updateRow('notices', editingNoticeId, notice);
+    const entry = noticeChecklistEntry(editingNoticeId);
+    saveNoticeChecklistEntry(editingNoticeId, { ...entry, enabled: data.checklist === 'on' });
   } else {
-    await insertRow('notices', notice);
+    const insertedNotice = await insertRow('notices', notice);
+    if (insertedNotice?.id) saveNoticeChecklistEntry(insertedNotice.id, { enabled: data.checklist === 'on', completed: [] });
   }
   e.currentTarget.reset();
   closeNoticeDialog();
@@ -163,9 +215,21 @@ $('#noticeForm')?.addEventListener('submit', async e => {
 });
 
 $('#noticeList')?.addEventListener('click', async e => {
+  const checkButton = e.target.closest('[data-toggle-notice-check]');
+  if (checkButton) {
+    const noticeId = checkButton.dataset.toggleNoticeCheck;
+    const classNo = Number(checkButton.dataset.classNo);
+    const entry = noticeChecklistEntry(noticeId);
+    const completed = new Set(entry.completed);
+    completed.has(classNo) ? completed.delete(classNo) : completed.add(classNo);
+    saveNoticeChecklistEntry(noticeId, { ...entry, completed: [...completed] });
+    await renderNotices();
+    return;
+  }
   const deleteId = e.target.dataset.deleteNotice;
   if (deleteId) {
     await deleteRow('notices', deleteId);
+    removeNoticeChecklistEntry(deleteId);
     await renderNotices();
     return;
   }
