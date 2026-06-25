@@ -740,3 +740,43 @@ menu {
 .today-timetable-empty {
   margin:10px 0 0
 }
+
+.notice-checklist-option {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--text);
+  font-size:15px
+}
+
+.notice-checklist-option input {
+  width:18px;
+  height:18px;
+  padding:0
+}
+
+.notice-checklist {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px dashed var(--line)
+}
+
+.notice-check-button {
+  min-width:58px;
+  padding:7px 10px;
+  background:#f9cfe0;
+  border-color:#f4adc9;
+  color:var(--text);
+  font-size:13px;
+  font-weight:700
+}
+
+.notice-check-button.completed {
+  background:#fff;
+  border-color:#d1d5db;
+  color:#9ca3af;
+  font-weight:600
+}
