@@ -116,6 +116,18 @@ function normalizeInfoUrl(url) {
   return /^[a-z][a-z0-9+.-]*:/i.test(value) ? value : `https://${value}`;
 }
 
+function openDialog(dialog) {
+  if (!dialog) return;
+  if (dialog.parentElement !== document.body) {
+    document.body.appendChild(dialog);
+  }
+  if (typeof dialog.showModal === 'function') {
+    if (!dialog.open) dialog.showModal();
+  } else {
+    dialog.setAttribute('open', '');
+  }
+}
+
 function showInfoDialog(info = null) {
   const dialog = $('#infoDialog');
   const form = $('#infoForm');
@@ -129,11 +141,7 @@ function showInfoDialog(info = null) {
   }
   $('.info-dialog-title', form).textContent = info ? '정보 수정' : '정보 추가';
   $('.info-submit-button', form).textContent = info ? '정보 수정' : '정보 추가';
-  if (typeof dialog.showModal === 'function') {
-    dialog.showModal();
-  } else {
-    dialog.setAttribute('open', '');
-  }
+  openDialog(dialog);
   form.elements.title.focus();
 }
 
@@ -331,7 +339,8 @@ $('#infoForm')?.addEventListener('submit', async e => {
 });
 
 $('#infoList')?.addEventListener('click', async e => {
-  const deleteId = e.target.dataset.deleteInfo;
+  const deleteButton = e.target.closest('[data-delete-info]');
+  const deleteId = deleteButton?.dataset.deleteInfo;
   if (deleteId) {
     await deleteRow('infos', deleteId);
     if ($('#infoForm')?.dataset.editingInfoId === deleteId) {
@@ -342,7 +351,8 @@ $('#infoList')?.addEventListener('click', async e => {
     return;
   }
 
-  const editId = e.target.dataset.editInfo;
+  const editButton = e.target.closest('[data-edit-info]');
+  const editId = editButton?.dataset.editInfo;
   if (!editId) return;
   const infos = await selectRows('infos');
   const info = infos.find(item => item.id === editId);
