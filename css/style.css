@@ -289,7 +289,9 @@ th {
 }
 
 .notice-edit-button,
-.notice-delete-button {
+.notice-delete-button,
+.subject-edit-button,
+.subject-delete-button {
   padding:4px 8px;
   border-radius:8px;
   font-size:12px;
