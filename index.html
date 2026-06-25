@@ -39,7 +39,10 @@
               <h3 class="full-field notice-dialog-title">공지사항 추가</h3>
               <input name="title" placeholder="제목" required />
               <input name="place" placeholder="장소" />
-              <input class="full-field" name="time" type="datetime-local"/>
+              <div class="notice-date-time full-field">
+                <label>날짜 <input name="date" type="date" /></label>
+                <label>시간 <input name="time" type="time" /></label>
+              </div>
               <textarea name="content" placeholder="내용"></textarea>
               <label class="notice-checklist-option full-field"><input name="checklist" type="checkbox" /> 체크리스트</label>
               <menu>
