@@ -3,6 +3,8 @@ let editingLesson = null;
 let editingEventId = null;
 let calendarSubjects = [];
 let slotClickTimer = null;
+let editingBulkSlot = null;
+let bulkInputValues = {};
 
 function startOfWeek(date) {
   const d = new Date(date);
@@ -48,6 +50,21 @@ function periodRows(periodCount) {
   return [0, ...Array.from({ length: periodCount }, (_, i) => i + 1), periodCount + 1];
 }
 
+function bulkSlotId(dayIndex, period, classNo) {
+  return `${dayIndex}-${period}-${classNo}`;
+}
+
+function eachDateInRange(startDate, endDate) {
+  const dates = [];
+  const cursor = new Date(startDate);
+  const end = new Date(endDate);
+  while (cursor <= end) {
+    dates.push(new Date(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return dates;
+}
+
 function markConflicts() {
   $$('.slot').forEach(slot => slot.classList.remove('conflict'));
   const groups = new Map();
@@ -70,6 +87,79 @@ function renderEventPeriodButtons(periodCount, selected = periodCount + 1) {
   wrap.innerHTML = periodRows(periodCount).map(period => (
     `<button type="button" data-event-period="${period}" class="${Number(period) === Number(selected) ? 'active' : ''}">${periodLabel(period, periodCount)}</button>`
   )).join('');
+}
+
+function renderBulkInputGrid(periodCount, classCount) {
+  const grid = $('#bulkInputGrid');
+  if (!grid) return;
+  document.documentElement.style.setProperty('--bulk-class-count', classCount);
+  const weekdays = ['월', '화', '수', '목', '금'];
+  let html = '<div class="cell head">교시</div>' + weekdays.map(day => `<div class="cell head">${day}</div>`).join('');
+  for (const p of periodRows(periodCount)) {
+    html += `<div class="cell period-head">${periodLabel(p, periodCount)}</div>`;
+    for (let dayIndex = 0; dayIndex < weekdays.length; dayIndex += 1) {
+      const slots = p === 0 || p === periodCount + 1 ? '' : `<div class="daybox bulk-daybox">${Array.from({ length: classCount }, (_, i) => {
+        const classNo = i + 1;
+        const key = bulkSlotId(dayIndex, p, classNo);
+        const code = bulkInputValues[key] || '';
+        const color = calendarSubjects.find(subject => subject.code === code)?.color || '#fff';
+        return `<button type="button" class="slot bulk-slot" data-bulk-key="${key}" data-day-index="${dayIndex}" data-period="${p}" data-class-no="${classNo}" data-subject="${esc(code)}" style="background:${color}">${esc(code)}</button>`;
+      }).join('')}</div>`;
+      html += `<div class="cell">${slots}</div>`;
+    }
+  }
+  grid.innerHTML = html;
+}
+
+async function openBulkInputDialog() {
+  const settings = await getAppSettings();
+  const periodCount = Number(settings.period_count) || 6;
+  const classCount = Number(settings.class_count) || 6;
+  calendarSubjects = await getSubjects();
+  bulkInputValues = {};
+  $('#bulkInputForm').reset();
+  $('[name="start_date"]', $('#bulkInputForm')).value = iso(weekStart);
+  $('[name="end_date"]', $('#bulkInputForm')).value = iso(addDays(weekStart, 4));
+  renderBulkInputGrid(periodCount, classCount);
+  $('#lessonDialog')?.close();
+  $('#memoDialog')?.close();
+  $('#eventDialog')?.close();
+  $('#bulkInputDialog').showModal();
+}
+
+function openBulkLessonDialog(slot) {
+  editingBulkSlot = slot;
+  editingLesson = null;
+  const buttons = [
+    `<button type="button" class="lesson-choice delete-choice" data-subject-code="">삭제</button>`,
+    ...calendarSubjects.map(subject => `<button type="button" class="lesson-choice" data-subject-code="${esc(subject.code)}" style="background:${esc(subject.color || '#fff')}"><b>${esc(subject.code)}</b><span>${esc(subject.label || '')}</span></button>`)
+  ];
+  $('#lessonSubjectButtons').innerHTML = buttons.join('');
+  $('#lessonDialog').showModal();
+}
+
+async function applyBulkInput(form) {
+  const data = formData(form);
+  if (!data.start_date || !data.end_date) return;
+  if (data.start_date > data.end_date) {
+    alert('끝 날짜는 시작 날짜 이후로 설정해 주세요.');
+    return;
+  }
+  const rows = [];
+  for (const date of eachDateInRange(data.start_date, data.end_date)) {
+    const dayIndex = date.getDay() - 1;
+    if (dayIndex < 0 || dayIndex > 4) continue;
+    const dateText = iso(date);
+    Object.entries(bulkInputValues).forEach(([key, subjectCode]) => {
+      if (!subjectCode) return;
+      const [slotDayIndex, period, classNo] = key.split('-').map(Number);
+      if (slotDayIndex !== dayIndex) return;
+      rows.push({ id: slotId(dateText, period, classNo), date: dateText, period, class_no: classNo, subject_code: subjectCode.trim(), memo: '' });
+    });
+  }
+  if (rows.length) await upsertRows('timetables', rows);
+  $('#bulkInputDialog').close();
+  await renderCalendar();
 }
 
 async function renderCalendar() {
@@ -173,6 +263,8 @@ $('#prevWeek')?.addEventListener('click', () => { weekStart.setDate(weekStart.ge
 $('#nextWeek')?.addEventListener('click', () => { weekStart.setDate(weekStart.getDate() +28); renderCalendar(); });
 $('#weekPicker')?.addEventListener('change', e => { weekStart = startOfWeek(new Date(e.target.value)); renderCalendar(); });
 $('#addEventBtn')?.addEventListener('click', () => openEventDialog());
+$('#bulkInputBtn')?.addEventListener('click', () => openBulkInputDialog());
+$('#closeBulkInputDialog')?.addEventListener('click', () => $('#bulkInputDialog').close());
 $('#closeDialog')?.addEventListener('click', () => $('#eventDialog').close());
 $('#calendarGrid')?.addEventListener('click', e => {
   const slot = e.target.closest('.slot');
@@ -191,10 +283,30 @@ $('#calendarGrid')?.addEventListener('dblclick', e => {
 });
 $('#lessonSubjectButtons')?.addEventListener('click', async e => {
   const button = e.target.closest('[data-subject-code]');
-  if (!button || !editingLesson) return;
+  if (!button) return;
+  if (editingBulkSlot) {
+    const code = button.dataset.subjectCode || '';
+    bulkInputValues[editingBulkSlot.dataset.bulkKey] = code;
+    editingBulkSlot.dataset.subject = code;
+    editingBulkSlot.textContent = code;
+    editingBulkSlot.style.background = calendarSubjects.find(subject => subject.code === code)?.color || '#fff';
+    $('#lessonDialog').close();
+    editingBulkSlot = null;
+    return;
+  }
+  if (!editingLesson) return;
   await saveLessonRow(editingLesson, button.dataset.subjectCode, editingLesson.dataset.memo || '');
   $('#lessonDialog').close();
   editingLesson = null;
+});
+$('#bulkInputGrid')?.addEventListener('click', e => {
+  const slot = e.target.closest('.bulk-slot');
+  if (!slot) return;
+  openBulkLessonDialog(slot);
+});
+$('#bulkInputForm')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  await applyBulkInput(e.currentTarget);
 });
 $('.event-period-buttons')?.addEventListener('click', e => {
   const button = e.target.closest('[data-event-period]');
@@ -213,6 +325,7 @@ $('#eventForm')?.addEventListener('submit', async e => {
 });
 closeOnBackdrop($('#lessonDialog'));
 closeOnBackdrop($('#eventDialog'));
+closeOnBackdrop($('#bulkInputDialog'));
 closeOnBackdrop($('#memoDialog'), saveMemoAndClose);
 $('#memoDialog')?.addEventListener('cancel', async e => {
   e.preventDefault();
