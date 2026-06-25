@@ -20,6 +20,7 @@
       <input id="weekPicker" type="date" />
       <button id="nextWeek">다음 주</button>
       <button id="addEventBtn">업무 일정 추가</button>
+      <button id="bulkInputBtn" type="button">일괄입력</button>
     </section>
 
     <section class="card scroll-card">
@@ -35,6 +36,20 @@
     <textarea id="memoText" class="memo-editor" placeholder="메모를 입력하세요."></textarea>
   </dialog>
 
+  <dialog id="bulkInputDialog" class="bulk-input-dialog">
+    <form method="dialog" id="bulkInputForm" class="dialog-form bulk-input-form">
+      <h2>일괄입력</h2>
+      <fieldset class="bulk-period-field">
+        <legend>적용 기간</legend>
+        <label>시작 날짜 <input name="start_date" type="date" required /></label>
+        <label>끝 날짜 <input name="end_date" type="date" required /></label>
+      </fieldset>
+      <div id="bulkInputGrid" class="bulk-week-grid" aria-label="요일별 시간표 일괄입력"></div>
+      <p class="muted full-field">입력한 칸만 적용 기간 안의 같은 요일에 자동 입력됩니다.</p>
+      <menu><button value="cancel" type="button" id="closeBulkInputDialog">취소</button><button value="default">적용</button></menu>
+    </form>
+  </dialog>
+  
   <dialog id="eventDialog">
     <form method="dialog" id="eventForm" class="grid-form dialog-form">
       <h2>업무 일정</h2>
