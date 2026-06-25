@@ -336,7 +336,7 @@ th {
 
 .daybox {
   display:grid;
-  grid-template-columns:repeat(var(--class-count),1fr);
+  grid-template-columns:repeat(var(--class-count),minmax(2.4em,1fr));
   gap:1px
 }
 
@@ -347,6 +347,7 @@ th {
 
 .slot {
   min-height:30px;
+  min-width:2.4em;
   width:100%;
   border:1px solid #cbd5e1;
   border-radius:0;
@@ -354,7 +355,10 @@ th {
   text-align:center;
   outline:none;
   color:var(--text);
-  cursor:pointer
+  cursor:pointer;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis
 }
 
 .slot:focus {
