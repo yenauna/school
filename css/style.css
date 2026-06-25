@@ -251,7 +251,8 @@ th {
   background:#f8fafc
 }
 
-#noticeList {
+#noticeList,
+#infoList {
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:10px
@@ -293,6 +294,15 @@ th {
   border-radius:8px;
   font-size:12px;
   line-height:1.2
+}
+
+.info-title-link {
+  color:var(--main);
+  text-decoration:none
+}
+
+.info-title-link:hover {
+  text-decoration:underline
 }
 
 .notice-content {
