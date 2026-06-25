@@ -116,25 +116,44 @@ function normalizeInfoUrl(url) {
   return /^[a-z][a-z0-9+.-]*:/i.test(value) ? value : `https://${value}`;
 }
 
+function showInfoDialog(info = null) {
+  const dialog = $('#infoDialog');
+  const form = $('#infoForm');
+  if (!dialog || !form) return;
+  form.reset();
+  form.dataset.editingInfoId = info?.id || '';
+  if (info) {
+    form.elements.title.value = info.title || '';
+    form.elements.url.value = info.url || '';
+    form.elements.content.value = info.content || '';
+  }
+  $('.info-dialog-title', form).textContent = info ? '정보 수정' : '정보 추가';
+  $('.info-submit-button', form).textContent = info ? '정보 수정' : '정보 추가';
+  if (typeof dialog.showModal === 'function') {
+    dialog.showModal();
+  } else {
+    dialog.setAttribute('open', '');
+  }
+  form.elements.title.focus();
+}
+
+function closeInfoDialog() {
+  const dialog = $('#infoDialog');
+  if (!dialog) return;
+  if (typeof dialog.close === 'function') {
+    dialog.close();
+  } else {
+    dialog.removeAttribute('open');
+  }
+}
+
 function resetInfoForm() {
   const form = $('#infoForm');
   if (!form) return;
   form.reset();
   form.dataset.editingInfoId = '';
+  $('.info-dialog-title', form).textContent = '정보 추가';
   $('.info-submit-button', form).textContent = '정보 추가';
-  $('#cancelInfoEditBtn')?.classList.add('hidden');
-}
-
-function fillInfoForm(info) {
-  const form = $('#infoForm');
-  if (!form || !info) return;
-  form.dataset.editingInfoId = info.id || '';
-  form.elements.title.value = info.title || '';
-  form.elements.url.value = info.url || '';
-  form.elements.content.value = info.content || '';
-  $('.info-submit-button', form).textContent = '정보 수정';
-  $('#cancelInfoEditBtn')?.classList.remove('hidden');
-  form.elements.title.focus();
 }
 
 async function renderInfo() {
@@ -241,6 +260,8 @@ $$('nav button[data-page]').forEach(button => button.addEventListener('click', (
 
 $('#showNoticeFormBtn')?.addEventListener('click', () => showNoticeDialog());
 $('#closeNoticeDialogBtn')?.addEventListener('click', closeNoticeDialog);
+$('#showInfoFormBtn')?.addEventListener('click', () => showInfoDialog());
+$('#closeInfoDialogBtn')?.addEventListener('click', closeInfoDialog);
 
 window.addEventListener('hashchange', () => setActivePage(getInitialPage()));
 
@@ -305,16 +326,18 @@ $('#infoForm')?.addEventListener('submit', async e => {
     await insertRow('infos', info);
   }
   resetInfoForm();
+  closeInfoDialog();
   await renderInfo();
 });
-
-$('#cancelInfoEditBtn')?.addEventListener('click', resetInfoForm);
 
 $('#infoList')?.addEventListener('click', async e => {
   const deleteId = e.target.dataset.deleteInfo;
   if (deleteId) {
     await deleteRow('infos', deleteId);
-    if ($('#infoForm')?.dataset.editingInfoId === deleteId) resetInfoForm();
+    if ($('#infoForm')?.dataset.editingInfoId === deleteId) {
+      resetInfoForm();
+      closeInfoDialog();
+    }
     await renderInfo();
     return;
   }
@@ -323,7 +346,7 @@ $('#infoList')?.addEventListener('click', async e => {
   if (!editId) return;
   const infos = await selectRows('infos');
   const info = infos.find(item => item.id === editId);
-  fillInfoForm(info);
+  if (info) showInfoDialog(info);
 });
 
 async function initIndexPage() {
