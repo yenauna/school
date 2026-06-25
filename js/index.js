@@ -35,6 +35,26 @@ function closeNoticeDialog() {
   }
 }
 
+function normalizeInfoUrl(url) {
+  const value = String(url || '').trim();
+  if (!value) return '';
+  return /^[a-z][a-z0-9+.-]*:/i.test(value) ? value : `https://${value}`;
+}
+
+async function renderInfo() {
+  const list = $('#infoList');
+  if (!list) return;
+  const infos = await selectRows('infos');
+  list.innerHTML = infos.map(info => {
+    const url = normalizeInfoUrl(info.url);
+    const title = escapeHtml(info.title);
+    const titleHtml = url
+      ? `<a class="info-title-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${title}</a>`
+      : title;
+    return `<article class="notice-item info-item" data-info-id="${escapeHtml(info.id)}"><div class="notice-title-row"><div class="notice-title">${titleHtml}</div><div class="notice-actions"><button class="secondary notice-delete-button" data-delete-info="${escapeHtml(info.id)}" type="button">삭제</button></div></div>${info.content ? `<p class="notice-content">${escapeHtml(info.content)}</p>` : ''}</article>`;
+  }).join('') || '<p class="muted">등록된 정보가 없습니다.</p>';
+}
+
 function getInitialPage() {
   const pageId = window.location.hash.replace('#', '');
   return $$('.page').some(page => page.id === pageId) ? pageId : 'main';
@@ -163,9 +183,28 @@ $('#noticeList')?.addEventListener('click', async e => {
   if (notice) showNoticeDialog(notice);
 });
 
+$('#infoForm')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const data = formData(e.currentTarget);
+  await insertRow('infos', {
+    title: data.title,
+    url: normalizeInfoUrl(data.url),
+    content: data.content || ''
+  });
+  e.currentTarget.reset();
+  await renderInfo();
+});
+
+$('#infoList')?.addEventListener('click', async e => {
+  const deleteId = e.target.dataset.deleteInfo;
+  if (!deleteId) return;
+  await deleteRow('infos', deleteId);
+  await renderInfo();
+});
+
 async function initIndexPage() {
   try {
-    await Promise.all([renderClassInfo(), renderNotices(), renderToday(), renderIndexControls()]);
+    await Promise.all([renderClassInfo(), renderNotices(), renderInfo(), renderToday(), renderIndexControls()]);
     setActivePage(getInitialPage());
   } catch (error) {
     console.error('메인 화면을 불러오지 못했습니다.', error);
