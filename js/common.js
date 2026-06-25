@@ -52,8 +52,8 @@ async function selectRows(table, order='created_at') {
 }
 
 async function insertRow(table, row) {
-  if(!db){ const rows=readLocalRows(table); rows.push({...row,id:crypto.randomUUID(),created_at:new Date().toISOString()}); writeLocalRows(table,rows); return; }
-  const {error}=await db.from(table).insert(row); if(error) throw error;
+  if(!db){ const newRow={...row,id:crypto.randomUUID(),created_at:new Date().toISOString()}; const rows=readLocalRows(table); rows.push(newRow); writeLocalRows(table,rows); return newRow; }
+  const {data,error}=await db.from(table).insert(row).select('*').single(); if(error) throw error; return data;
 }
 async function deleteRow(table, id) { if(!db){ const rows=readLocalRows(table).filter(r=>r.id!==id); writeLocalRows(table,rows); return; } const {error}=await db.from(table).delete().eq('id',id); if(error) throw error; }
 async function updateRow(table, id, row) { if(!db){ const rows=readLocalRows(table); const i=rows.findIndex(r=>r.id===id); if(i>=0) rows[i]={...rows[i],...row}; writeLocalRows(table,rows); return; } const {error}=await db.from(table).update(row).eq('id',id); if(error) throw error; }
