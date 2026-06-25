@@ -88,6 +88,27 @@ function normalizeInfoUrl(url) {
   return /^[a-z][a-z0-9+.-]*:/i.test(value) ? value : `https://${value}`;
 }
 
+function resetInfoForm() {
+  const form = $('#infoForm');
+  if (!form) return;
+  form.reset();
+  form.dataset.editingInfoId = '';
+  $('.info-submit-button', form).textContent = '정보 추가';
+  $('#cancelInfoEditBtn')?.classList.add('hidden');
+}
+
+function fillInfoForm(info) {
+  const form = $('#infoForm');
+  if (!form || !info) return;
+  form.dataset.editingInfoId = info.id || '';
+  form.elements.title.value = info.title || '';
+  form.elements.url.value = info.url || '';
+  form.elements.content.value = info.content || '';
+  $('.info-submit-button', form).textContent = '정보 수정';
+  $('#cancelInfoEditBtn')?.classList.remove('hidden');
+  form.elements.title.focus();
+}
+
 async function renderInfo() {
   const list = $('#infoList');
   if (!list) return;
@@ -98,7 +119,7 @@ async function renderInfo() {
     const titleHtml = url
       ? `<a class="info-title-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${title}</a>`
       : title;
-    return `<article class="notice-item info-item" data-info-id="${escapeHtml(info.id)}"><div class="notice-title-row"><div class="notice-title">${titleHtml}</div><div class="notice-actions"><button class="secondary notice-delete-button" data-delete-info="${escapeHtml(info.id)}" type="button">삭제</button></div></div>${info.content ? `<p class="notice-content">${escapeHtml(info.content)}</p>` : ''}</article>`;
+  return `<article class="notice-item info-item" data-info-id="${escapeHtml(info.id)}"><div class="notice-title-row"><div class="notice-title">${titleHtml}</div><div class="notice-actions"><button class="secondary notice-edit-button" data-edit-info="${escapeHtml(info.id)}" type="button">수정</button><button class="secondary notice-delete-button" data-delete-info="${escapeHtml(info.id)}" type="button">삭제</button></div></div>${info.content ? `<p class="notice-content">${escapeHtml(info.content)}</p>` : ''}</article>`;
   }).join('') || '<p class="muted">등록된 정보가 없습니다.</p>';
 }
 
@@ -244,20 +265,37 @@ $('#noticeList')?.addEventListener('click', async e => {
 $('#infoForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   const data = formData(e.currentTarget);
-  await insertRow('infos', {
+  const info = {
     title: data.title,
     url: normalizeInfoUrl(data.url),
     content: data.content || ''
-  });
-  e.currentTarget.reset();
+   };
+  const editingInfoId = e.currentTarget.dataset.editingInfoId;
+  if (editingInfoId) {
+    await updateRow('infos', editingInfoId, info);
+  } else {
+    await insertRow('infos', info);
+  }
+  resetInfoForm();
   await renderInfo();
 });
 
+$('#cancelInfoEditBtn')?.addEventListener('click', resetInfoForm);
+
 $('#infoList')?.addEventListener('click', async e => {
   const deleteId = e.target.dataset.deleteInfo;
-  if (!deleteId) return;
-  await deleteRow('infos', deleteId);
-  await renderInfo();
+  if (deleteId) {
+    await deleteRow('infos', deleteId);
+    if ($('#infoForm')?.dataset.editingInfoId === deleteId) resetInfoForm();
+    await renderInfo();
+    return;
+  }
+
+  const editId = e.target.dataset.editInfo;
+  if (!editId) return;
+  const infos = await selectRows('infos');
+  const info = infos.find(item => item.id === editId);
+  fillInfoForm(info);
 });
 
 async function initIndexPage() {
