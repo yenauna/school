@@ -112,11 +112,6 @@ async function renderToday() {
     const lessons = (await selectRows('timetables'))
       .filter(lesson => lessonDateValue(lesson) === now && lessonSubjectCode(lesson));
 
-    if (!lessons.length) {
-      timetable.innerHTML = '<p class="muted">오늘 수업시간표가 없습니다.</p>';
-      return;
-    }
-
     const lessonMap = new Map(lessons.map(lesson => [`${Number(lesson.period || 0)}-${Number(lessonClassNo(lesson) || 0)}`, lesson]));
     const classHeaders = Array.from({ length: classCount }, (_, i) => `<div class="today-timetable-head">${i + 1}반</div>`).join('');
     const rows = Array.from({ length: periodCount }, (_, periodIndex) => {
@@ -132,8 +127,7 @@ async function renderToday() {
       return `<div class="today-timetable-period">${period}교시</div>${cells}`;
     }).join('');
 
-    timetable.innerHTML = `<div class="today-timetable-grid" style="--today-class-count:${classCount}"><div class="today-timetable-corner">교시</div>${classHeaders}${rows}</div>`;
-    timetable.innerHTML = lessons.map(l => `<span class="legend-chip"><span class="color-dot" style="background:${subjects.find(s => s.code === (l.subject_code || l.subjectCode))?.color || '#fff'}"></span>${l.class_no || l.classNo || ''}반 ${l.period}교시 ${l.subject_code || l.subjectCode || ''}</span>`).join('') || '<p class="muted">오늘 수업시간표가 없습니다.</p>';
+    timetable.innerHTML = `<div class="today-timetable-grid" style="--today-class-count:${classCount}"><div class="today-timetable-corner">교시</div>${classHeaders}${rows}</div>${lessons.length ? '' : '<p class="muted today-timetable-empty">오늘 수업시간표가 없습니다.</p>'}`;
   }
 }
 
