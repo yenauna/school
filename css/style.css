@@ -615,3 +615,57 @@ menu {
   cursor:grabbing;
   opacity:.58
 }
+
+.today-timetable-grid {
+  display:grid;
+  grid-template-columns:56px repeat(var(--today-class-count),minmax(34px,1fr));
+  border:2px solid #111;
+  background:#111;
+  gap:1px;
+  overflow:auto;
+  font-size:13px
+}
+
+.today-timetable-corner,
+.today-timetable-head,
+.today-timetable-period,
+.today-timetable-slot {
+  min-height:32px;
+  padding:5px 3px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  background:#fff;
+  color:var(--text)
+}
+
+.today-timetable-corner,
+.today-timetable-head {
+  background:#eef9e8;
+  font-weight:700
+}
+
+.today-timetable-period {
+  background:#fffbe8;
+  font-weight:700;
+  white-space:nowrap
+}
+
+.today-timetable-slot {
+  position:relative;
+  border:1px solid #cbd5e1;
+  word-break:break-all
+}
+
+.today-timetable-slot.has-memo::after {
+  content:"";
+  position:absolute;
+  top:3px;
+  right:3px;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#22c55e;
+  box-shadow:0 0 0 1px rgba(255,255,255,.9)
+}
