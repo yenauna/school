@@ -802,3 +802,61 @@ menu {
     grid-template-columns:1fr;
   }
 }
+
+.bulk-input-dialog {
+  width:min(1120px,calc(100vw - 36px));
+}
+
+.bulk-input-form {
+  display:grid;
+  gap:14px;
+  min-width:0;
+}
+
+.bulk-period-field {
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(180px,1fr));
+  gap:10px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+}
+
+.bulk-period-field legend {
+  padding:0 6px;
+  font-weight:700;
+}
+
+.bulk-period-field label {
+  display:grid;
+  gap:6px;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.bulk-week-grid {
+  grid-column:1/-1;
+  min-width:900px;
+  border:2px solid #111;
+  background:#111;
+  display:grid;
+  grid-template-columns:90px repeat(5,1fr);
+  gap:2px;
+  overflow:auto;
+}
+
+.bulk-daybox {
+  grid-template-columns:repeat(var(--bulk-class-count),minmax(2.4em,1fr));
+}
+
+.bulk-slot:empty::after {
+  content:"+";
+  color:#94a3b8;
+}
+
+@media(max-width:900px) {
+  .bulk-period-field {
+    grid-template-columns:1fr;
+  }
+}
