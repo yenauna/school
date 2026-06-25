@@ -16,19 +16,19 @@ function writeNoticeChecklistState(state) {
 
 function noticeChecklistEntry(noticeId) {
   const state = readNoticeChecklistState();
-  const entry = state[noticeId] || {};
+  const entry = state[String(noticeId)] || {};
   return { enabled: Boolean(entry.enabled), completed: Array.isArray(entry.completed) ? entry.completed.map(Number) : [] };
 }
 
 function saveNoticeChecklistEntry(noticeId, entry) {
   const state = readNoticeChecklistState();
-  state[noticeId] = { enabled: Boolean(entry.enabled), completed: [...new Set((entry.completed || []).map(Number))].sort((a, b) => a - b) };
+  state[String(noticeId)] = { enabled: Boolean(entry.enabled), completed: [...new Set((entry.completed || []).map(Number))].sort((a, b) => a - b) };
   writeNoticeChecklistState(state);
 }
 
 function removeNoticeChecklistEntry(noticeId) {
   const state = readNoticeChecklistState();
-  delete state[noticeId];
+  delete state[String(noticeId)];
   writeNoticeChecklistState(state);
 }
 
@@ -42,6 +42,32 @@ function renderNoticeChecklist(noticeId, classCount) {
     return `<button class="notice-check-button${isDone ? ' completed' : ''}" data-toggle-notice-check="${escapeHtml(noticeId)}" data-class-no="${classNo}" type="button" aria-pressed="${isDone}">${classNo}반</button>`;
   }).join('');
   return `<div class="notice-checklist" aria-label="공지사항 완료 체크리스트">${buttons}</div>`;
+}
+
+function splitNoticeDateTime(value) {
+  const text = String(value || '');
+  if (!text) return { date: '', time: '' };
+  if (text.includes('T')) {
+    const [date, time = ''] = text.split('T');
+    return { date: date.slice(0, 10), time: time.slice(0, 5) };
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return { date: text, time: '' };
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) return { date: text.slice(0, 10), time: '' };
+  return { date: iso(parsed), time: hm(text) };
+}
+
+function combineNoticeDateTime(date, time) {
+  const day = String(date || '').trim();
+  const clock = String(time || '').trim();
+  if (!day) return null;
+  return clock ? `${day}T${clock}` : day;
+}
+
+function formatNoticeDeadline(value) {
+  const { date, time } = splitNoticeDateTime(value);
+  if (!date) return '';
+  return `마감일: ${ymd(date)}${time ? ` ${time}` : ''}`;
 }
 
 function setActivePage(pageId) {
@@ -58,7 +84,9 @@ function showNoticeDialog(notice = null) {
   if (notice) {
     form.elements.title.value = notice.title || '';
     form.elements.place.value = notice.place || '';
-    form.elements.time.value = notice.time ? String(notice.time).slice(0, 16) : '';
+    const dateTime = splitNoticeDateTime(notice.time);
+    form.elements.date.value = dateTime.date;
+    form.elements.time.value = dateTime.time;
     form.elements.content.value = notice.content || '';
     form.elements.checklist.checked = noticeChecklistEntry(notice.id).enabled;
   }
@@ -148,7 +176,7 @@ async function renderNotices() {
   const classCount = Number(settings.class_count) || 6;
   const notices = await selectRows('notices');
   list.innerHTML = notices.map(n => {
-    const deadline = n.time ? `마감일: ${ymd(n.time)} ${hm(n.time)}` : '';
+    const deadline = formatNoticeDeadline(n.time);
     const meta = [deadline, n.place].filter(Boolean).map(escapeHtml).join(' · ');
     return `<article class="notice-item" data-notice-id="${escapeHtml(n.id)}"><div class="notice-title-row"><div class="notice-title">${escapeHtml(n.title)}</div><div class="notice-actions"><button class="secondary notice-edit-button" data-edit-notice="${escapeHtml(n.id)}" type="button">수정</button><button class="secondary notice-delete-button" data-delete-notice="${escapeHtml(n.id)}" type="button">삭제</button></div></div><div class="muted">${meta}</div><p class="notice-content">${escapeHtml(n.content || '')}</p>${renderNoticeChecklist(n.id, classCount)}</article>`;
   }).join('') || '<p class="muted">등록된 공지사항이 없습니다.</p>';
@@ -219,7 +247,7 @@ window.addEventListener('hashchange', () => setActivePage(getInitialPage()));
 $('#noticeForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   const data = formData(e.currentTarget);
-  const notice = { title: data.title, place: data.place, time: data.time || null, content: data.content || '' };
+  const notice = { title: data.title, place: data.place, time: combineNoticeDateTime(data.date, data.time), content: data.content || '' };
   const editingNoticeId = e.currentTarget.dataset.editingNoticeId;
   if (editingNoticeId) {
     await updateRow('notices', editingNoticeId, notice);
