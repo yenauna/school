@@ -3580,10 +3580,8 @@ var CORE = (function () {
   function startPolling() {
     if (POLL_TIMER !== null) return;
     if (typeof setInterval !== 'function') return;
-    setPollOnce();
     POLL_TIMER = setInterval(pollOnce, POLL_MS);
   }
-  function setPollOnce() { /* 자동 검사에서 주기를 손으로 돌릴 수 있게 연결점만 둔다 */ }
 
   /* ---------- 잠금 화면 ---------- */
   function lockMsg(msg, kind) {
