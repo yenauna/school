@@ -89,7 +89,6 @@
   .chip{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;margin:1px 2px 1px 0;line-height:1.5}
   .chip:hover{border-color:#c9d3e2;color:#3b4657}
   .chip.on{background:var(--accent-soft);border-color:#a9c3f6;color:#1d4ed8;font-weight:600}
-  .chip.on[data-tag="통합학급"]{background:#fdeceb;border-color:#efb1ab;color:#b3261e}
   .chip.on[data-tag="생활"]{background:#fdf3e2;border-color:#eccb92;color:#8a5308}
   .chip.on[data-tag="학습"]{background:#eef7ee;border-color:#a9d5ab;color:#1a7f4b}
   .muted{color:var(--muted)}
@@ -98,7 +97,6 @@
   .tag-on{display:inline-flex;flex-direction:column;align-items:center;gap:1px;background:#f1f3f6;border:1px solid var(--line);border-radius:6px;padding:2px 6px;font-size:11px;color:#3f4650;line-height:1.2;white-space:nowrap}
   .tag-on i{font-style:normal;font-weight:600}
   .tag-on b{font-weight:700;color:#8a5308;font-size:10.5px}
-  .tag-on.sp{background:#fdeceb;border-color:#efb1ab;color:#b3261e}
   .status{font-size:12.5px;font-weight:600}
   .status.ok{color:var(--good)}.status.warn{color:var(--warn)}.status.bad{color:var(--bad)}
   .status.muted{color:var(--muted);font-weight:400}
@@ -158,12 +156,8 @@
   .colhead .cgen{font-size:11.5px;color:var(--muted);white-space:nowrap}
   .colhead .cscore{margin-left:auto;font-size:12.5px;font-weight:700;color:#8a5308;white-space:nowrap}
   .colhead .cwarns{font-size:11.5px;color:var(--bad);margin-top:4px;line-height:1.45}
-  /* 반별 태그 요약: 태그명 / n명 / ☆점수 3줄 카드 */
+  /* 반별 학생 기준 태그 요약 */
   .tagsum{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-  .tcard{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:46px;border:1px solid var(--line);border-radius:7px;background:#fff;padding:3px 6px;line-height:1.22}
-  .tcard .t1{font-size:11px;font-weight:700;color:#3f4650;white-space:nowrap}
-  .tcard .t2{font-size:10.5px;color:var(--muted)}
-  .tcard .t3{font-size:10.5px;font-weight:700;color:#8a5308}
   .chiplist{padding:6px;display:flex;flex-direction:column;gap:4px}
   .stu{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12.5px;cursor:grab}
   /* 남학생은 연한 하늘색, 여학생은 연한 분홍 */
@@ -278,6 +272,18 @@
     .card{break-inside:avoid;border-color:#ccc;box-shadow:none}
     #printArea table{font-size:11.5px}
   }
+
+  .group-grid{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;max-width:none!important}
+  .group-card{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fafbfc}
+  .group-card .row{justify-content:space-between}.group-member{display:flex;gap:4px;margin:6px 0}.group-member>.btn{flex:1;text-align:left}
+  .picker-split{display:grid;grid-template-columns:90px 1fr;gap:12px;height:380px;margin-top:12px}
+  #pickerClasses,#pickerStudents{display:flex;flex-direction:column;gap:6px;overflow:auto}#pickerStudents .btn{text-align:left}#pickerSearch{width:100%}
+  .chiplist{padding:4px;gap:2px}.stu{padding:3px 4px;border-radius:5px;font-size:12px;min-height:27px}
+  .stu .l1{flex-wrap:nowrap;gap:3px}.stu .nm{white-space:nowrap}.stu .g5b{padding:0 3px;font-size:10px}
+  .tag-on{display:inline-flex;flex-direction:row;padding:1px 3px;font-size:10px;line-height:1.4;white-space:nowrap;flex-shrink:0;border-radius:4px}
+  .colhead{padding:6px;box-sizing:border-box}.tagsum{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+  .student-summary{display:inline-block;white-space:nowrap;background:#eef0f5;border-radius:4px;padding:1px 4px;font-size:11px}
+  .gendivider{margin:2px 0}
 </style>
 </head>
 <body class="locked">
@@ -331,10 +337,10 @@
         <p style="margin:0 0 4px">처음 열면 <b>암호 입력 화면</b>이 뜹니다. 학교에서 함께 쓰는 암호를 넣으면 서버에 저장된 최신 명단을 불러옵니다. 한 번 넣으면 탭을 닫을 때까지 다시 묻지 않고, 위의 <b>[잠금]</b>을 누르면 다시 잠깁니다. 작업 중에 인터넷이 끊겨도 이 브라우저에 저장되어 이어서 작업할 수 있습니다(처음 들어갈 때는 서버 확인이 필요합니다).</p>
         <ol>
           <li><b>새 반 구성</b>에서 반별 목표 인원을 맞춥니다. '학생 수에 맞춰 목표 인원 채우기'를 누르면 전체 학생 수에 맞춰 채워지고, '통합학급'으로 체크한 반은 '통합학급은 몇 명 적게'에 적은 만큼 적게 잡힙니다. 새 반 이름은 기본으로 <b>가반·나반·다반·라반·마반·바반</b>이고, 표에서 직접 고쳐도 됩니다.</li>
-          <li><b>태그</b>를 추가·수정·삭제합니다. 태그마다 <b>힘든 점수(★, 관심이 더 필요한 정도)</b>를 정합니다(예: 통합학급 ★3, 학습 ★2). 태그가 붙은 학생은 반마다 인원도 비슷해지고, 그 태그의 점수도 반마다 고르게 나뉩니다.</li>
-          <li><b>학생마다 정도가 다르면</b> 명단의 태그 옆 <b>×1~×5</b>로 그 학생만의 강도를 올립니다(기본 ×1 = 태그 점수 그대로, ×2면 두 배). 한 학생이 태그를 여러 개 가지면 그 점수들이 합쳐져 그 학생의 힘든 점수가 됩니다(예: 통합학급 ★3 + 폭력 ★4 = ★7).</li>
-          <li><b>같은 반이 되면 안 되는 학생</b>을 짝으로 넣습니다. 여러 짝을 한꺼번에 붙여넣을 수 있고, 한 학생이 여러 짝에 나와도 모두 지켜집니다. 4·5학년에 같이 있던 학생은 이 목록에 넣지 않아도 자동으로 갈라 놓습니다(3년 연속 같은 반 금지).</li>
-          <li><b>같은 반 희망 조합</b>에는 같이 있고 싶은 학생을 한 줄에 모아 적습니다. 강제가 아니라 우선 배치라서 다른 조건을 해치지 않는 범위에서 같은 반이 되도록 맞추고, 결과에는 <b>몇 개가 반영됐는지</b>만 참고로 보입니다.</li>
+          <li><b>태그</b>를 추가·수정·삭제합니다. 학생에게는 특수·학습·생활 등의 태그를 붙입니다.</li>
+          <li><b>별(★)</b>은 학생 명단에서 개인별로 조절합니다. 태그를 켜면 ★1로 시작하며 학생별 별 합계를 반마다 고르게 나눕니다.</li>
+          <li><b>같은 반이 되면 안 되는 학생</b>을 분리 그룹으로 선택합니다. 그룹 안의 학생들은 서로 모두 다른 반에 배정됩니다. 4·5학년에 같이 있던 학생은 이 목록에 넣지 않아도 자동으로 갈라 놓습니다(3년 연속 같은 반 금지).</li>
+          <li><b>같은 반 희망 조합</b>에는 같이 있고 싶은 학생을 조합 카드에서 선택합니다. 강제가 아니라 우선 배치라서 다른 조건을 해치지 않는 범위에서 같은 반이 되도록 맞추고, 결과에는 <b>몇 개가 반영됐는지</b>만 참고로 보입니다.</li>
           <li><b>학생 명단</b>을 넣습니다. 담임별로 받은 엑셀·CSV 파일을 <b>[명단 파일 올리기]</b>로 올리거나(머리글로 열을 찾음), 엑셀에서 복사해 붙여넣거나, 표에서 직접 고치면 됩니다. 처음이면 <b>[빈 양식 내려받기]</b>로 받은 파일을 채워 올리세요. 연습은 '연습용 명단으로 해보기'로 먼저 해 보세요. 명단 표 위의 <b>[전체] [5-1] [5-2]…</b> 탭을 누르면 그 5학년 반 학생만 보이고, 반 탭을 고른 채 <b>[학생 추가]</b>를 누르면 5학년 반이 그 반으로 자동으로 들어갑니다.</li>
           <li><b>배정 실행</b>을 누릅니다. 결과에서 반마다 힘든 점수(★) 총합이 비슷한지 확인하고, 필요하면 학생을 다른 반으로 끌어다 놓아 맞춥니다. 빠진 학생은 반 카드 아래 <b>[+ 학생 추가]</b>로 그 반에 바로 넣을 수 있고, 마음에 들면 <b>엑셀 내려받기</b>로 받습니다.</li>
         </ol>
@@ -355,12 +361,12 @@
     </div>
 
     <div class="grouphdr"><span class="n">2</span>반과 조건 정하기<span class="note">— 대부분은 기본값 그대로 두어도 됩니다</span></div>
-    <div class="card">
+    <div class="card" id="cardClasses">
       <h2>새 반 구성</h2>
       <div class="row">
         <label class="fld">새 반 개수 <input type="number" id="classCount" min="2" max="12" step="1" value="6"></label>
         <label class="fld" title="'통합학급'으로 체크한 반은 목표 인원에서 이만큼 적게 잡습니다.">통합학급은 <input type="number" id="deduct" min="0" max="6" step="1" value="2"> 명 적게</label>
-        <label class="fld"><input type="checkbox" id="restrictSpecial"> 통합학급 학생은 '통합학급'으로 체크한 반에만</label>
+        <label class="fld"><input type="checkbox" id="restrictSpecial" hidden checked> 특수학생은 통합학급으로 체크한 반에만 배정됩니다.</label>
         <label class="fld"><input type="checkbox" id="useY3" checked> 4·5학년에 같이 있던 학생은 6학년에 또 같은 반이 되지 않게</label>
       </div>
       <div class="table-wrap">
@@ -374,7 +380,7 @@
 
     <div class="card">
       <h2>태그와 힘든 점수(★) <span class="muted small" style="font-weight:400">— 이름을 고치거나 ✕로 지울 수 있습니다</span></h2>
-      <p class="hint"><b>힘든 점수(★)는 그 학생에게 선생님의 관심·지원이 더 필요한 정도</b>입니다. 태그마다 '이 태그 학생 한 명이 반에 더하는 부담'을 정해 두면(예: 통합학급 ★3), 태그가 붙은 학생이 한 반에 몰리지 않도록 <b>인원과 점수 모두</b> 골고루 나눠 배정합니다. 학생마다 정도가 다르면 명단 표에서 ×배수로 올립니다. <b>반당 최대</b>를 비우면 자동(그 태그 학생 수 ÷ 반 수, 올림)으로 잡히고, '통합학급'처럼 한 반에 한 명만 두려면 최대를 1로 적으면 됩니다.</p>
+      <p class="hint">별(★)은 학생 개인에게 필요한 관심·지원의 정도입니다. 태그를 켜면 ★1로 시작하며, 학생 명단에서 별 수를 조절하세요. 배정 시 학생별 별 합계를 고르게 나눕니다.</p>
       <div class="table-wrap">
         <table id="tagTable"></table>
       </div>
@@ -385,25 +391,15 @@
     </div>
 
     <div class="card">
-      <h2>같이 두면 안 되는 학생 <span class="muted small" style="font-weight:400">— 분리 짝</span></h2>
-      <p class="hint">짝 하나씩 추가하거나, 여러 줄을 한꺼번에 넣을 수 있습니다. 같은 학생이 여러 짝에 나오면 그 상대 모두와 다른 반이 되도록 배정합니다. <b>4학년·5학년 반이 모두 같은 학생들</b>은 여기에 넣지 않아도 6학년에 다시 같은 반이 되지 않게 자동으로 갈라 놓습니다(위 '3년 연속' 설정).</p>
-
-      <details class="sub" open>
-        <summary>여러 짝 한꺼번에 넣기</summary>
-        <textarea id="pairBulk" placeholder="한 줄에 두 이름, 예:&#10;김민준 - 이서연&#10;박지호 / 최수아&#10;김민준, 박지호"></textarea>
-        <div class="row" style="margin:7px 0 0">
-          <button class="btn primary" type="button" id="btnPairBulk">목록에 넣기</button>
-          <span class="muted small">이름 사이는 -, /, 쉼표, 탭 무엇이든 됩니다. 넣은 줄은 아래 목록에 바로 뜹니다.</span>
-        </div>
-        <div class="msg" id="pairBulkMsg"></div>
-      </details>
+      <h2>같이 두면 안 되는 학생 <span class="muted small" style="font-weight:400">— 분리 그룹</span></h2>
+      <p class="hint">한 그룹에 두 명 이상을 선택하세요. 그룹 안의 학생들은 서로 모두 다른 반에 배정합니다. 학생 수가 반 수보다 많으면 모두 분리할 수 없으므로 점검 경고를 확인하세요. <b>4학년·5학년 반이 모두 같은 학생들</b>은 여기에 넣지 않아도 6학년에 다시 같은 반이 되지 않게 자동으로 갈라 놓습니다(위 '3년 연속' 설정).</p>
 
       <div class="table-wrap" style="margin-top:12px">
-        <table id="pairTable"></table>
+        <div id="pairTable" class="group-grid"></div>
       </div>
       <div class="row" style="margin:9px 0 0">
-        <button class="btn" type="button" id="btnAddPair">짝 하나 추가</button>
-        <button class="btn danger" type="button" id="btnClearPairs">분리 짝 모두 지우기</button>
+        <button class="btn" type="button" id="btnAddPair">분리 그룹 추가</button>
+        <button class="btn danger" type="button" id="btnClearPairs">분리 그룹 모두 지우기</button>
         <span class="status" id="pairHint"></span>
         <span class="status" id="y3Hint"></span>
       </div>
@@ -411,18 +407,10 @@
 
     <div class="card">
       <h2>같은 반이 되면 좋은 학생 <span class="muted small" style="font-weight:400">— 희망 조합, 가능하면 같이</span></h2>
-      <p class="hint">같이 있고 싶은 학생을 한 줄에 모아 적습니다. <b>강제가 아닌 우선 배치</b>라서, 인원·분리 짝·태그·힘든 점수를 해치지 않는 범위에서 같은 반이 되도록 배정합니다. 결과에서 부득이하게 나뉜 조합은 빨간 경고 없이 <b>참고 표시</b>만 됩니다.</p>
-      <details class="sub" open>
-        <summary>여러 조합 한꺼번에 넣기</summary>
-        <textarea id="wishBulk" placeholder="한 줄에 2명 이상, 예:&#10;김민준, 이서연&#10;박지호 - 최수아 - 정민서"></textarea>
-        <div class="row" style="margin:7px 0 0">
-          <button class="btn primary" type="button" id="btnWishBulk">목록에 넣기</button>
-          <span class="muted small">이름 사이는 -, /, 쉼표, 탭 무엇이든 됩니다. 한 줄이 조합 하나입니다.</span>
-        </div>
-        <div class="msg" id="wishBulkMsg"></div>
-      </details>
+      <p class="hint">같이 있고 싶은 학생을 조합 카드에서 선택합니다. <b>강제가 아닌 우선 배치</b>라서, 인원·분리 그룹·태그·힘든 점수를 해치지 않는 범위에서 같은 반이 되도록 배정합니다. 결과에서 부득이하게 나뉜 조합은 빨간 경고 없이 <b>참고 표시</b>만 됩니다.</p>
+
       <div class="table-wrap" style="margin-top:12px">
-        <table id="wishTable"></table>
+        <div id="wishTable" class="group-grid"></div>
       </div>
       <div class="row" style="margin:9px 0 0">
         <button class="btn" type="button" id="btnAddWish">조합 하나 추가</button>
@@ -433,7 +421,7 @@
 
     <div class="card" id="cardStudents">
       <h2>명단 표 <span class="muted small" style="font-weight:400">— 칸을 눌러 바로 고칠 수 있습니다</span></h2>
-      <p class="hint">태그는 이름 옆 태그를 눌러 켜고 끕니다. 켠 태그 옆 <b>×1~×5</b>는 그 학생만의 정도입니다(기본 ×1). <b>힘든 점수</b>는 그 학생이 반에 더하는 부담(★)의 합계입니다. <b>번호</b>는 출석 번호입니다. <b>5학년 반</b>은 지금 다니는 반(<b>5-1</b> 등), <b>반드시 이 반</b>은 6학년 <b>새 반</b>(가반~바반)이고, 여기서 고르면 그 학생은 꼭 그 반으로 갑니다.</p>
+      <p class="hint">태그는 이름 옆 태그를 눌러 켜고 끕니다. 켠 태그 옆에서 <b>★1~★10</b>을 학생 개인별로 조절합니다(기본 ★1). <b>힘든 점수</b>는 그 학생이 반에 더하는 부담(★)의 합계입니다. <b>번호</b>는 출석 번호입니다. <b>5학년 반</b>은 지금 다니는 반(<b>5-1</b> 등), <b>반드시 이 반</b>은 6학년 <b>새 반</b>(가반~바반)이고, 여기서 고르면 그 학생은 꼭 그 반으로 갑니다.</p>
       <div class="toolbar">
         <button class="btn" type="button" id="btnAddStudent">학생 추가</button>
         <button class="btn danger sm" type="button" id="btnClearStudents">명단 전체 지우기</button>
@@ -472,7 +460,7 @@
     <div class="card" id="resultCard">
       <h2>배정 점검 결과</h2>
       <p class="hint" style="margin-top:-2px"><b>3단계</b>입니다. 아래에서 조건을 지켰는지 확인하고, 학생을 끌어 옮겨 손본 뒤 <b>4단계</b>에서 내려받으세요.</p>
-      <div class="verdicts" id="verdict"></div>
+      <div class="row" id="resultSort" role="group" aria-label="결과 정렬"><button class="btn" type="button" data-act="result-sort" data-sort="gender">남녀·가나다순</button><button class="btn" type="button" data-act="result-sort" data-sort="origin">5학년 반·번호순</button></div><div class="verdicts" id="verdict"></div>
       <ul class="problems" id="problems"></ul>
       <div class="wishnote" id="wishInfo"></div>
       <div class="toolbar" style="margin:12px 0 0">
@@ -509,7 +497,7 @@
     <h2>엑셀에서 붙여넣기</h2>
     <p class="hint">엑셀이나 구글 시트에서 아래 순서로 복사해 붙여넣으세요. 머리글 줄은 있어도 됩니다.<br>
       <b>A열 4학년 반 · B열 5학년 반 · C열 번호 · D열 이름 · E열 성별(남/여) · F열 태그(쉼표로 구분) · G열 점수(★) · H열 고정 반</b><br>
-      <span class="muted">가장 짧게는 '5학년 반, 이름, 성별' 세 칸만 있어도 됩니다. 머리글이 있으면 열 순서가 달라도 이름으로 찾아 넣습니다(번호·출석번호·학번 열도 알아봅니다). 점수는 고려가 필요한 학생만 적으면 되고, 비워 두면 태그 점수로 계산합니다.</span></p>
+      <span class="muted">가장 짧게는 '5학년 반, 이름, 성별' 세 칸만 있어도 됩니다. 머리글이 있으면 열 순서가 달라도 이름으로 찾아 넣습니다(번호·출석번호·학번 열도 알아봅니다). 점수는 고려가 필요한 학생만 적으면 되고, 비워 두면 학생 개인별 태그의 별 수를 합산합니다.</span></p>
     <textarea id="pasteText" style="min-height:160px" placeholder="1반	2반	1	김민준	남	학습	2	&#10;2반	2반	2	이서연	여			&#10;3반	4반	3	박지호	남	통합학급, 생활	5	3반"></textarea>
     <div class="msg" id="pasteMsg"></div>
     <div class="actions">
@@ -576,16 +564,16 @@
 
 <input type="file" id="workFileInput" accept=".json,application/json" hidden>
 
+<div class="overlay" id="studentPicker" role="dialog" aria-modal="true" aria-labelledby="pickerTitle"><div class="modal"><div class="row"><h2 id="pickerTitle">학생 선택</h2><button type="button" class="btn" data-act="picker-close">닫기</button></div><input id="pickerSearch" type="search" placeholder="이름이나 반 검색 (예: 김민준, 5-1)" aria-label="학생 검색"><div class="picker-split"><nav id="pickerClasses" aria-label="5학년 반"></nav><div id="pickerStudents"></div></div></div></div>
 <script>
 /*__CORE_START__*/
 var CORE = (function () {
   'use strict';
 
-  var DEFAULT_TAGS = ['학습', '생활'];
+  var DEFAULT_TAGS = ['특수', '학습', '생활'];
 
-  /* 힘든 점수(★): 태그마다 기본 점수. 정말 고려가 필요한 소수 학생에게만 붙이고,
-     태그가 없는 학생은 0점(합계에 영향 없음). 높을수록 교사의 관심이 더 필요하다는 뜻. */
-  var DEFAULT_TAG_WEIGHTS = { '통합학급': 3, '생활': 2, '학습': 2, '폭력': 4 };
+  /* 기본 별 수는 1. 앱은 개인별 별 수를 사용하며 명시적인 구버전 엔진 옵션은 유지한다. */
+  var DEFAULT_TAG_WEIGHTS = {};
 
   /* 새 반 이름: 가반·나반·다반… (예전 '1반' 같은 이름도 그대로 쓸 수 있다) */
   var CLASS_NAMES = ['가반', '나반', '다반', '라반', '마반', '바반', '사반', '아반', '자반', '차반', '카반', '타반'];
@@ -595,7 +583,7 @@ var CORE = (function () {
   var LEGACY_TAGS = {};
   (function () {
     var pairs = [
-      ['\uD2B9\uC218', '통합학급'], ['\uD2B9\uC218\uBC18', '통합학급'],
+      ['통합학급', '특수'], ['\uD2B9\uC218\uBC18', '특수'],
       ['\uD559\uC2B5 \uBD80\uC9C4', '학습'],
       ['\uC0DD\uD65C \uC9C0\uB3C4 \uD544\uC694', '생활'],
       ['\uD3ED\uB825\uC131', '폭력']
@@ -604,7 +592,6 @@ var CORE = (function () {
   })();
   function tagName(v) { var t = String(v == null ? '' : v).trim(); return LEGACY_TAGS[t] || t; }
   var DEFAULT_TAG_WEIGHT = 1;
-  var MAX_INTENSITY = 10;
 
   function mulberry32(a) {
     return function () {
@@ -638,16 +625,26 @@ var CORE = (function () {
     if (w == null) w = numOrNull(DEFAULT_TAG_WEIGHTS[name]);
     return w == null ? DEFAULT_TAG_WEIGHT : w;
   }
-  /* 학생 개인의 정도(강도) 배수. 지정하지 않았으면 1배(= 태그 기본 점수 그대로) */
+  /* 학생 개인의 태그별 별 수. 지정하지 않았으면 1. */
   function intensityOf(s, name) {
     var w = s && s.w;
     if (!w) return 1;
     var v = Number(w[name]);
-    if (!isFinite(v) || v <= 0) return 1;
-    return Math.min(MAX_INTENSITY, v);
+    if (!isFinite(v) || v < 0) return 1;
+    return v;
   }
-  /* 한 학생의 힘든 점수 = 가진 태그들의 (기본 점수 × 그 학생의 배수) 합계.
-     학생에 직접 점수(★)를 적었으면 그 값을 그대로 쓴다(태그 없는 학생은 0점). */
+  function starsOf(s, name) {
+    var tags = (s && s.tags) || [], total = numOrNull(s && s.score);
+    if (total == null) return intensityOf(s, name);
+    var sum = tags.reduce(function (v,t) { return v + intensityOf(s,t); },0), used = 0;
+    for (var i = 0; i < tags.length; i++) {
+      var value = i === tags.length - 1 ? total - used : Math.floor(total * intensityOf(s,tags[i]) / (sum || 1));
+      if (tags[i] === name) return Math.round(value * 100) / 100;
+      used += value;
+    }
+    return 0;
+  }
+  /* 개인별 별 합계. 직접 입력한 총점은 그대로 사용한다. */
   function studentScore(s, opts) {
     var manual = numOrNull(s && s.score);
     var out = 0, seen = {};
@@ -656,7 +653,7 @@ var CORE = (function () {
       seen[t] = 1;
       out += tagWeight(t, opts) * intensityOf(s, t);
     });
-    if (manual != null && manual > out) out = manual;
+    if (manual != null) out = manual;
     return Math.round(out * 100) / 100;
   }
 
@@ -669,8 +666,8 @@ var CORE = (function () {
   }
 
   /* 연습용 가상 명단: 기존 5학년 6반(가반~바반), 반별 16~19명, 남녀 거의 절반,
-     통합학급 4명이 서로 다른 4개 반에 1명씩, 학습은 반마다 1~2명,
-     분리 짝 3개(한 학생이 두 짝에 나오는 경우 포함), 고정 반 3명.
+     특수학생 4명이 서로 다른 4개 반에 1명씩, 학습은 반마다 1~2명,
+     분리 그룹 3개(한 학생이 두 짝에 나오는 경우 포함), 고정 반 3명.
      힘든 점수(★)는 정말 고려가 필요한 소수 학생에게만 붙는다(전체의 15% 안팎).
      나머지 학생은 태그·점수 없이 0점이고, 반별 합계에 영향을 주지 않는다. */
   function virtualRoster() {
@@ -709,17 +706,17 @@ var CORE = (function () {
       list.forEach(function (s, i2) { s.g4 = pool[i2] + '반'; });
     });
 
-    // 통합학급: 서로 다른 4개 반에 1명씩
+    // 특수학생: 서로 다른 4개 반에 1명씩
     var clsOrder = shuffle([0,1,2,3,4,5], rnd).slice(0, 4);
     clsOrder.forEach(function (c) {
       var cand = byClass[c];
       var s = cand[Math.floor(rnd() * cand.length)];
-      s.tags.push('통합학급');
+      s.tags.push('특수');
     });
 
-    // 학습: 반마다 1~2명 (통합학급 학생과는 겹치지 않게)
+    // 학습: 반마다 1~2명 (특수학생과는 겹치지 않게)
     byClass.forEach(function (list) {
-      var pool = list.filter(function (s) { return s.tags.indexOf('통합학급') === -1; });
+      var pool = list.filter(function (s) { return s.tags.indexOf('특수') === -1; });
       var n = rnd() < 0.5 ? 1 : 2;
       shuffle(pool.slice(), rnd).slice(0, n).forEach(function (s) { s.tags.push('학습'); });
     });
@@ -736,13 +733,13 @@ var CORE = (function () {
     shuffle(students.filter(function (s) { return !s.tags.length; }), rnd).slice(0, 2)
       .forEach(function (s) { s.tags.push('폭력'); });
 
-    // 같은 태그라도 학생마다 정도가 다른 예시(명단에서 ×배수로 조절하는 값)
-    var spTagged = students.filter(function (s) { return s.tags.indexOf('통합학급') !== -1; });
-    if (spTagged.length) spTagged[0].w = { '통합학급': 2 };                   // ★3 ×2 = ★6
+    // 같은 태그라도 학생마다 별 수를 다르게 입력하는 예시
+    var spTagged = students.filter(function (s) { return s.tags.indexOf('특수') !== -1; });
+    if (spTagged.length) spTagged[0].w = { '특수': 6 };
     var learnTagged2 = students.filter(function (s) { return s.tags.indexOf('학습') !== -1; });
-    if (learnTagged2.length) learnTagged2[0].w = { '학습': 2 };               // ★2 ×2 = ★4
+    if (learnTagged2.length) learnTagged2[0].w = { '학습': 2 };
 
-    // 분리 짝: (A-B), (A-C), (D-E) — A는 두 명과 떨어져야 함
+    // 분리 그룹: (A-B), (A-C), (D-E) — A는 두 명과 떨어져야 함
     var picks = [];
     var classPick = shuffle([0,1,2,3,4,5], rnd);
     for (k = 0; k < 5; k++) {
@@ -763,7 +760,7 @@ var CORE = (function () {
       s.fixed = target;
     });
 
-    // 같은 반 희망 조합 예시 3개(분리 짝·고정 반과 겹치지 않는 무태그 학생으로)
+    // 같은 반 희망 조합 예시 3개(분리 그룹·고정 반과 겹치지 않는 무태그 학생으로)
     var inPair = {}, fixedIds = {};
     pairs.forEach(function (p) { inPair[p[0]] = 1; inPair[p[1]] = 1; });
     fixedPicks.forEach(function (s) { fixedIds[s.id] = 1; });
@@ -784,7 +781,7 @@ var CORE = (function () {
       if (group.length >= 2) wishGroups.push(group.map(function (s) { return s.id; }));
     });
 
-    var tags = DEFAULT_TAGS.concat(['통합학급', '폭력']);
+    var tags = DEFAULT_TAGS.concat(['폭력']);
     var tagWeights = {};
     tags.forEach(function (t) { tagWeights[t] = defaultWeight(t); });
 
@@ -843,7 +840,7 @@ var CORE = (function () {
     return { total: total, male: male, female: female };
   }
 
-  /* 학생 사이의 '같은 반 금지' 연결: 직접 넣은 분리 짝 + 3년 연속 같은 반(4·5학년 동일) */
+  /* 학생 사이의 '같은 반 금지' 연결: 직접 넣은 분리 그룹 + 3년 연속 같은 반(4·5학년 동일) */
   function buildLinks(students, pairs, opts) {
     opts = opts || {};
     var N = students.length, map = {}, links = [];
@@ -856,8 +853,9 @@ var CORE = (function () {
       map[key] = e; links.push(e);
     }
     (pairs || []).forEach(function (p) {
-      var a = Number(p[0]), b = Number(p[1]);
-      if (!isNaN(a) && !isNaN(b)) add(a, b, true, false);
+      p.forEach(function (a, i) { p.slice(i + 1).forEach(function (b) {
+        if (a != null && b != null && a !== '' && b !== '') add(Number(a), Number(b), true, false);
+      }); });
     });
     if (opts.threeYear !== false) {
       var groups = {};
@@ -889,7 +887,7 @@ var CORE = (function () {
         done[t] = 1;
         if (seen[t] == null) { seen[t] = names.length; names.push(t); totals.push(0); scoreTotals.push(0); }
         totals[seen[t]]++;
-        scoreTotals[seen[t]] += tagWeight(t, opts) * intensityOf(s, t);
+        scoreTotals[seen[t]] += tagWeight(t, opts) * starsOf(s, t);
       });
     });
     var rules = opts.tagRules || {}, pinned = opts.pinned || {};
@@ -940,7 +938,7 @@ var CORE = (function () {
       (s.tags || []).forEach(function (t) {
         var ti = tagMap[t];
         if (ti == null || out[ti] !== undefined) return;
-        out[ti] = tagWeight(t, opts) * intensityOf(s, t);
+        out[ti] = tagWeight(t, opts) * starsOf(s, t);
       });
       return out;
     });
@@ -959,7 +957,7 @@ var CORE = (function () {
     links.forEach(function (l) { sepOf[l.a].push(l.b); sepOf[l.b].push(l.a); });
 
     /* 같은 반 희망 조합(소프트): 묶인 학생끼리 같은 반이면 좋다는 정도만 반영한다.
-       분리 짝·인원·남녀·태그·점수 같은 조건이 우선이고, 그 조건을 지키는 여러 배치 중
+       분리 그룹·인원·남녀·태그·점수 같은 조건이 우선이고, 그 조건을 지키는 여러 배치 중
        희망 조합이 지켜지는 쪽을 고르는 용도다. */
     var wishOf = students.map(function () { return []; });
     (opts.wishGroups || []).forEach(function (g) {
@@ -975,7 +973,7 @@ var CORE = (function () {
       });
     });
 
-    var WSEP = 5e6, WPIN = 2e6;
+    var WSEP = 5e6, WPIN = 1e9;
     var WSIZE = 2000, WGENDER = 500, WTAG = 120, WCAP = 3000;
     var WSCORE = 80, WTAGSCORE = 45, WWISH = 100;   /* 희망 조합: 태그 분포·남녀·인원보다 약하게(소프트) */
 
@@ -1204,7 +1202,7 @@ var CORE = (function () {
         if (!t || done[t]) return;
         done[t] = 1;
         p.tags[t] = (p.tags[t] || 0) + 1;
-        p.tagScore[t] = (p.tagScore[t] || 0) + tagWeight(t, opts || {}) * intensityOf(s, t);
+        p.tagScore[t] = (p.tagScore[t] || 0) + tagWeight(t, opts || {}) * starsOf(s, t);
       });
       p.members.push(idx);
     });
@@ -1432,6 +1430,7 @@ var CORE = (function () {
     defaultWeight: defaultWeight,
     tagWeight: tagWeight,
     intensityOf: intensityOf,
+    starsOf: starsOf,
     studentScore: studentScore,
     fmtNum: fmtNum
   };
@@ -1460,16 +1459,11 @@ var CORE = (function () {
   function num(v) { return v === '' || v == null ? null : Number(v); }
   function fmtScore(v) { return CORE.fmtNum(v); }
   function tagWeightMap() {
-    var m = {};
-    (S.tags || []).forEach(function (t) {
-      var w = num(t.weight);
-      m[t.name] = (w == null || isNaN(w)) ? CORE.defaultWeight(t.name) : w;
-    });
-    return m;
+    var m = {}; (S.tags || []).forEach(function (t) { m[t.name] = 1; }); return m;
   }
   function scoreOf(s) { return CORE.studentScore(s, { tagWeights: tagWeightMap() }); }
   function classNum(label) {
-    var m = String(label == null ? '' : label).match(/\d+/);
+    var m = String(label == null ? '' : label).replace(/^[4-6]\s*-\s*/, '').match(/\d+/);
     return m ? Number(m[0]) : null;
   }
   /* '5-1'·'5-1반'·'1반'·'1'을 모두 '1반'으로 맞춘다(업로드·붙여넣기에서 사용) */
@@ -1489,10 +1483,10 @@ var CORE = (function () {
   }
   function initialState() {
     return {
-      classCount: 6, deduct: 2, restrictSpecial: false, useY3: true,
+      classCount: 6, deduct: 2, restrictSpecial: true, useY3: true,
       classes: defaultClasses(6),
       tags: CORE.DEFAULT_TAGS.map(function (t) { return { name: t, weight: CORE.defaultWeight(t), max: null }; }),
-      students: [], pairs: [], wishGroups: [], nextId: 1, result: null
+      starVersion: 2, students: [], pairs: [], wishGroups: [], nextId: 1, result: null
     };
   }
   /* 저장된 데이터·작업 파일이 구버전이어도 깨지지 않게 기본값을 채운다 */
@@ -1509,8 +1503,11 @@ var CORE = (function () {
     out.classCount = out.classCount || out.classes.length;
     if (out.deduct == null) out.deduct = 2;
     if (out.useY3 == null) out.useY3 = true;
-    out.restrictSpecial = !!out.restrictSpecial;
+    out.restrictSpecial = true;
 
+    var legacyStars = out.starVersion !== 2;
+    var oldWeights = {};
+    (out.tags || []).forEach(function (t) { if (t && t.name) oldWeights[normTagName(t.name)] = Number(t.weight) || 1; });
     var tags = [];
     (out.tags || []).forEach(function (t) {
       if (typeof t === 'string') t = { name: t, max: null };
@@ -1539,9 +1536,10 @@ var CORE = (function () {
       s.w = {};
       Object.keys(wIn).forEach(function (k) {
         var key = normTagName(k), v = Number(wIn[k]);
-        if (!key || !isFinite(v) || v <= 0) return;
-        s.w[key] = Math.min(10, v);
+        if (!key || !isFinite(v) || v < 0) return;
+        s.w[key] = v;
       });
+      if (legacyStars) s.tags.forEach(function (t) { s.w[t] = (s.w[t] == null ? 1 : s.w[t]) * (oldWeights[t] || 1); });
       /* 출석 번호: 비어 있으면 '', 있으면 앞뒤 공백만 정리해 문자열로 둔다 */
       s.no = (s.no == null || s.no === '') ? '' : String(s.no).trim();
       var sc = num(s.score);
@@ -1550,7 +1548,9 @@ var CORE = (function () {
       else s.fixed = Number(s.fixed);
       if (s.id == null) s.id = i + 1;
     });
+    out.starVersion = 2;
     if (!Array.isArray(out.pairs)) out.pairs = [];
+    out.pairs = out.pairs.filter(Array.isArray).map(function (g) { return g.map(function (id) { return id == null || id === '' ? null : Number(id); }); });
     /* 같은 반 희망 조합: 학생 id 배열의 배열. 없는 학생은 빼고 두 명 미만은 버린다 */
     if (!Array.isArray(out.wishGroups)) out.wishGroups = [];
     var liveIds = {};
@@ -1627,7 +1627,7 @@ var CORE = (function () {
       st += Number(c.total) || 0; sm += Number(c.male) || 0; sf += Number(c.female) || 0;
       h += '<tr>' +
         '<td data-label="반"><input class="w6" type="text" data-scope="class" data-k="' + k + '" data-field="name" value="' + esc(c.name) + '"></td>' +
-        '<td data-label="통합학급"><input type="checkbox" data-scope="class" data-k="' + k + '" data-field="special"' + (c.special ? ' checked' : '') + ' title="통합학급 학생이 배정되는 반"></td>' +
+        '<td data-label="통합학급"><input type="checkbox" data-scope="class" data-k="' + k + '" data-field="special"' + (c.special ? ' checked' : '') + ' title="특수학생이 배정되는 반"></td>' +
         '<td data-label="목표 인원"><input class="w4" type="number" min="0" data-scope="class" data-k="' + k + '" data-field="total" value="' + (c.total == null ? '' : c.total) + '"></td>' +
         '<td data-label="남"><input class="w4" type="number" min="0" data-scope="class" data-k="' + k + '" data-field="male" value="' + (c.male == null ? '' : c.male) + '"></td>' +
         '<td data-label="여"><input class="w4" type="number" min="0" data-scope="class" data-k="' + k + '" data-field="female" value="' + (c.female == null ? '' : c.female) + '"></td>' +
@@ -1733,39 +1733,12 @@ var CORE = (function () {
 
   /* ---------- 태그 ---------- */
   function renderTags() {
-    var counts = {}, totals = {};
-    S.students.forEach(function (s) {
-      var seen = {};
-      (s.tags || []).forEach(function (t) {
-        if (!t || seen[t]) return;
-        seen[t] = 1;
-        counts[t] = (counts[t] || 0) + 1;
-      });
-    });
-    var wm = tagWeightMap();
-    S.students.forEach(function (s) {
-      (s.tags || []).forEach(function (t) {
-        if (!t) return;
-        var base = wm[t]; if (base == null) base = CORE.defaultWeight(t);
-        totals[t] = (totals[t] || 0) + base * CORE.intensityOf(s, t);
-      });
-    });
-    var h = '<thead><tr><th>태그 이름</th><th>힘든 점수(★)</th><th>반당 최대</th><th>학생 수 · 점수 합</th><th></th></tr></thead><tbody>';
-    if (!S.tags.length) h += '<tr><td colspan="5" class="muted small" style="padding:9px">태그가 없습니다. 아래에서 추가하세요.</td></tr>';
+    var h = '<thead><tr><th>태그 이름</th><th>해당 학생 인원수</th><th>삭제</th></tr></thead><tbody>';
     S.tags.forEach(function (t, i) {
-      var n = counts[t.name] || 0;
-      var auto = Math.max(1, Math.ceil(n / (S.classes.length || 1)));
-      var w = num(t.weight);
-      h += '<tr>' +
-        '<td data-label="태그 이름"><input class="w7" style="width:160px" type="text" data-scope="tag" data-i="' + i + '" data-field="name" value="' + esc(t.name) + '"></td>' +
-        '<td data-label="힘든 점수(★)"><input class="w4" type="number" min="0" max="50" step="1" data-scope="tag" data-i="' + i + '" data-field="weight" title="이 태그 학생 한 명이 더하는 힘든 점수(★)" value="' + (w == null || isNaN(w) ? '' : w) + '" placeholder="' + esc(fmtScore(CORE.defaultWeight(t.name))) + '"></td>' +
-        '<td data-label="반당 최대"><input class="w4" type="number" min="1" data-scope="tag" data-i="' + i + '" data-field="max" placeholder="자동 ' + auto + '" value="' + (t.max == null ? '' : t.max) + '"></td>' +
-        '<td class="small" data-label="학생 수">' + n + '명' + (n ? ' · ★' + esc(fmtScore(totals[t.name] || 0)) : '') + '</td>' +
-        '<td class="act"><button class="icon" type="button" data-act="del-tag" data-i="' + i + '" title="태그 지우기">✕</button></td>' +
-      '</tr>';
+      var n = S.students.filter(function (s) { return (s.tags || []).indexOf(t.name) !== -1; }).length;
+      h += '<tr><td data-label="태그 이름"><input type="text" data-scope="tag" data-i="' + i + '" data-field="name" value="' + esc(t.name) + '"></td><td data-label="해당 학생 인원수">' + n + '명</td><td class="act"><button class="icon" type="button" data-act="del-tag" data-i="' + i + '" aria-label="태그 삭제">✕</button></td></tr>';
     });
-    h += '</tbody>';
-    $('#tagTable').innerHTML = h;
+    $('#tagTable').innerHTML = h + '</tbody>';
   }
   function addTag(name) {
     name = String(name || '').trim();
@@ -1773,7 +1746,7 @@ var CORE = (function () {
     if (S.tags.some(function (t) { return t.name === name; })) { toast('이미 있는 태그입니다: ' + name, 'err'); return; }
     S.tags.push({ name: name, weight: CORE.defaultWeight(name), max: null });
     invalidate(); renderTags(); renderStudents();
-    toast('태그를 추가했습니다: ' + name + ' (힘든 점수 ★' + fmtScore(CORE.defaultWeight(name)) + ')', 'ok');
+    toast('태그를 추가했습니다: ' + name, 'ok');
   }
   function deleteTag(i) {
     var t = S.tags[i];
@@ -1799,7 +1772,7 @@ var CORE = (function () {
     t.name = nv;
     S.students.forEach(function (s) {
       var k = (s.tags || []).indexOf(old);
-      if (k !== -1) s.tags[k] = nv;
+      if (k !== -1) { s.tags[k] = nv; if (s.w && s.w[old] != null) { s.w[nv] = s.w[old]; delete s.w[old]; } }
     });
     invalidate(); renderTags(); renderStudents();
   }
@@ -1814,33 +1787,55 @@ var CORE = (function () {
     });
   }
 
-  /* ---------- 분리 짝 ---------- */
-  function studentOptions(sel) {
-    var h = '<option value="">학생 선택</option>';
-    S.students.forEach(function (s) {
-      h += '<option value="' + s.id + '"' + (String(s.id) === String(sel) ? ' selected' : '') + '>' + esc(s.name) + (s.g5 ? ' · ' + esc(s.g5) : '') + '</option>';
+  /* ---------- 분리 그룹 ---------- */
+
+  function renderPairs() { renderGroupCards('pair', S.pairs, '#pairTable'); updatePairHint(); }
+  var pickerTarget = null, pickerClass = '', pickerOpener = null;
+  function studentLabel(s) { return '5-' + (classNum(s.g5) || '?') + ' ' + s.name + ' (' + (s.no || '?') + '번)'; }
+  function renderGroupCards(kind, groups, target) {
+    var h = '';
+    groups.forEach(function (g, i) {
+      h += '<article class="group-card"><div class="row"><b>' + (kind === 'pair' ? '분리 그룹 ' : '희망 조합 ') + (i + 1) + '</b><button type="button" class="icon" data-act="del-' + kind + '" data-i="' + i + '" aria-label="그룹 삭제">✕</button></div>';
+      g.forEach(function (id, j) {
+        var st = findStudent(id);
+        h += '<div class="group-member"><button type="button" class="btn" data-act="pick-student" data-kind="' + kind + '" data-i="' + i + '" data-j="' + j + '">' + (st ? esc(studentLabel(st)) : '학생 선택') + '</button><button type="button" class="icon" data-act="remove-member" data-kind="' + kind + '" data-i="' + i + '" data-j="' + j + '" aria-label="학생 제거">−</button></div>';
+      });
+      h += '<button type="button" class="btn" data-act="group-add" data-kind="' + kind + '" data-i="' + i + '">＋ 학생 추가</button></article>';
     });
-    return h;
+    $(target).innerHTML = h || '<p class="muted small">등록된 그룹이 없습니다.</p>';
   }
-  function renderPairs() {
-    var h = '<thead><tr><th>학생 1</th><th>학생 2</th><th></th></tr></thead><tbody>';
-    if (!S.pairs.length) h += '<tr><td colspan="3" class="muted small" style="padding:9px">아직 분리 짝이 없습니다.</td></tr>';
-    S.pairs.forEach(function (p, i) {
-      h += '<tr>' +
-        '<td data-label="학생 1"><select data-scope="pair" data-i="' + i + '" data-j="0">' + studentOptions(p[0]) + '</select></td>' +
-        '<td data-label="학생 2"><select data-scope="pair" data-i="' + i + '" data-j="1">' + studentOptions(p[1]) + '</select></td>' +
-        '<td class="act"><button class="icon" type="button" data-act="del-pair" data-i="' + i + '" title="이 짝 지우기">✕</button></td>' +
-      '</tr>';
-    });
-    h += '</tbody>';
-    $('#pairTable').innerHTML = h;
-    updatePairHint();
+  function closePicker() {
+    $('#studentPicker').classList.remove('show'); pickerTarget = null;
+    if (pickerOpener) pickerOpener.focus();
+  }
+  document.addEventListener('keydown', function (e) {
+    if (!pickerTarget || e.key !== 'Tab') return;
+    var items = $$('#studentPicker button:not(:disabled), #studentPicker input');
+    var first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+  $('#studentPicker').addEventListener('click', function (e) { if (e.target === this) closePicker(); });
+  function renderPicker() {
+    var q = $('#pickerSearch').value.trim().toLowerCase();
+    var groups = pickerTarget.kind === 'pair' ? S.pairs : S.wishGroups;
+    var selected = groups[pickerTarget.i];
+    $('#pickerClasses').innerHTML = [''].concat([1,2,3,4,5,6].map(String)).map(function (c) {
+      return '<button type="button" class="btn' + (c === pickerClass ? ' primary' : '') + '" data-act="picker-class" data-class="' + c + '">' + (c ? '5-' + c : '전체') + '</button>';
+    }).join('');
+    $('#pickerStudents').innerHTML = S.students.filter(function (st) {
+      return (!pickerClass || String(classNum(st.g5)) === pickerClass) && (!q || studentLabel(st).toLowerCase().indexOf(q) !== -1 || String(st.g5).indexOf(q) !== -1);
+    }).sort(function (a,b) { return classNum(a.g5)-classNum(b.g5) || Number(a.no)-Number(b.no) || a.name.localeCompare(b.name, 'ko'); }).map(function (st) {
+      var used = selected.some(function (id,j) { return j !== pickerTarget.j && id === st.id; });
+      return '<button type="button" class="btn" data-act="picker-select" data-id="' + st.id + '"' + (used ? ' disabled' : '') + '>' + esc(studentLabel(st)) + (used ? ' · 선택됨' : '') + '</button>';
+    }).join('') || '<p class="muted">검색 결과가 없습니다.</p>';
+    $('#pickerStudents').scrollTop = 0;
   }
   function updatePairHint() {
     var valid = S.pairs.filter(function (p) { return p[0] && p[1]; }).length;
     var el = $('#pairHint');
     el.className = 'status muted';
-    el.textContent = valid ? '분리 짝 ' + valid + '개 적용' : '분리 짝 없음';
+    el.textContent = valid ? '분리 그룹 ' + valid + '개 적용' : '분리 그룹 없음';
     var y3 = $('#y3Hint');
     if (y3) {
       if (S.useY3 === false) { y3.className = 'status muted'; y3.textContent = '3년 연속 금지 꺼짐'; }
@@ -1852,48 +1847,9 @@ var CORE = (function () {
       }
     }
   }
-  function nameIndex() {
-    var map = {}, dups = {};
-    S.students.forEach(function (s) {
-      if (map[s.name]) { dups[s.name] = 1; } else { map[s.name] = s; }
-    });
-    return { map: map, dups: Object.keys(dups) };
-  }
-  function parsePairText(text) {
-    var nm = nameIndex(), add = [], errs = [], lines = String(text || '').split(/\r?\n/);
-    lines.forEach(function (line, i) {
-      var raw = line.trim();
-      if (!raw) return;
-      var parts = raw.split(/\s*(?:-|\/|,|\t|~|–|—|\+)\s*/).filter(function (x) { return x && x.trim(); });
-      if (parts.length < 2) { errs.push((i + 1) + '번째 줄: 이름 두 개가 필요합니다 — ' + raw); return; }
-      var a = nm.map[parts[0].trim()], b = nm.map[parts[1].trim()];
-      if (!a) { errs.push((i + 1) + '번째 줄: 명단에 없는 이름 — ' + parts[0].trim()); return; }
-      if (!b) { errs.push((i + 1) + '번째 줄: 명단에 없는 이름 — ' + parts[1].trim()); return; }
-      if (a.id === b.id) { errs.push((i + 1) + '번째 줄: 같은 학생입니다 — ' + a.name); return; }
-      add.push([a.id, b.id]);
-    });
-    return { add: add, errs: errs, dups: nm.dups };
-  }
+
   /* ---------- 같은 반 희망 조합(소프트) ---------- */
-  function renderWishGroups() {
-    var el = $('#wishTable');
-    if (!el) return;
-    var h = '<thead><tr><th class="num">#</th><th>같이 있으면 좋은 학생</th><th></th></tr></thead><tbody>';
-    if (!S.wishGroups.length) {
-      h += '<tr><td colspan="3" class="muted small" style="padding:9px">아직 희망 조합이 없습니다.</td></tr>';
-    }
-    S.wishGroups.forEach(function (g, i) {
-      h += '<tr><td class="num" data-label="조합">' + (i + 1) + '</td><td class="wishcell" data-label="같이 있을 학생">';
-      g.forEach(function (id, j) {
-        h += '<select class="wishsel" data-scope="wish" data-i="' + i + '" data-j="' + j + '">' + studentOptions(id) + '</select>';
-      });
-      if (g.length < 5) h += '<button class="icon" type="button" data-act="wish-add" data-i="' + i + '" title="이 조합에 학생 한 명 더">＋</button>';
-      h += '</td><td class="act"><button class="icon" type="button" data-act="del-wish" data-i="' + i + '" title="이 조합 지우기">✕</button></td></tr>';
-    });
-    h += '</tbody>';
-    el.innerHTML = h;
-    updateWishHint();
-  }
+  function renderWishGroups() { renderGroupCards('wish', S.wishGroups, '#wishTable'); updateWishHint(); }
   function updateWishHint() {
     var el = $('#wishHint');
     if (!el) return;
@@ -1907,92 +1863,11 @@ var CORE = (function () {
   function nameSet(text) {
     return String(text || '').split(/\s*(?:-|\/|,|\t|~|–|—|\+)\s*/).map(function (x) { return x.trim(); }).filter(function (x) { return x; });
   }
-  function parseWishText(text) {
-    var nm = nameIndex(), add = [], errs = [], lines = String(text || '').split(/\r?\n/);
-    lines.forEach(function (line, i) {
-      var raw = line.trim();
-      if (!raw) return;
-      var parts = nameSet(raw);
-      if (parts.length < 2) { errs.push((i + 1) + '번째 줄: 이름 두 개 이상이 필요합니다 — ' + raw); return; }
-      var ids = [], miss = [];
-      parts.forEach(function (name) {
-        var st = nm.map[name];
-        if (!st) { miss.push(name); return; }
-        if (ids.indexOf(st.id) === -1) ids.push(st.id);
-      });
-      if (miss.length) { errs.push((i + 1) + '번째 줄: 명단에 없는 이름 — ' + miss.join(', ')); return; }
-      if (ids.length < 2) { errs.push((i + 1) + '번째 줄: 서로 다른 학생 두 명 이상이 필요합니다 — ' + raw); return; }
-      add.push(ids);
-    });
-    return { add: add, errs: errs, dups: nm.dups };
-  }
-  function sameGroup(a, b) {
-    if (a.length !== b.length) return false;
-    var x = a.slice().sort(function (p, q) { return p - q; });
-    var y = b.slice().sort(function (p, q) { return p - q; });
-    for (var i = 0; i < x.length; i++) if (Number(x[i]) !== Number(y[i])) return false;
-    return true;
-  }
-  function applyWishBulk(auto) {
-    var ta = $('#wishBulk'), msg = $('#wishBulkMsg');
-    if (!S.students.length) {
-      msg.className = 'msg bad';
-      msg.textContent = '학생 명단을 먼저 넣어 주세요.';
-      return;
-    }
-    var r = parseWishText(ta.value);
-    if (r.errs.length) {
-      msg.className = 'msg bad';
-      msg.innerHTML = r.errs.slice(0, 4).map(esc).join('<br>') + (r.errs.length > 4 ? '<br>…외 ' + (r.errs.length - 4) + '개' : '');
-      return;
-    }
-    if (!r.add.length) {
-      if (!auto) { msg.className = 'msg bad'; msg.textContent = '넣을 조합이 없습니다. 한 줄에 두 이름 이상을 적어 주세요.'; }
-      return;
-    }
-    var added = 0;
-    r.add.forEach(function (g) {
-      var dup = S.wishGroups.some(function (q) { return sameGroup(q, g); });
-      if (!dup) { S.wishGroups.push(g.slice()); added++; }
-    });
-    ta.value = '';
-    msg.className = 'msg ok';
-    msg.textContent = added + '개 조합을 넣었습니다.' + (r.add.length - added ? ' (' + (r.add.length - added) + '개는 이미 있던 조합)' : '') +
-      (r.dups.length ? ' 이름이 겹치는 학생이 있어 첫 번째 학생으로 넣었습니다: ' + r.dups.join(', ') : '');
-    invalidate(); renderWishGroups();
-  }
+
   function addWishGroup() {
     if (!S.students.length) { toast('학생 명단을 먼저 넣어 주세요.', 'err'); return; }
     S.wishGroups.push([null, null]);
     invalidate(); renderWishGroups();
-  }
-  function applyPairBulk(auto) {
-    var ta = $('#pairBulk'), msg = $('#pairBulkMsg');
-    if (!S.students.length) {
-      msg.className = 'msg bad';
-      msg.textContent = '학생 명단을 먼저 넣어 주세요.';
-      return;
-    }
-    var r = parsePairText(ta.value);
-    if (r.errs.length) {
-      msg.className = 'msg bad';
-      msg.innerHTML = r.errs.slice(0, 4).map(esc).join('<br>') + (r.errs.length > 4 ? '<br>…외 ' + (r.errs.length - 4) + '개' : '');
-      return;
-    }
-    if (!r.add.length) {
-      if (!auto) { msg.className = 'msg bad'; msg.textContent = '넣을 짝이 없습니다. 한 줄에 두 이름을 적어 주세요.'; }
-      return;
-    }
-    var added = 0;
-    r.add.forEach(function (p) {
-      var dup = S.pairs.some(function (q) { return (q[0] === p[0] && q[1] === p[1]) || (q[0] === p[1] && q[1] === p[0]); });
-      if (!dup) { S.pairs.push(p); added++; }
-    });
-    ta.value = '';
-    msg.className = 'msg ok';
-    msg.textContent = added + '개 짝을 넣었습니다.' + (r.add.length - added ? ' (' + (r.add.length - added) + '개는 이미 있던 짝)' : '') +
-      (r.dups.length ? ' 이름이 겹치는 학생이 있어 첫 번째 학생으로 넣었습니다: ' + r.dups.join(', ') : '');
-    invalidate(); renderPairs();
   }
 
   /* ---------- 학생 명단 ---------- */
@@ -2004,11 +1879,11 @@ var CORE = (function () {
     return names.map(function (t) {
       var on = (s.tags || []).indexOf(t) !== -1;
       var base = wm[t]; if (base == null) base = CORE.defaultWeight(t);
-      var h = '<button type="button" class="chip' + (on ? ' on' : '') + '" data-act="toggle-tag" data-id="' + s.id + '" data-tag="' + esc(t) + '" title="' + esc(t) + ' ★' + esc(fmtScore(base)) + '">' + esc(t) + '</button>';
+      var h = '<button type="button" class="chip' + (on ? ' on' : '') + '" style="' + (on ? tagStyle(t) : '') + '" data-act="toggle-tag" data-id="' + s.id + '" data-tag="' + esc(t) + '" title="' + esc(t) + ' ★' + esc(fmtScore(base)) + '">' + esc(t) + '</button>';
       if (on) {
-        var mult = (s.w && Number(s.w[t]) > 0) ? Number(s.w[t]) : 1;
-        h += '<select class="mul" data-act="tag-mul" data-id="' + s.id + '" data-tag="' + esc(t) + '" title="이 학생의 정도(강도): 태그 점수 ×배수">' +
-          [1, 2, 3, 4, 5].map(function (m) { return '<option value="' + m + '"' + (m === mult ? ' selected' : '') + '>×' + m + '</option>'; }).join('') +
+        var mult = CORE.starsOf(s,t);
+        h += '<select class="mul" data-act="tag-mul" data-id="' + s.id + '" data-tag="' + esc(t) + '" title="이 학생의 태그별 별 수">' +
+          [mult].concat([1,2,3,4,5,6,7,8,9,10].filter(function (v) { return v !== mult; })).sort(function (a,b) { return a-b; }).map(function (m) { return '<option value="' + m + '"' + (m === mult ? ' selected' : '') + '>★' + m + '</option>'; }).join('') +
         '</select>';
       }
       return h;
@@ -2043,7 +1918,7 @@ var CORE = (function () {
           '<option value="여"' + (s.gender === '여' ? ' selected' : '') + '>여</option>' +
         '</select></td>' +
         '<td class="tags" data-label="태그">' + tagChips(s) + '</td>' +
-        '<td class="pts' + (sc > 0 ? '' : ' zero') + '" data-label="힘든 점수" data-score="' + sc + '"><input class="w3" type="number" min="0" max="50" step="1" data-scope="student" data-id="' + s.id + '" data-field="score" value="' + (s.score == null ? '' : s.score) + '" placeholder="' + (sc > 0 ? '★' + esc(fmtScore(sc)) : '0') + '" title="이 학생의 힘든 점수(★). 태그로 자동 계산되고, 직접 적으면 그 값(더 큰 값)을 씁니다."></td>' +
+        '<td class="pts' + (sc > 0 ? '' : ' zero') + '" data-label="힘든 점수" data-score="' + sc + '"><input class="w3" type="number" min="0" max="50" step="1" data-scope="student" data-id="' + s.id + '" data-field="score" value="' + (s.score == null ? '' : s.score) + '" placeholder="' + (sc > 0 ? '★' + esc(fmtScore(sc)) : '0') + '" title="이 학생의 별 총합입니다. 비워 두면 태그별 별 수를 합산합니다."></td>' +
         '<td data-label="반드시 이 반"><select data-scope="student" data-id="' + s.id + '" data-field="fixed">' + fixedOptions(s) + '</select></td>' +
         '<td class="act"><button class="icon" type="button" data-act="del-student" data-id="' + s.id + '" title="학생 지우기">✕</button></td>' +
       '</tr>';
@@ -2133,7 +2008,7 @@ var CORE = (function () {
     var idx = studentIndex(id);
     if (idx < 0) return;
     S.students.splice(idx, 1);
-    S.pairs = S.pairs.filter(function (p) { return Number(p[0]) !== Number(id) && Number(p[1]) !== Number(id); });
+    S.pairs = S.pairs.map(function (g) { return g.filter(function (x) { return Number(x) !== Number(id); }); }).filter(function (g) { return g.length >= 2; });
     S.wishGroups = S.wishGroups.map(function (g) {
       return (g || []).filter(function (x) { return Number(x) !== Number(id); });
     }).filter(function (g) { return g.length >= 2; });
@@ -2149,7 +2024,8 @@ var CORE = (function () {
     S.wishGroups = (r.wishGroups || []).map(function (g) { return g.slice(); });
     S.tags = r.tags.map(function (t) { return { name: t, weight: (r.tagWeights && r.tagWeights[t] != null) ? r.tagWeights[t] : CORE.defaultWeight(t), max: null }; });
     S.classes = defaultClasses(6);
-    S.deduct = 2; S.restrictSpecial = false; S.useY3 = true;
+    S.classes.slice(0,4).forEach(function (c) { c.special = true; });
+    S.deduct = 2; S.restrictSpecial = true; S.useY3 = true;
     S.nextId = S.students.reduce(function (a, s) { return Math.max(a, s.id); }, 0) + 1;
     S.result = null;
     S.sample = true;
@@ -2157,7 +2033,7 @@ var CORE = (function () {
     S.classes.forEach(function (c, k) { c.total = t.total[k]; c.male = t.male[k]; c.female = t.female[k]; });
     renderAll();
     save();
-    showBanner('info', '연습용 가상 명단 ' + S.students.length + '명을 넣었습니다(기존 6반, 태그·힘든 점수(★)·분리 짝·고정 반 예시 포함 — 점수가 붙은 학생은 ' + S.students.filter(function (s) { return scoreOf(s) > 0; }).length + '명). 위의 <b>배정 실행</b>을 눌러 보세요. 실제 명단은 <b>명단 파일 올리기</b>나 <b>빈 양식 내려받기</b>로 넣으면 됩니다.');
+    showBanner('info', '연습용 가상 명단 ' + S.students.length + '명을 넣었습니다(기존 6반, 태그·힘든 점수(★)·분리 그룹·고정 반 예시 포함 — 점수가 붙은 학생은 ' + S.students.filter(function (s) { return scoreOf(s) > 0; }).length + '명). 위의 <b>배정 실행</b>을 눌러 보세요. 실제 명단은 <b>명단 파일 올리기</b>나 <b>빈 양식 내려받기</b>로 넣으면 됩니다.');
   }
 
   function normalizeGender(v) {
@@ -2820,27 +2696,19 @@ var CORE = (function () {
     opts.wishGroups = wishGroupsAsIndex();
     S.tags.forEach(function (t) {
       opts.tagRules[t.name] = {
-        max: (t.max == null || t.max === '') ? null : Number(t.max),
-        weight: (t.weight == null || t.weight === '') ? CORE.defaultWeight(t.name) : Number(t.weight)
+        max: null, weight: 1
       };
     });
-    if (S.restrictSpecial) {
+    {
       var pc = [];
       S.classes.forEach(function (c, k) { if (c.special) pc.push(k); });
-      if (pc.length) opts.pinned['통합학급'] = pc;
+      if (pc.length) opts.pinned['특수'] = pc;
     }
     return opts;
   }
   function pairsAsIndex() {
-    var map = {};
-    S.students.forEach(function (s, i) { map[s.id] = i; });
-    var out = [];
-    S.pairs.forEach(function (p) {
-      var a = map[p[0]], b = map[p[1]];
-      if (a == null || b == null || a === b) return;
-      out.push([a, b]);
-    });
-    return out;
+    var map = {}; S.students.forEach(function (s, i) { map[s.id] = i; });
+    return S.pairs.map(function (g) { return g.filter(function (id) { return id != null && map[id] != null; }).map(function (id) { return map[id]; }); }).filter(function (g) { return g.length >= 2; });
   }
   /* 희망 조합을 학생 id → 배열 번호로 바꿔 배정 엔진에 넘긴다 */
   function wishGroupsAsIndex() {
@@ -2863,6 +2731,7 @@ var CORE = (function () {
     if (!N) return '학생 명단이 비어 있습니다. \'연습용 명단으로 해보기\'로 연습하거나 \'엑셀에서 붙여넣기\'로 명단을 넣어 주세요.';
     var noName = S.students.filter(function (s) { return !String(s.name || '').trim(); }).length;
     if (noName) return '이름이 비어 있는 학생이 ' + noName + '명 있습니다. 이름을 채워 주세요.';
+    if (S.students.some(function (s) { return (s.tags || []).indexOf('특수') !== -1; }) && !S.classes.some(function (c) { return c.special; })) return '특수학생을 배정할 통합학급을 한 반 이상 체크해 주세요.';
     if (S.classes.length < 2) return '새 반이 2개 이상이어야 합니다.';
     var sum = 0, zero = [];
     S.classes.forEach(function (c, k) {
@@ -2938,7 +2807,7 @@ var CORE = (function () {
   /* ---------- 결과 ---------- */
   function verdictHtml(rep) {
     var v = rep.verdict, out = [];
-    out.push(v.sep === 0 ? '<span class="v ok">분리 짝 위반 0건</span>' : '<span class="v bad">분리 짝 위반 ' + v.sep + '건</span>');
+    out.push(v.sep === 0 ? '<span class="v ok">분리 그룹 위반 0건</span>' : '<span class="v bad">분리 그룹 위반 ' + v.sep + '건</span>');
     var y3n = v.y3 || 0;
     out.push(y3n === 0 ? '<span class="v ok">3년 연속 같은 반 0쌍</span>' : '<span class="v bad">3년 연속 같은 반 ' + y3n + '쌍</span>');
     out.push(v.cap === 0 ? '<span class="v ok">반별 인원 목표대로</span>' : '<span class="v warn">인원이 목표와 다른 반 ' + v.cap + '개</span>');
@@ -2985,16 +2854,18 @@ var CORE = (function () {
     if (m) return '5-' + Number(m[1]);
     return '5-' + raw;
   }
-  /* 학생 카드: 남자는 연한 하늘색, 여자는 연한 분홍 배경. 이름 옆에 힘든 점수 ☆, 태그는 2줄 칩 */
+  /* 학생별 한 줄 태그 배지와 개인별 별 합계 */
+  var resultSort = 'gender';
+  function tagStyle(t) {
+    var i = S.tags.map(function (x) { return x.name; }).indexOf(t);
+    var hue = ((Math.max(0,i) * 137.508) + 205) % 360;
+    return 'background:hsl(' + hue + ',65%,92%);border-color:hsl(' + hue + ',45%,77%);color:hsl(' + hue + ',40%,28%)';
+  }
   function chipHtml(idx, k, sepMap, y3Map, fixMap) {
     var s = S.students[idx];
     var wm = tagWeightMap();
     var tags = (s.tags || []).map(function (t) {
-      var base = wm[t]; if (base == null) base = CORE.defaultWeight(t);
-      var mult = (s.w && Number(s.w[t]) > 0) ? Number(s.w[t]) : 1;
-      var pt = base * mult;
-      return '<span class="tag-on' + (t === '통합학급' ? ' sp' : '') + '" title="' + esc(t) + ' ★' + esc(fmtScore(base)) + (mult > 1 ? ' ×' + mult : '') + '">' +
-        '<i>' + esc(t) + '</i><b>★' + esc(fmtScore(pt)) + '</b></span>';
+      return '<span class="tag-on" style="' + tagStyle(t) + '">' + esc(t) + esc(fmtScore(CORE.starsOf(s,t))) + '</span>';
     }).join('');
     var total = scoreOf(s);
     var warns = [];
@@ -3006,10 +2877,8 @@ var CORE = (function () {
     var isFixedHere = (s.fixed != null && s.fixed !== '' && Number(s.fixed) === k);
     return '<div class="' + cls + '" draggable="true" data-id="' + s.id + '" data-score="' + total + '" title="4학년 ' + esc(s.g4 || '?') + ' · 5학년 ' + esc(s.g5 || '?') + '">' +
       '<div class="l1"><span class="nm">' + esc(s.name) + '</span>' +
-        (total > 0 ? '<span class="st" title="힘든 점수">☆' + esc(fmtScore(total)) + '</span>' : '') +
         (isFixedHere ? '<span class="kb fix">고정</span>' : '') +
-        '<span class="g5b" title="5학년 반">' + esc(g5Badge(s)) + '</span></div>' +
-      (tags ? '<div class="l2">' + tags + '</div>' : '') +
+        tags + '<span class="g5b" title="5학년 반">' + esc(g5Badge(s)) + '</span></div>' +
       (warns.length ? '<div class="warn">' + warns.map(esc).join('<br>') + '</div>' : '') +
     '</div>';
   }
@@ -3038,12 +2907,9 @@ var CORE = (function () {
 
     function byGenderAndNo(a, b) {
       var s1 = S.students[a], s2 = S.students[b];
+      if (resultSort === 'origin') return classNum(s1.g5) - classNum(s2.g5) || Number(s1.no || 999) - Number(s2.no || 999) || s1.name.localeCompare(s2.name, 'ko');
       if (s1.gender !== s2.gender) return s1.gender === '남' ? -1 : 1;
-      var n1 = Number(s1.no), n2 = Number(s2.no);
-      var h1 = String(s1.no || '') !== '' && isFinite(n1), h2 = String(s2.no || '') !== '' && isFinite(n2);
-      if (h1 && h2 && n1 !== n2) return n1 - n2;
-      if (h1 !== h2) return h1 ? -1 : 1;
-      return String(s1.name).localeCompare(String(s2.name));
+      return s1.name.localeCompare(s2.name, 'ko') || Number(s1.no) - Number(s2.no);
     }
 
     var h = '';
@@ -3061,15 +2927,11 @@ var CORE = (function () {
       var boys = members.filter(function (i) { return S.students[i].gender !== '여'; });
       var girls = members.filter(function (i) { return S.students[i].gender === '여'; });
 
-      /* 태그 요약: 태그명 / n명 / ☆점수 — 3줄짜리 작은 카드 */
-      var tagCards = rep.tagSpread.filter(function (ts) { return (p.tags[ts.tag] || 0) > 0; })
-        .map(function (ts) {
-          var pt = p.tagScore[ts.tag] || 0;
-          return '<div class="tcard" data-tag="' + esc(ts.tag) + '">' +
-            '<span class="t1">' + esc(ts.tag) + '</span>' +
-            '<span class="t2">' + p.tags[ts.tag] + '명</span>' +
-            '<span class="t3">☆' + esc(fmtScore(pt)) + '</span></div>';
-        }).join('');
+      /* 태그가 붙은 학생마다 태그 조합과 개인별 별 총합을 표시 */
+      var tagCards = p.members.filter(function (i) { return (S.students[i].tags || []).length; }).map(function (i) {
+        var st = S.students[i];
+        return '<span class="student-summary" title="' + esc(studentLabel(st)) + '">' + esc(st.tags.join('·')) + esc(fmtScore(scoreOf(st))) + '</span>';
+      }).join('');
 
       h += '<div class="col" data-k="' + p.k + '" data-score="' + p.score + '">' +
         '<div class="colhead">' +
@@ -3081,9 +2943,10 @@ var CORE = (function () {
           (warns.length ? '<div class="cwarns">' + warns.map(function (w) { return '· ' + esc(w); }).join('<br>') + '</div>' : '') +
         '</div>' +
         '<div class="chiplist">' +
+          (resultSort === 'origin' ? members.map(function (idx) { return chipHtml(idx, p.k, sepMap, y3Map, fixMap); }).join('') :
           boys.map(function (idx) { return chipHtml(idx, p.k, sepMap, y3Map, fixMap); }).join('') +
           (boys.length && girls.length ? '<div class="gendivider"></div>' : '') +
-          girls.map(function (idx) { return chipHtml(idx, p.k, sepMap, y3Map, fixMap); }).join('') +
+          girls.map(function (idx) { return chipHtml(idx, p.k, sepMap, y3Map, fixMap); }).join('')) +
           (!members.length ? '<div class="muted small" style="padding:6px 4px">학생 없음</div>' : '') +
         '</div>' +
         '<button class="addstu" type="button" data-act="add-class-student" data-k="' + p.k + '">+ 학생 추가</button>' +
@@ -3131,12 +2994,12 @@ var CORE = (function () {
       if (wi0) { wi0.hidden = true; wi0.innerHTML = ''; }
       return;
     }
-    var rep = CORE.evaluate(S.students, S.classes, pairsAsIndex(), S.result.assign, S.result.opts || currentOptions());
+    var rep = CORE.evaluate(S.students, S.classes, pairsAsIndex(), S.result.assign, currentOptions());
     S.result.report = rep;
     $('#verdict').innerHTML = verdictHtml(rep);
     $('#problems').innerHTML = rep.problems.length
       ? rep.problems.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('')
-      : '<li class="muted" style="color:#1a7f4b">문제 없음 — 분리 짝, 인원, 남녀, 태그별 분포, 고정 반, 힘든 점수(★) 균형을 모두 만족합니다.</li>';
+      : '<li class="muted" style="color:#1a7f4b">문제 없음 — 분리 그룹, 인원, 남녀, 태그별 분포, 고정 반, 힘든 점수(★) 균형을 모두 만족합니다.</li>';
     var wi = $('#wishInfo');
     if (wi) {
       var wish = rep.wishGroups || [];
@@ -3158,8 +3021,16 @@ var CORE = (function () {
     /* 모든 반을 한 줄에: 반 개수만큼 열을 만든다(좁은 화면은 CSS가 줄을 바꾼다) */
     wrap.setAttribute('style', '--cls-count:' + (rep.per.length || 1));
     wrap.innerHTML = cardsHtml(rep);
+    $$('#resultSort button').forEach(function (b) { b.classList.toggle('primary', b.dataset.sort === resultSort); b.setAttribute('aria-pressed', String(b.dataset.sort === resultSort)); });
+    alignResultHeads();
     $('#printArea').innerHTML = printHtml(rep);
   }
+  function alignResultHeads() {
+    var heads = $$('.colhead'); heads.forEach(function (h) { h.style.minHeight = ''; });
+    var height = heads.reduce(function (m,h) { return Math.max(m,h.getBoundingClientRect().height); },0);
+    heads.forEach(function (h) { h.style.minHeight = height + 'px'; });
+  }
+  window.addEventListener('resize', alignResultHeads);
   function moveStudent(id, to) {
     if (!S.result) return;
     var idx = studentIndex(id);
@@ -3718,6 +3589,7 @@ var CORE = (function () {
   }
   document.addEventListener('input', function (e) {
     var el = e.target;
+    if (el.id === 'pickerSearch') { renderPicker(); return; }
     if (el.id === 'search') { renderStudents(); return; }
     if (el.id === 'newTagName') return;
     if (el.dataset.scope === 'student') onStudentField(el);
@@ -3730,7 +3602,9 @@ var CORE = (function () {
       if (!ms) return;
       var mv = Number(el.value);
       if (!ms.w || typeof ms.w !== 'object') ms.w = {};
-      if (isFinite(mv) && mv > 0) ms.w[el.dataset.tag] = mv; else delete ms.w[el.dataset.tag];
+      if (ms.score != null) { var existing = {}; (ms.tags || []).forEach(function (t) { existing[t] = CORE.starsOf(ms,t); }); ms.w = existing; }
+      ms.score = null;
+      if (isFinite(mv) && mv >= 0) ms.w[el.dataset.tag] = mv; else delete ms.w[el.dataset.tag];
       invalidate(); renderTags(); renderStudents();
       return;
     }
@@ -3748,7 +3622,7 @@ var CORE = (function () {
     }
     if (el.dataset.scope === 'class') { onClassField(el, true); return; }
     if (el.dataset.scope === 'tag') { onTagField(el, true); return; }
-    if (el.dataset.scope === 'student') { onStudentField(el); if (el.dataset.field === 'name') renderPairs(); return; }
+    if (el.dataset.scope === 'student') { onStudentField(el); if (el.dataset.field === 'name') { renderPairs(); renderWishGroups(); } if (el.dataset.field === 'score') renderStudents(); return; }
     if (el.dataset.scope === 'pair') {
       var i = Number(el.dataset.i), j = Number(el.dataset.j);
       if (S.pairs[i]) { S.pairs[i][j] = el.value === '' ? null : Number(el.value); invalidate(); updatePairHint(); }
@@ -3758,13 +3632,21 @@ var CORE = (function () {
     var t = e.target.closest ? e.target.closest('[data-act]') : null;
     if (!t) return;
     var act = t.dataset.act;
+    if (act === 'pick-student') { pickerOpener = t; pickerTarget = {kind:t.dataset.kind,i:Number(t.dataset.i),j:Number(t.dataset.j)}; pickerClass = ''; $('#pickerSearch').value = ''; renderPicker(); $('#studentPicker').classList.add('show'); $('#pickerSearch').focus(); return; }
+    if (act === 'picker-close') { closePicker(); return; }
+    if (act === 'picker-class') { pickerClass = t.dataset.class; renderPicker(); return; }
+    if (act === 'picker-select') { var gs = pickerTarget.kind === 'pair' ? S.pairs : S.wishGroups; gs[pickerTarget.i][pickerTarget.j] = Number(t.dataset.id); closePicker(); invalidate(); renderPairs(); renderWishGroups(); return; }
+    if (act === 'group-add' || act === 'remove-member') { var gs = t.dataset.kind === 'pair' ? S.pairs : S.wishGroups; var g = gs[Number(t.dataset.i)]; if (act === 'group-add') g.push(null); else if (g.length > 2) g.splice(Number(t.dataset.j),1); else g[Number(t.dataset.j)] = null; invalidate(); renderPairs(); renderWishGroups(); return; }
+    if (act === 'result-sort') { resultSort = t.dataset.sort; renderResult(); return; }
+
     if (act === 'toggle-tag') {
       var s = findStudent(t.dataset.id);
       if (!s) return;
       var name = t.dataset.tag;
       var idx = (s.tags || []).indexOf(name);
-      if (idx === -1) { s.tags = (s.tags || []).concat([name]); t.classList.add('on'); }
-      else { s.tags.splice(idx, 1); t.classList.remove('on'); }
+      if (s.score != null) { var personal = {}; (s.tags || []).forEach(function (t) { personal[t] = CORE.starsOf(s,t); }); s.w = personal; }
+      if (idx === -1) { s.tags = (s.tags || []).concat([name]); if (!s.w) s.w = {}; s.w[name] = 1; s.score = null; t.classList.add('on'); }
+      else { s.tags.splice(idx, 1); if (s.w) delete s.w[name]; s.score = null; t.classList.remove('on'); }
       invalidate(); renderTags(); renderStudents();
       return;
     }
@@ -3835,25 +3717,15 @@ var CORE = (function () {
   });
   $('#btnClearPairs').addEventListener('click', function () {
     if (!S.pairs.length) return;
-    if (!window.confirm('분리 짝 ' + S.pairs.length + '개를 모두 지웁니다. 계속할까요?')) return;
+    if (!window.confirm('분리 그룹 ' + S.pairs.length + '개를 모두 지웁니다. 계속할까요?')) return;
     S.pairs = []; invalidate(); renderPairs();
   });
-  $('#btnPairBulk').addEventListener('click', function () { applyPairBulk(false); });
-  $('#pairBulk').addEventListener('input', function () {
-    var msg = $('#pairBulkMsg');
-    var n = String(this.value).split(/\r?\n/).filter(function (l) { return l.trim(); }).length;
-    if (!n) { msg.className = 'msg'; msg.textContent = ''; return; }
-    msg.className = 'msg muted';
-    msg.textContent = n + '줄 입력됨 — [목록에 넣기]를 누르면 아래로 들어갑니다.';
-  });
-  $('#pairBulk').addEventListener('paste', function () {
-    setTimeout(function () { if ($('#pairBulk').value.trim()) applyPairBulk(true); }, 80);
-  });
+
   $('#btnSample').addEventListener('click', loadSample);
   $('#btnAddStudent').addEventListener('click', addStudent);
   $('#btnClearStudents').addEventListener('click', function () {
     if (!S.students.length) return;
-    if (!window.confirm('학생 명단 ' + S.students.length + '명과 분리 짝을 모두 지웁니다. 계속할까요?')) return;
+    if (!window.confirm('학생 명단 ' + S.students.length + '명과 분리 그룹을 모두 지웁니다. 계속할까요?')) return;
     S.students = []; S.pairs = []; S.wishGroups = []; S.result = null; S.sample = false; renderAll(); save();
   });
   $('#btnPaste').addEventListener('click', openPaste);
@@ -3882,7 +3754,7 @@ var CORE = (function () {
   $('#addStudentModal').addEventListener('click', function (e) { if (e.target === this) closeAddStudent(); });
   $('#addStuName').addEventListener('keydown', function (e) { if (e.key === 'Enter') applyAddStudent(); });
   $('#addStuNo').addEventListener('keydown', function (e) { if (e.key === 'Enter') applyAddStudent(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closePaste(); closeUpload(); closeAddStudent(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closePaste(); closeUpload(); closeAddStudent(); closePicker(); } });
 
   $('#btnSaveWork').addEventListener('click', saveWorkFile);
   $('#btnLoadWork').addEventListener('click', function () { $('#workFileInput').click(); });
@@ -3907,17 +3779,7 @@ var CORE = (function () {
     toast('이 브라우저의 내용으로 서버를 덮어씁니다.', 'ok');
     cloudFlush(true);
   });
-  $('#btnWishBulk').addEventListener('click', function () { applyWishBulk(false); });
-  $('#wishBulk').addEventListener('input', function () {
-    var msg = $('#wishBulkMsg');
-    var n = String(this.value).split(/\r?\n/).filter(function (l) { return l.trim(); }).length;
-    if (!n) { msg.className = 'msg'; msg.textContent = ''; return; }
-    msg.className = 'msg muted';
-    msg.textContent = n + '줄 입력됨 — [목록에 넣기]를 누르면 아래로 들어갑니다.';
-  });
-  $('#wishBulk').addEventListener('paste', function () {
-    setTimeout(function () { if ($('#wishBulk').value.trim()) applyWishBulk(true); }, 80);
-  });
+
   $('#btnAddWish').addEventListener('click', addWishGroup);
   $('#btnClearWish').addEventListener('click', function () {
     if (!S.wishGroups.length) return;
