@@ -7,63 +7,86 @@
 <title>반배정 도우미</title>
 <style>
   :root{
-    --bg:#f4f5f7; --card:#ffffff; --line:#e2e5ea; --text:#1c2024; --muted:#697079;
-    --accent:#2f6fed; --accent-soft:#e8f0ff; --good:#1a7f4b; --good-soft:#e7f6ee;
-    --warn:#a8620a; --warn-soft:#fdf3e2; --bad:#c0392b; --bad-soft:#fdeceb;
+    --bg:#f5f6f8; --card:#ffffff; --line:#e4e7ec; --line2:#eef0f4; --text:#1b2026; --muted:#6a7280;
+    --accent:#3b6fe0; --accent-ink:#27509f; --accent-soft:#edf2fe;
+    --good:#177a4c; --good-soft:#e9f6ee; --warn:#95620b; --warn-soft:#fdf4e4; --bad:#bf3b30; --bad-soft:#fdeeec;
+    --r:12px; --rs:9px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   body{
-    background:var(--bg); color:var(--text); font-size:14px; line-height:1.55;
+    background:var(--bg); color:var(--text); font-size:14px; line-height:1.6;
     font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","맑은 고딕",sans-serif;
     -webkit-text-size-adjust:100%;
   }
-  header{padding:16px 18px 10px;max-width:1180px;margin:0 auto}
-  h1{font-size:19px;margin:0 0 3px;letter-spacing:-.2px}
-  .sub{margin:0;color:var(--muted);font-size:12.5px}
-  .tabs{display:flex;gap:4px;padding:0 18px;max-width:1180px;margin:0 auto;position:sticky;top:0;background:var(--bg);z-index:20;border-bottom:1px solid var(--line)}
-  .tab{border:1px solid transparent;border-bottom:none;background:transparent;color:var(--muted);font:inherit;font-weight:600;padding:9px 14px;border-radius:8px 8px 0 0;cursor:pointer}
+  header{padding:20px 18px 0;max-width:1180px;margin:0 auto}
+  .htop{display:flex;gap:12px 20px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+  h1{font-size:20px;margin:0 0 4px;letter-spacing:-.3px}
+  .sub{margin:0;color:var(--muted);font-size:12.8px;max-width:68ch}
+  .stepsbar{max-width:1180px;margin:14px auto 0;padding:0 18px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .step{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 13px 5px 6px;font:inherit;font-size:12.8px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap}
+  .step:hover{border-color:#cfd7e4;color:#333b46}
+  .step .n{width:20px;height:20px;border-radius:50%;background:#eef0f4;color:#6a7280;display:inline-grid;place-items:center;font-size:11.5px;font-weight:700}
+  .step.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .step.on .n{background:rgba(255,255,255,.26);color:#fff}
+  .step.done{border-color:#c6d8f8;color:var(--accent-ink)}
+  .step.done .n{background:var(--accent-soft);color:var(--accent-ink)}
+  .statebadge{font-size:12.3px;font-weight:600;border-radius:999px;padding:5px 12px;border:1px solid var(--line);background:var(--card);color:var(--muted);white-space:nowrap}
+  .statebadge.demo{background:var(--warn-soft);border-color:#eed7a8;color:#8a5308}
+  .statebadge.real{background:var(--good-soft);border-color:#b9e2c8;color:#15693d}
+  .tabs{display:flex;gap:4px;padding:14px 18px 0;max-width:1180px;margin:0 auto;position:sticky;top:0;background:var(--bg);z-index:20;border-bottom:1px solid var(--line)}
+  .tab{border:1px solid transparent;border-bottom:none;background:transparent;color:var(--muted);font:inherit;font-weight:600;font-size:13.5px;padding:9px 15px;border-radius:9px 9px 0 0;cursor:pointer}
   .tab.active{background:var(--card);color:var(--text);border-color:var(--line)}
-  main{padding:14px 18px 96px;max-width:1180px;margin:0 auto}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 15px;margin:0 0 13px}
-  h2{font-size:15px;margin:0 0 9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  main{padding:16px 18px 112px;max-width:1180px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 17px;margin:0 0 14px;box-shadow:0 1px 2px rgba(16,24,40,.03)}
+  h2{font-size:15.5px;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   h3{font-size:14px;margin:0}
-  .hint{color:var(--muted);font-size:12.5px;margin:0 0 9px}
+  .hint{color:var(--muted);font-size:12.6px;margin:0 0 10px;line-height:1.62}
   .hint b{color:var(--text);font-weight:600}
-  .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+  .grouphdr{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:20px 0 10px;padding:0 2px;font-size:13.6px;font-weight:700;color:#2c3540}
+  .grouphdr .n{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:inline-grid;place-items:center;font-size:12px;font-weight:700}
+  .grouphdr .note{font-weight:400;color:var(--muted);font-size:12.3px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
   label.fld{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
   label.fld b{color:var(--text);font-weight:600}
   input,select,textarea,button{font:inherit;color:var(--text)}
   input[type=text],input[type=number],input:not([type]),select,textarea{
-    border:1px solid var(--line);border-radius:7px;padding:5px 7px;background:#fff;min-width:0;
+    border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff;min-width:0;
   }
-  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:#9fbbf7}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:#a9c3f6}
   input[type=number]{width:64px;text-align:right}
   input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
   textarea{width:100%;min-height:92px;resize:vertical;line-height:1.6}
-  .btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 11px;cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap}
-  .btn:hover{background:#f7f8fa}
-  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-  .btn.primary:hover{filter:brightness(1.06)}
-  .btn.danger{color:var(--bad);border-color:#f0c8c4}
+  .btn{border:1px solid #dfe3e9;background:#fff;border-radius:var(--rs);padding:7px 12px;cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap;transition:background .12s,border-color .12s}
+  .btn:hover{background:#f7f8fa;border-color:#d3d9e2}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 1px 2px rgba(59,111,224,.22)}
+  .btn.primary:hover{background:#3565d3;border-color:#3565d3}
+  .btn.ghost{background:transparent;border-color:transparent;color:var(--accent-ink);padding:7px 8px}
+  .btn.ghost:hover{background:var(--accent-soft)}
+  .btn.ghost.danger{color:var(--bad)}
+  .btn.ghost.danger:hover{background:var(--bad-soft)}
+  .btn.danger{color:var(--bad);border-color:#f0ccc8}
   .btn.danger:hover{background:var(--bad-soft)}
-  .btn.big{font-size:15px;padding:10px 26px;border-radius:9px}
+  .btn.big{font-size:15px;padding:11px 26px;border-radius:11px}
+  .btn.sm{font-size:12.4px;padding:5px 10px}
   .btn:disabled{opacity:.55;cursor:default}
-  .icon{border:none;background:transparent;color:#a4abb4;cursor:pointer;font-size:14px;padding:2px 5px;border-radius:6px}
+  .icon{border:none;background:transparent;color:#a9b0ba;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:6px}
   .icon:hover{background:var(--bad-soft);color:var(--bad)}
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
   .toolbar .spacer{flex:1}
-  .table-wrap{border:1px solid var(--line);border-radius:9px}
+  .table-wrap{border:1px solid var(--line);border-radius:10px;background:#fff}
   table{border-collapse:collapse;width:100%;font-size:13px}
-  th,td{padding:5px 7px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+  th,td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:middle}
   thead th{background:#fafbfc;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
   tbody tr:last-child td{border-bottom:none}
-  tbody tr:hover{background:#fbfcfd}
+  tbody tr:hover{background:#fbfcfe}
   td.num{color:var(--muted);font-size:12px;width:38px;text-align:right}
-  .w3{width:52px}.w4{width:62px}.w5{width:74px}.w6{width:96px}.w7{width:120px}
+  .w3{width:56px}.w4{width:62px}.w5{width:74px}.w6{width:96px}.w7{width:124px}
   .tags{white-space:nowrap}
   .chip{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;margin:1px 2px 1px 0;line-height:1.5}
-  .chip.on{background:var(--accent-soft);border-color:#9fbbf7;color:#1d4ed8;font-weight:600}
+  .chip:hover{border-color:#c9d3e2;color:#3b4657}
+  .chip.on{background:var(--accent-soft);border-color:#a9c3f6;color:#1d4ed8;font-weight:600}
   .chip.on[data-tag="특수"]{background:#fdeceb;border-color:#efb1ab;color:#b3261e}
   .chip.on[data-tag="생활 지도 필요"]{background:#fdf3e2;border-color:#eccb92;color:#8a5308}
   .chip.on[data-tag="학습 부진"]{background:#eef7ee;border-color:#a9d5ab;color:#1a7f4b}
@@ -73,17 +96,19 @@
   .tag-on.sp{background:#fdeceb;border-color:#efb1ab;color:#b3261e}
   .status{font-size:12.5px;font-weight:600}
   .status.ok{color:var(--good)}.status.warn{color:var(--warn)}.status.bad{color:var(--bad)}
-  .banner{border-radius:9px;padding:9px 12px;margin:0 0 12px;font-size:13px;display:none}
+  .status.muted{color:var(--muted);font-weight:400}
+  .banner{border-radius:10px;padding:10px 13px;margin:0 0 14px;font-size:13px;display:none}
   .banner.show{display:block}
-  .banner.err{background:var(--bad-soft);border:1px solid #f0c8c4;color:#8f2b20}
-  .banner.info{background:var(--accent-soft);border:1px solid #c2d5fb;color:#1b469f}
-  .actionbar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid var(--line);padding:10px 18px;display:flex;gap:12px;align-items:center;justify-content:flex-end;z-index:30;backdrop-filter:blur(6px)}
-  .actionbar .abinfo{font-size:12.5px;color:var(--muted);margin-right:auto}
+  .banner.err{background:var(--bad-soft);border:1px solid #f2cdc9;color:#8f2b20}
+  .banner.info{background:var(--accent-soft);border:1px solid #c9dafb;color:#1b469f}
+  .actionbar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:10px 18px;display:flex;gap:10px;align-items:center;justify-content:flex-end;z-index:30;box-shadow:0 -1px 3px rgba(16,24,40,.05)}
+  .actionbar .abinfo{font-size:12.5px;color:var(--muted);margin-right:auto;min-width:0}
   .verdicts{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 10px}
   .v{font-size:12.5px;padding:3px 10px;border-radius:999px;border:1px solid;font-weight:600}
   .v.ok{background:var(--good-soft);border-color:#b6e0c6;color:#15693d}
   .v.warn{background:var(--warn-soft);border-color:#edcf9f;color:#8a5308}
   .v.bad{background:var(--bad-soft);border-color:#f0c8c4;color:#992e23}
+  .v.info{background:var(--accent-soft);border-color:#c9dafb;color:#1b469f}
   ul.problems{margin:6px 0 0;padding-left:19px;font-size:12.5px;color:#7a3128}
   ul.problems li{margin:2px 0}
   .classcard .chead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
@@ -92,16 +117,20 @@
   .kb{font-size:11px;font-weight:600;border-radius:5px;padding:1px 5px;margin-left:4px;vertical-align:1px}
   .kb.m{background:#e8f0ff;color:#1d4ed8}.kb.f{background:#fdeaf3;color:#a61b62}
   .kb.fix{background:#f1f3f6;color:#4b5563}
-  details.help{margin:0 0 13px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:0 14px}
-  details.help>summary{cursor:pointer;padding:11px 0;font-weight:600;font-size:13.5px}
-  details.help .inner{padding:0 0 12px;font-size:13px;color:#3d434b}
+  details.help{margin:0 0 14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:0 16px;box-shadow:0 1px 2px rgba(16,24,40,.03)}
+  details.help>summary{cursor:pointer;padding:13px 0;font-weight:600;font-size:13.6px}
+  details.help .inner{padding:0 0 14px;font-size:13px;color:#3d434b;border-top:1px solid var(--line2);padding-top:12px}
   details.help ol{margin:6px 0 0;padding-left:20px}
-  details.help li{margin:4px 0}
+  details.help li{margin:6px 0}
+  details.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:0 16px;margin:0 0 14px;box-shadow:0 1px 2px rgba(16,24,40,.03)}
+  details.panel>summary{cursor:pointer;padding:14px 0;font-weight:600;font-size:13.6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  details.panel>summary .note{font-weight:400;color:var(--muted);font-size:12.4px}
+  details.panel .inner{padding:14px 0;border-top:1px solid var(--line2)}
   details.sub{margin:8px 0 0}
-  details.sub>summary{cursor:pointer;font-size:13px;color:var(--accent);font-weight:600}
+  details.sub>summary{cursor:pointer;font-size:13px;color:var(--accent-ink);font-weight:600}
   .overlay{position:fixed;inset:0;background:rgba(20,24,30,.42);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
   .overlay.show{display:flex}
-  .modal{background:#fff;border-radius:12px;padding:16px;width:100%;max-width:640px;max-height:88vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.2)}
+  .modal{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:640px;max-height:88vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.2)}
   .modal h2{margin-bottom:6px}
   .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
   .msg{font-size:12.5px;min-height:18px;margin-top:6px}
@@ -110,9 +139,9 @@
   td.bad{color:var(--bad);font-weight:700}
   /* 배정 결과 보드 */
   .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:9px;padding:0;align-items:start}
-  .col{background:#fff;border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;min-width:0}
+  .col{background:#fff;border:1px solid var(--line);border-radius:11px;display:flex;flex-direction:column;min-width:0}
   .col.over{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-  .colhead{padding:8px 9px;border-bottom:1px solid var(--line);background:#fafbfc;border-radius:10px 10px 0 0}
+  .colhead{padding:8px 9px;border-bottom:1px solid var(--line);background:#fafbfc;border-radius:11px 11px 0 0}
   .colhead .row1{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
   .colhead .cname{font-weight:700;font-size:14.5px}
   .colhead .ccount{font-size:12px;color:var(--muted)}
@@ -138,7 +167,7 @@
   .cscore .dev{font-size:11px;color:var(--muted);margin-left:2px}
   .cscore.dev-bad b{color:var(--bad)}
   .cscore.dev-bad .dev{color:var(--bad)}
-  .scorebar{border-radius:9px;padding:8px 11px;margin:0 0 10px;font-size:12.5px;background:#fafbfc;border:1px solid var(--line);color:#3f4650;line-height:1.6}
+  .scorebar{border-radius:10px;padding:9px 12px;margin:0 0 10px;font-size:12.5px;background:#fafbfc;border:1px solid var(--line);color:#3f4650;line-height:1.65}
   .scorebar.warn{background:var(--warn-soft);border-color:#edcf9f;color:#8a5308}
   .scorebar b{font-weight:700;color:var(--text)}
   .scorebar.warn b{color:#7a4a06}
@@ -148,78 +177,116 @@
   .g{font-size:10.5px;font-weight:700;border-radius:4px;padding:0 4px}
   .g.m{background:#e8f0ff;color:#1d4ed8}
   .g.f{background:#fdeaf3;color:#a61b62}
-  .toast{position:fixed;left:50%;bottom:84px;transform:translate(-50%,10px);background:#2a2f36;color:#fff;padding:9px 15px;border-radius:9px;font-size:13px;opacity:0;pointer-events:none;transition:.18s;z-index:60;max-width:92vw;box-shadow:0 8px 24px rgba(0,0,0,.2);text-align:center}
+  .toast{position:fixed;left:50%;bottom:88px;transform:translate(-50%,10px);background:#2a2f36;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.18s;z-index:60;max-width:92vw;box-shadow:0 8px 24px rgba(0,0,0,.2);text-align:center}
   .toast.show{opacity:1;transform:translate(-50%,0)}
   .toast.err{background:#a2302a}
   .toast.ok{background:#1a6b41}
   .print-area{display:none}
-  @media print{
-    .print-area{display:block}
-    #classCards,.verdicts,.toast,#resultCard .toolbar,.cloudbar,.sheettabs,#lockScreen{display:none!important}
-    #printArea table{font-size:11.5px}
-  }
   .sumline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:13px}
   .sumline .box{background:#fafbfc;border:1px solid var(--line);border-radius:8px;padding:5px 10px}
   /* ---- 서버(클라우드) 상태 · 잠금 화면 · 반별 시트 탭 · 희망 조합 ---- */
-  .cloudbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:9px}
-  .cloud{font-size:12.5px;font-weight:600;border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px;color:var(--muted);white-space:nowrap}
+  .cloudbar{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  .cloud{font-size:12.4px;font-weight:600;border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;color:var(--muted);white-space:nowrap}
   .cloud.ok{color:#15693d;border-color:#b6e0c6;background:var(--good-soft)}
   .cloud.warn{color:#8a5308;border-color:#edcf9f;background:var(--warn-soft)}
   .cloud.bad{color:#992e23;border-color:#f0c8c4;background:var(--bad-soft)}
-  .cloud.loading{color:#1b469f;border-color:#c2d5fb;background:var(--accent-soft)}
-  .conflict{border:1px solid #edcf9f;background:var(--warn-soft);color:#8a5308;border-radius:9px;padding:10px 12px;margin:0 0 12px;font-size:13px}
+  .cloud.loading{color:#1b469f;border-color:#c9dafb;background:var(--accent-soft)}
+  .conflict{border:1px solid #edcf9f;background:var(--warn-soft);color:#8a5308;border-radius:10px;padding:10px 13px;margin:0 0 14px;font-size:13px}
   .conflict[hidden]{display:none}
   .sheettabs{display:flex;gap:3px;flex-wrap:wrap;align-items:flex-end;margin:2px 0 8px;border-bottom:1px solid var(--line)}
   .sheettabs .sheet{font:inherit;font-size:12.5px;font-weight:600;padding:5px 11px;border:1px solid var(--line);border-bottom:none;background:#f7f8fa;color:var(--muted);border-radius:7px 7px 0 0;cursor:pointer;white-space:nowrap}
   .sheettabs .sheet:hover{background:#fff;color:var(--text)}
-  .sheettabs .sheet.active{background:#fff;color:#1d4ed8;border-color:#9fbbf7;margin-bottom:-1px;box-shadow:inset 0 2px 0 var(--accent)}
+  .sheettabs .sheet.active{background:#fff;color:#1d4ed8;border-color:#a9c3f6;margin-bottom:-1px;box-shadow:inset 0 2px 0 var(--accent)}
   .wishcell{display:flex;flex-wrap:wrap;align-items:center}
   .wishsel{margin:1px 3px 1px 0;max-width:160px}
-  .wishnote{font-size:12.5px;color:#3f4650;margin:9px 0 0;line-height:1.6}
+  .wishnote{font-size:12.6px;color:#3f4650;margin:9px 0 0;line-height:1.6}
   .wishnote[hidden]{display:none}
   .wishnote .wtag{font-size:12px;font-weight:600;border-radius:999px;padding:2px 9px;border:1px solid;display:inline-block;margin-right:6px}
   .wishnote .wtag.ok{background:var(--good-soft);border-color:#b6e0c6;color:#15693d}
-  .wishnote .wtag.part{background:var(--accent-soft);border-color:#c2d5fb;color:#1b469f}
+  .wishnote .wtag.part{background:var(--accent-soft);border-color:#c9dafb;color:#1b469f}
   .lockrow{display:flex;gap:8px;align-items:center}
   .lockbox{max-width:400px}
-  .v.info{background:var(--accent-soft);border-color:#c2d5fb;color:#1b469f}
-  @media (max-width:640px){
-    header{padding:14px 12px 8px}
-    .sheettabs .sheet{padding:4px 8px;font-size:12px}
-    .cloudbar .btn{padding:5px 9px;font-size:12.5px}
+  .locklogo{font-size:26px;line-height:1;margin:0 0 6px}
+  @media (max-width:720px){
+    header{padding:16px 12px 0}
+    .stepsbar{padding:0 12px;gap:8px}
+    .steps{gap:5px}
+    .step{font-size:12.2px;padding:5px 11px 5px 5px}
     .tabs,main{padding-left:12px;padding-right:12px}
-    .card{padding:12px 11px}
+    .tabs{padding-top:12px}
+    main{padding-bottom:118px}
+    .card{padding:13px 12px}
     body{font-size:13.5px}
-    h1{font-size:17px}
+    h1{font-size:18px}
     .actionbar{padding:9px 12px}
-    .btn.big{padding:9px 16px;font-size:14px}
-    th,td{padding:4px 4px}
+    .btn.big{padding:10px 18px;font-size:14.5px}
     .board{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px}
     .scorebar{font-size:12px;line-height:1.7}
   }
+  /* 좁은 화면: 표를 카드처럼 세로로 펼친다(가로 넘침·안쪽 스크롤 없이) */
+  @media (max-width:640px){
+    #classTable,#tagTable,#pairTable,#wishTable,#studentTable{display:block;border:0;font-size:13px}
+    #classTable thead,#tagTable thead,#pairTable thead,#wishTable thead,#studentTable thead{display:none}
+    #classTable tbody,#tagTable tbody,#pairTable tbody,#wishTable tbody,#studentTable tbody{display:block}
+    #classTable tfoot{display:none}
+    #classTable tr,#tagTable tr,#pairTable tr,#wishTable tr,#studentTable tr{display:block;border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin:0 0 8px;background:#fff}
+    #classTable td,#tagTable td,#pairTable td,#wishTable td,#studentTable td{display:flex;gap:10px;align-items:center;border:0;padding:3px 0;min-height:32px;white-space:normal}
+    #classTable td[data-label]::before,#tagTable td[data-label]::before,#pairTable td[data-label]::before,
+    #wishTable td[data-label]::before,#studentTable td[data-label]::before{
+      content:attr(data-label);flex:0 0 68px;color:var(--muted);font-size:11.5px;font-weight:600;
+    }
+    #classTable td.num,#studentTable td.num,#wishTable td.num{width:auto;text-align:left;font-weight:700;color:var(--text)}
+    #classTable td input[type=text],#classTable td input[type=number],
+    #studentTable td input[type=text],#studentTable td input[type=number]{width:auto;flex:1 1 auto;min-width:64px}
+    #classTable td[data-label="특수반"]{justify-content:flex-start}
+    #studentTable td.tags{white-space:normal}
+    #studentTable td.act,#tagTable td.act,#pairTable td.act,#wishTable td.act{justify-content:flex-end;min-height:0;padding-top:2px}
+    #pairTable td select,#studentTable td select,#tagTable td select{flex:1 1 auto;min-width:0}
+    .wishcell{flex:1 1 auto}
+    .wishsel{max-width:none;flex:1 1 120px}
+    .table-wrap{border:0;background:transparent;border-radius:0}
+    .sheettabs .sheet{padding:4px 9px;font-size:12px}
+    .cloudbar .btn{padding:5px 9px;font-size:12.5px}
+    th,td{padding:5px 6px}
+  }
   @media print{
-    .tabs,.actionbar,.toolbar,details.help,.btn{display:none!important}
+    .tabs,.actionbar,.toolbar,details.help,.btn,.stepsbar,.sheettabs,#classCards,.verdicts,.toast,#resultCard .toolbar,.cloudbar,#lockScreen{display:none!important}
+    .print-area{display:block}
     body{background:#fff}
-    .card{break-inside:avoid;border-color:#ccc}
+    .card{break-inside:avoid;border-color:#ccc;box-shadow:none}
+    #printArea table{font-size:11.5px}
   }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>반배정 도우미</h1>
-  <p class="sub">4·5학년 반과 이름·성별·태그를 넣으면, 조건(분리 짝·태그별 분포·3년 연속 같은 반 금지·인원·남녀)과 <b>반별 힘든 점수(★) 총합</b>이 고르게 되도록 6학년 반을 새로 짜 줍니다. 명단은 <b>암호로 잠긴 서버</b>에 자동으로 저장되어 같은 암호를 쓰는 선생님들과 함께 쓸 수 있고, 인터넷이 끊겨도 이 브라우저에 저장되어 이어서 작업할 수 있습니다.</p>
-  <div class="cloudbar">
-    <span class="cloud" id="cloudStatus">🔒 잠김</span>
-    <button class="btn" type="button" id="btnCloudReload">서버에서 새로고침</button>
-    <button class="btn" type="button" id="btnLock">잠금</button>
-    <span class="muted small" id="cloudHint">같은 암호를 쓰는 선생님과 명단을 함께 씁니다.</span>
+  <div class="htop">
+    <div>
+      <h1>반배정 도우미</h1>
+      <p class="sub">4·5학년 반과 이름·성별·태그를 넣으면, <b>같이 두면 안 되는 학생</b>과 <b>반별 부담(★)</b>이 고르게 되도록 6학년 반을 새로 짜 줍니다. 명단은 암호로 잠긴 서버에 자동 저장되어, 같은 암호를 쓰는 선생님과 함께 쓸 수 있습니다.</p>
+    </div>
+    <div class="cloudbar">
+      <span class="cloud" id="cloudStatus">🔒 잠김</span>
+      <button class="btn sm" type="button" id="btnCloudReload" title="다른 선생님이 저장한 최신 내용을 서버에서 다시 받아옵니다.">다른 선생님 수정 불러오기</button>
+      <button class="btn sm ghost" type="button" id="btnLock">잠금</button>
+    </div>
   </div>
 </header>
 
+<div class="stepsbar">
+  <div class="steps" id="stepGuide">
+    <button class="step" type="button" data-step="1"><span class="n">1</span>명단 올리기</button>
+    <button class="step" type="button" data-step="2"><span class="n">2</span>반·조건 정하기</button>
+    <button class="step" type="button" data-step="3"><span class="n">3</span>배정하고 손보기</button>
+    <button class="step" type="button" data-step="4"><span class="n">4</span>엑셀로 받기</button>
+  </div>
+  <span class="statebadge" id="stateBadge">아직 명단이 없습니다</span>
+</div>
+
 <div class="tabs">
-  <button class="tab active" type="button" data-tab="setup">1. 명단 · 조건</button>
-  <button class="tab" type="button" data-tab="result">2. 배정 결과</button>
+  <button class="tab active" type="button" data-tab="setup">명단 · 조건</button>
+  <button class="tab" type="button" data-tab="result">배정 결과</button>
 </div>
 
 <main>
@@ -239,39 +306,53 @@
     <details class="help">
       <summary>사용 순서 (처음 한 번만 읽어도 됩니다)</summary>
       <div class="inner">
-        <p style="margin:0 0 4px">처음 열면 <b>암호 입력 화면</b>이 뜹니다. 학교에서 함께 쓰는 암호(<b>2026</b>)를 넣으면 서버에 저장된 최신 명단을 불러옵니다. 한 번 넣으면 탭을 닫을 때까지 다시 묻지 않고, 위의 <b>[잠금]</b>을 누르면 다시 잠깁니다.</p>
+        <p style="margin:0 0 4px">처음 열면 <b>암호 입력 화면</b>이 뜹니다. 학교에서 함께 쓰는 암호를 넣으면 서버에 저장된 최신 명단을 불러옵니다. 한 번 넣으면 탭을 닫을 때까지 다시 묻지 않고, 위의 <b>[잠금]</b>을 누르면 다시 잠깁니다. 인터넷이 끊겨도 이 브라우저에 저장되어 이어서 작업할 수 있습니다.</p>
         <ol>
-          <li><b>새 반 구성</b>에서 반별 목표 인원을 맞춥니다. '목표 인원 자동 맞추기'를 누르면 전체 학생 수에 맞춰 채워지고, 특수반으로 체크한 반은 '특수반 정원 차감'만큼 적게 잡힙니다. 이후 숫자는 직접 고쳐도 됩니다.</li>
-          <li><b>태그</b>를 추가·수정·삭제합니다. 태그마다 <b>힘든 점수(★)</b>를 정합니다(예: 특수 ★3, 학습 부진 ★2). 태그가 붙은 학생은 반마다 인원도 비슷해지고, 그 태그의 점수도 반마다 고르게 나뉩니다.</li>
+          <li><b>새 반 구성</b>에서 반별 목표 인원을 맞춥니다. '학생 수에 맞춰 목표 인원 채우기'를 누르면 전체 학생 수에 맞춰 채워지고, '특수반'으로 체크한 반은 '특수반은 몇 명 적게'에 적은 만큼 적게 잡힙니다. 이후 숫자는 직접 고쳐도 됩니다.</li>
+          <li><b>태그</b>를 추가·수정·삭제합니다. 태그마다 <b>힘든 점수(★, 관심이 더 필요한 정도)</b>를 정합니다(예: 특수 ★3, 학습 부진 ★2). 태그가 붙은 학생은 반마다 인원도 비슷해지고, 그 태그의 점수도 반마다 고르게 나뉩니다.</li>
           <li><b>학생마다 정도가 다르면</b> 명단의 태그 옆 <b>×1~×5</b>로 그 학생만의 강도를 올립니다(기본 ×1 = 태그 점수 그대로, ×2면 두 배). 한 학생이 태그를 여러 개 가지면 그 점수들이 합쳐져 그 학생의 힘든 점수가 됩니다(예: 특수 ★3 + 폭력성 ★4 = ★7).</li>
           <li><b>같은 반이 되면 안 되는 학생</b>을 짝으로 넣습니다. 여러 짝을 한꺼번에 붙여넣을 수 있고, 한 학생이 여러 짝에 나와도 모두 지켜집니다. 4·5학년에 같이 있던 학생은 이 목록에 넣지 않아도 자동으로 갈라 놓습니다(3년 연속 같은 반 금지).</li>
           <li><b>같은 반 희망 조합</b>에는 같이 있고 싶은 학생을 한 줄에 모아 적습니다. 강제가 아니라 우선 배치라서 다른 조건을 해치지 않는 범위에서 같은 반이 되도록 맞추고, 결과에는 <b>몇 개가 반영됐는지</b>만 참고로 보입니다.</li>
-          <li><b>학생 명단</b>을 넣습니다. 담임별로 받은 엑셀·CSV 파일을 <b>[명단 파일 올리기]</b>로 올리거나(머리글로 열을 찾음), 엑셀에서 복사해 붙여넣거나, 표에서 직접 고치면 됩니다. 처음이면 <b>[빈 양식 내려받기]</b>로 받은 파일을 채워 올리세요. 연습은 '가상 명단 불러오기'로 먼저 해 보세요. 명단 표 위의 <b>[전체] [5-1] [5-2]…</b> 탭을 누르면 그 5학년 반 학생만 보이고, 반 탭을 고른 채 <b>[학생 추가]</b>를 누르면 5학년 반이 그 반으로 자동으로 들어갑니다.</li>
+          <li><b>학생 명단</b>을 넣습니다. 담임별로 받은 엑셀·CSV 파일을 <b>[명단 파일 올리기]</b>로 올리거나(머리글로 열을 찾음), 엑셀에서 복사해 붙여넣거나, 표에서 직접 고치면 됩니다. 처음이면 <b>[빈 양식 내려받기]</b>로 받은 파일을 채워 올리세요. 연습은 '연습용 명단으로 해보기'로 먼저 해 보세요. 명단 표 위의 <b>[전체] [5-1] [5-2]…</b> 탭을 누르면 그 5학년 반 학생만 보이고, 반 탭을 고른 채 <b>[학생 추가]</b>를 누르면 5학년 반이 그 반으로 자동으로 들어갑니다.</li>
           <li><b>배정 실행</b>을 누릅니다. 결과에서 반마다 힘든 점수(★) 총합이 비슷한지 확인하고, 필요하면 학생을 다른 반으로 끌어다 놓아 맞춥니다. 마음에 들면 CSV로 내려받습니다.</li>
         </ol>
       </div>
     </details>
 
+    <div class="grouphdr"><span class="n">1</span>명단 올리기<span class="note">— 엑셀·CSV 파일, 또는 엑셀에서 복사한 표를 그대로</span></div>
+    <div class="card" id="cardRoster">
+      <h2>학생 명단 <span id="studentCount" class="muted small" style="font-weight:400"></span></h2>
+      <p class="hint">담임별로 받은 엑셀(.xlsx)·CSV 파일을 올리면 이름·반·성별·태그를 알아서 읽습니다. 여러 번 나누어 올려도 됩니다. 처음이면 <b>빈 양식 내려받기</b>로 받은 파일을 채워 올리세요.</p>
+      <div class="toolbar" style="margin-bottom:4px">
+        <button class="btn primary" type="button" id="btnUpload">명단 파일 올리기 (.xlsx·CSV)</button>
+        <button class="btn" type="button" id="btnTemplate">빈 양식 내려받기</button>
+        <button class="btn" type="button" id="btnPaste">엑셀에서 붙여넣기</button>
+        <button class="btn ghost" type="button" id="btnSample" title="연습용 가상 명단 108명을 넣어 봅니다. 실제 명단은 파일로 올리세요.">연습용 명단으로 해보기</button>
+      </div>
+      <div class="msg" id="rosterSummary"></div>
+    </div>
+
+    <div class="grouphdr"><span class="n">2</span>반과 조건 정하기<span class="note">— 대부분은 기본값 그대로 두어도 됩니다</span></div>
     <div class="card">
       <h2>새 반 구성</h2>
       <div class="row">
         <label class="fld">새 반 개수 <input type="number" id="classCount" min="2" max="12" step="1" value="6"></label>
-        <label class="fld">특수반 정원 차감 <input type="number" id="deduct" min="0" max="6" step="1" value="2"></label>
-        <label class="fld"><input type="checkbox" id="restrictSpecial"> 특수 태그 학생은 '특수반' 체크한 반에만 배정</label>
-        <label class="fld"><input type="checkbox" id="useY3" checked> 4·5학년에 같은 반이었던 학생은 6학년에 다시 같은 반이 되지 않게</label>
+        <label class="fld" title="'특수반'으로 체크한 반은 목표 인원에서 이만큼 적게 잡습니다.">특수반은 <input type="number" id="deduct" min="0" max="6" step="1" value="2"> 명 적게</label>
+        <label class="fld"><input type="checkbox" id="restrictSpecial"> 특수 학생은 '특수반'으로 체크한 반에만</label>
+        <label class="fld"><input type="checkbox" id="useY3" checked> 4·5학년에 같이 있던 학생은 6학년에 또 같은 반이 되지 않게</label>
       </div>
       <div class="table-wrap">
         <table id="classTable"></table>
       </div>
       <div class="row" style="margin-top:9px">
-        <button class="btn" type="button" id="btnAutoTargets">목표 인원 자동 맞추기</button>
+        <button class="btn" type="button" id="btnAutoTargets">학생 수에 맞춰 목표 인원 채우기</button>
         <span class="status" id="targetHint"></span>
       </div>
     </div>
 
     <div class="card">
-      <h2>태그 <span class="muted small" style="font-weight:400">— 이름을 고치거나 ✕로 지울 수 있습니다</span></h2>
-      <p class="hint">태그가 붙은 학생이 한 반에 몰리지 않도록 <b>인원과 점수 모두</b> 골고루 나눕니다. <b>힘든 점수(★)</b>는 그 태그가 있는 학생 한 명이 반에 더해 주는 부담입니다(예: 특수 ★3). 학생마다 정도가 다르면 명단에서 ×배수로 올립니다. <b>반당 최대</b>를 비우면 자동(해당 태그 학생 수 ÷ 반 수, 올림)으로 잡습니다. '특수'처럼 한 반에 한 명만 두고 싶은 태그는 최대를 1로 적으면 됩니다.</p>
+      <h2>태그와 힘든 점수(★) <span class="muted small" style="font-weight:400">— 이름을 고치거나 ✕로 지울 수 있습니다</span></h2>
+      <p class="hint"><b>힘든 점수(★)는 그 학생에게 선생님의 관심·지원이 더 필요한 정도</b>입니다. 태그마다 '이 태그 학생 한 명이 반에 더하는 부담'을 정해 두면(예: 특수 ★3), 태그가 붙은 학생이 한 반에 몰리지 않도록 <b>인원과 점수 모두</b> 골고루 나눠 배정합니다. 학생마다 정도가 다르면 명단 표에서 ×배수로 올립니다. <b>반당 최대</b>를 비우면 자동(그 태그 학생 수 ÷ 반 수, 올림)으로 잡히고, '특수'처럼 한 반에 한 명만 두려면 최대를 1로 적으면 됩니다.</p>
       <div class="table-wrap">
         <table id="tagTable"></table>
       </div>
@@ -282,7 +363,7 @@
     </div>
 
     <div class="card">
-      <h2>같은 반이 되면 안 되는 학생 <span class="muted small" style="font-weight:400">— 분리 짝</span></h2>
+      <h2>같이 두면 안 되는 학생 <span class="muted small" style="font-weight:400">— 분리 짝</span></h2>
       <p class="hint">짝 하나씩 추가하거나, 여러 줄을 한꺼번에 넣을 수 있습니다. 같은 학생이 여러 짝에 나오면 그 상대 모두와 다른 반이 되도록 배정합니다. <b>4학년·5학년 반이 모두 같은 학생들</b>은 여기에 넣지 않아도 6학년에 다시 같은 반이 되지 않게 자동으로 갈라 놓습니다(위 '3년 연속' 설정).</p>
 
       <details class="sub" open>
@@ -307,7 +388,7 @@
     </div>
 
     <div class="card">
-      <h2>같은 반 희망 조합 <span class="muted small" style="font-weight:400">— 가능하면 같이</span></h2>
+      <h2>같은 반이 되면 좋은 학생 <span class="muted small" style="font-weight:400">— 희망 조합, 가능하면 같이</span></h2>
       <p class="hint">같이 있고 싶은 학생을 한 줄에 모아 적습니다. <b>강제가 아닌 우선 배치</b>라서, 인원·분리 짝·태그·힘든 점수를 해치지 않는 범위에서 같은 반이 되도록 배정합니다. 결과에서 부득이하게 나뉜 조합은 빨간 경고 없이 <b>참고 표시</b>만 됩니다.</p>
       <details class="sub" open>
         <summary>여러 조합 한꺼번에 넣기</summary>
@@ -328,32 +409,27 @@
       </div>
     </div>
 
-    <div class="card">
-      <h2>학생 명단 <span id="studentCount" class="muted small" style="font-weight:400"></span></h2>
+    <div class="card" id="cardStudents">
+      <h2>명단 표 <span class="muted small" style="font-weight:400">— 칸을 눌러 바로 고칠 수 있습니다</span></h2>
+      <p class="hint">태그는 이름 옆 태그를 눌러 켜고 끕니다. 켠 태그 옆 <b>×1~×5</b>는 그 학생만의 정도입니다(기본 ×1). <b>힘든 점수</b>는 그 학생이 반에 더하는 부담(★)의 합계입니다. <b>5학년 반</b>은 지금 다니는 반(<b>5-1</b> 등), <b>반드시 이 반</b>은 6학년 <b>새 반</b>(1반~6반)이고, 여기서 고르면 그 학생은 꼭 그 반으로 갑니다.</p>
       <div class="toolbar">
-        <button class="btn primary" type="button" id="btnSample">가상 명단 불러오기</button>
-        <button class="btn" type="button" id="btnUpload">명단 파일 올리기 (.xlsx·CSV)</button>
-        <button class="btn" type="button" id="btnTemplate">빈 양식 내려받기</button>
-        <button class="btn" type="button" id="btnPaste">엑셀에서 붙여넣기</button>
         <button class="btn" type="button" id="btnAddStudent">학생 추가</button>
-        <button class="btn danger" type="button" id="btnClearStudents">명단 전체 지우기</button>
+        <button class="btn danger sm" type="button" id="btnClearStudents">명단 전체 지우기</button>
         <span class="spacer"></span>
-        <input type="text" id="search" placeholder="이름 검색" style="width:120px">
+        <input type="text" id="search" placeholder="이름 검색" style="width:130px">
       </div>
-      <p class="hint" style="margin-top:-2px">엑셀에서 열어 채운 뒤 <b>그대로 저장해서 업로드</b>하세요. 처음이면 <b>[빈 양식 내려받기]</b>로 받은 파일을 채워 올리면 됩니다(엑셀 .xlsx 또는 CSV UTF-8). 명단은 담임별로 나누어 여러 번 올려도 됩니다.</p>
-      <div class="msg" id="rosterSummary" style="margin:-2px 0 9px"></div>
-      <p class="hint">태그는 이름 옆 태그를 눌러 켜고 끕니다. 켠 태그 옆 <b>×1~×5</b>는 그 학생만의 정도(강도)입니다(기본 ×1). <b>힘든 점수</b> 칸에는 그 학생의 별점 합계가 나옵니다. '고정 반'을 고르면 그 학생은 반드시 그 반으로 갑니다.</p>
       <div class="sheettabs" id="g5Tabs"></div>
       <p class="hint" style="margin:0 0 9px">탭을 누르면 그 5학년 반 학생만 보입니다(검색어와 함께 동작). 반 탭을 고른 상태에서 <b>[학생 추가]</b>를 누르면 5학년 반이 그 반으로 자동으로 들어갑니다.</p>
       <div class="table-wrap">
         <table id="studentTable"></table>
       </div>
-      <div id="studentEmpty" class="empty" style="display:none">아직 명단이 없습니다. <b>명단 파일 올리기</b>로 엑셀·CSV를 올리거나, <b>빈 양식 내려받기</b>로 받은 파일을 채워 올리세요. 연습은 '가상 명단 불러오기'로 먼저 해 보셔도 됩니다.</div>
+      <div id="studentEmpty" class="empty" style="display:none">아직 명단이 없습니다. 위 <b>1단계 명단 올리기</b>에서 엑셀·CSV 파일을 올리거나, <b>연습용 명단</b>으로 먼저 해 보세요.</div>
     </div>
 
-    <div class="card">
-      <h2>다른 컴퓨터로 옮기기</h2>
-      <p class="hint"><b>이미 서버에 자동 저장됩니다</b>: 같은 암호로 다른 컴퓨터·다른 선생님 화면에서 열면 서버의 최신 내용이 그대로 나옵니다. 아래 <b>작업 파일(JSON)</b>은 서버와 상관없이 남겨 두는 <b>백업</b>입니다(USB에 옮기듯 이 파일 하나로도 복원됩니다). 브라우저 저장(localStorage)은 같은 컴퓨터에서 인터넷이 끊겨도 이어 쓰기 위한 것이고, CSV는 배정 결과만 담기므로 작업 이어받기는 JSON으로 합니다. <b>크롬 계정 동기화로는 넘어가지 않습니다</b>.</p>
+    <details class="panel" id="backupPanel">
+      <summary>백업·관리 <span class="note">— 작업 파일 저장, 다른 컴퓨터로 옮기기, 처음부터 다시</span></summary>
+      <div class="inner">
+      <p class="hint" style="margin-top:0"><b>명단은 이미 서버에 자동 저장됩니다</b>: 같은 암호로 다른 컴퓨터·다른 선생님 화면에서 열면 서버의 최신 내용이 그대로 나옵니다. 아래 <b>작업 파일(JSON)</b>은 서버와 상관없이 남겨 두는 <b>백업</b>입니다(USB에 옮기듯 이 파일 하나로도 복원됩니다). CSV는 배정 결과만 담기므로 작업 이어받기는 JSON으로 합니다. <b>크롬 계정 동기화로는 넘어가지 않습니다</b>.</p>
       <div class="row" style="margin-bottom:0">
         <button class="btn primary" type="button" id="btnSaveWork">작업 파일 저장 (.json)</button>
         <button class="btn" type="button" id="btnLoadWork">작업 파일 불러오기</button>
@@ -366,12 +442,14 @@
         <span class="muted small">입력한 명단·조건은 이 브라우저에도 자동으로 저장됩니다. 창을 닫았다 열어도 이어서 할 수 있습니다.</span>
         <button class="btn danger" type="button" id="btnResetAll">저장된 내용 모두 지우기</button>
       </div>
-    </div>
+      </div>
+    </details>
 
   </section>
   <section id="tab-result" hidden>
     <div class="card" id="resultCard">
-      <h2>검증 결과</h2>
+      <h2>배정 점검 결과</h2>
+      <p class="hint" style="margin-top:-2px"><b>3단계</b>입니다. 아래에서 조건을 지켰는지 확인하고, 학생을 끌어 옮겨 손본 뒤 <b>4단계</b>에서 내려받으세요.</p>
       <div class="verdicts" id="verdict"></div>
       <ul class="problems" id="problems"></ul>
       <div class="wishnote" id="wishInfo"></div>
@@ -391,6 +469,7 @@
 
 <div class="actionbar">
   <div class="abinfo" id="abInfo">학생 0명</div>
+  <button class="btn primary big" type="button" id="btnBarCSV" style="display:none">CSV로 내려받기</button>
   <button class="btn primary big" type="button" id="btnRun">배정 실행</button>
 </div>
 
@@ -1457,15 +1536,15 @@ var CORE = (function () {
   /* ---------- 새 반 구성 ---------- */
   function renderClasses() {
     var st = 0, sm = 0, sf = 0;
-    var h = '<thead><tr><th>반</th><th>특수반</th><th>목표 총원</th><th>남</th><th>여</th></tr></thead><tbody>';
+    var h = '<thead><tr><th>반</th><th>특수반</th><th>목표 인원</th><th>남</th><th>여</th></tr></thead><tbody>';
     S.classes.forEach(function (c, k) {
       st += Number(c.total) || 0; sm += Number(c.male) || 0; sf += Number(c.female) || 0;
       h += '<tr>' +
-        '<td><input class="w6" type="text" data-scope="class" data-k="' + k + '" data-field="name" value="' + esc(c.name) + '"></td>' +
-        '<td><input type="checkbox" data-scope="class" data-k="' + k + '" data-field="special"' + (c.special ? ' checked' : '') + ' title="특수 학생이 배정되는 반"></td>' +
-        '<td><input class="w4" type="number" min="0" data-scope="class" data-k="' + k + '" data-field="total" value="' + (c.total == null ? '' : c.total) + '"></td>' +
-        '<td><input class="w4" type="number" min="0" data-scope="class" data-k="' + k + '" data-field="male" value="' + (c.male == null ? '' : c.male) + '"></td>' +
-        '<td><input class="w4" type="number" min="0" data-scope="class" data-k="' + k + '" data-field="female" value="' + (c.female == null ? '' : c.female) + '"></td>' +
+        '<td data-label="반"><input class="w6" type="text" data-scope="class" data-k="' + k + '" data-field="name" value="' + esc(c.name) + '"></td>' +
+        '<td data-label="특수반"><input type="checkbox" data-scope="class" data-k="' + k + '" data-field="special"' + (c.special ? ' checked' : '') + ' title="특수 학생이 배정되는 반"></td>' +
+        '<td data-label="목표 인원"><input class="w4" type="number" min="0" data-scope="class" data-k="' + k + '" data-field="total" value="' + (c.total == null ? '' : c.total) + '"></td>' +
+        '<td data-label="남"><input class="w4" type="number" min="0" data-scope="class" data-k="' + k + '" data-field="male" value="' + (c.male == null ? '' : c.male) + '"></td>' +
+        '<td data-label="여"><input class="w4" type="number" min="0" data-scope="class" data-k="' + k + '" data-field="female" value="' + (c.female == null ? '' : c.female) + '"></td>' +
       '</tr>';
     });
     h += '</tbody><tfoot><tr><td class="small muted">합계</td><td></td><td class="small">' + st + '</td><td class="small">' + sm + '</td><td class="small">' + sf + '</td></tr></tfoot>';
@@ -1494,6 +1573,56 @@ var CORE = (function () {
   }
   function updateAbInfo() {
     $('#abInfo').textContent = '학생 ' + S.students.length + '명 · 새 반 ' + S.classes.length + '개' + (S.result ? ' · 배정 결과 있음' : '');
+    updateGuide();
+    updateActionBar();
+  }
+  /* ---------- 1→2→3→4 단계 안내 ---------- */
+  function updateGuide() {
+    var n = S.students.length, has = !!(S.result && S.result.assign);
+    var cur = !n ? 1 : (!has ? 2 : 3);
+    $$('.step').forEach(function (b) {
+      var k = Number(b.dataset.step);
+      b.classList.toggle('on', k === cur);
+      b.classList.toggle('done', k < cur);
+    });
+    var badge = $('#stateBadge');
+    if (!badge) return;
+    if (!n) { badge.className = 'statebadge'; badge.textContent = '아직 명단이 없습니다'; }
+    else if (S.sample) { badge.className = 'statebadge demo'; badge.textContent = '연습용 가상 명단 ' + n + '명'; }
+    else { badge.className = 'statebadge real'; badge.textContent = '실제 명단 ' + n + '명'; }
+  }
+  /* 지금 탭에서 다음에 할 일을 아래 고정 막대에 보여 준다 */
+  function updateActionBar() {
+    var run = $('#btnRun'), csv = $('#btnBarCSV');
+    var onResult = (tab === 'result') && !!S.result;
+    if (run) run.style.display = onResult ? 'none' : '';
+    if (csv) csv.style.display = onResult ? '' : 'none';
+  }
+  function scrollToCard(sel) {
+    var el = $(sel);
+    if (!el || !el.scrollIntoView) return;
+    try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { el.scrollIntoView(); }
+  }
+  function stepClick(k) {
+    if (k <= 2) {
+      switchTab('setup');
+      setTimeout(function () { scrollToCard(k === 1 ? '#cardRoster' : '#cardClasses'); }, 30);
+      return;
+    }
+    if (k === 3) {
+      if (!S.students.length) {
+        toast('먼저 1단계에서 명단을 올려 주세요.', 'err');
+        switchTab('setup');
+        setTimeout(function () { scrollToCard('#cardRoster'); }, 30);
+        return;
+      }
+      if (S.result) { switchTab('result'); setTimeout(function () { scrollToCard('#resultCard'); }, 30); return; }
+      requestRun();
+      return;
+    }
+    if (!S.result) { toast('배정을 먼저 실행하면 CSV로 내려받을 수 있습니다.', 'err'); stepClick(3); return; }
+    switchTab('result');
+    setTimeout(function () { scrollToCard('#resultCard'); }, 30);
   }
   function autoTargetsNow() {
     if (!S.students.length) { toast('먼저 학생 명단을 넣어 주세요.', 'err'); return; }
@@ -1542,11 +1671,11 @@ var CORE = (function () {
       var auto = Math.max(1, Math.ceil(n / (S.classes.length || 1)));
       var w = num(t.weight);
       h += '<tr>' +
-        '<td><input class="w7" style="width:160px" type="text" data-scope="tag" data-i="' + i + '" data-field="name" value="' + esc(t.name) + '"></td>' +
-        '<td><input class="w4" type="number" min="0" max="50" step="1" data-scope="tag" data-i="' + i + '" data-field="weight" title="이 태그 학생 한 명이 더하는 힘든 점수(★)" value="' + (w == null || isNaN(w) ? '' : w) + '" placeholder="' + esc(fmtScore(CORE.defaultWeight(t.name))) + '"></td>' +
-        '<td><input class="w4" type="number" min="1" data-scope="tag" data-i="' + i + '" data-field="max" placeholder="자동 ' + auto + '" value="' + (t.max == null ? '' : t.max) + '"></td>' +
-        '<td class="small">' + n + '명' + (n ? ' · ★' + esc(fmtScore(totals[t.name] || 0)) : '') + '</td>' +
-        '<td><button class="icon" type="button" data-act="del-tag" data-i="' + i + '" title="태그 지우기">✕</button></td>' +
+        '<td data-label="태그 이름"><input class="w7" style="width:160px" type="text" data-scope="tag" data-i="' + i + '" data-field="name" value="' + esc(t.name) + '"></td>' +
+        '<td data-label="힘든 점수(★)"><input class="w4" type="number" min="0" max="50" step="1" data-scope="tag" data-i="' + i + '" data-field="weight" title="이 태그 학생 한 명이 더하는 힘든 점수(★)" value="' + (w == null || isNaN(w) ? '' : w) + '" placeholder="' + esc(fmtScore(CORE.defaultWeight(t.name))) + '"></td>' +
+        '<td data-label="반당 최대"><input class="w4" type="number" min="1" data-scope="tag" data-i="' + i + '" data-field="max" placeholder="자동 ' + auto + '" value="' + (t.max == null ? '' : t.max) + '"></td>' +
+        '<td class="small" data-label="학생 수">' + n + '명' + (n ? ' · ★' + esc(fmtScore(totals[t.name] || 0)) : '') + '</td>' +
+        '<td class="act"><button class="icon" type="button" data-act="del-tag" data-i="' + i + '" title="태그 지우기">✕</button></td>' +
       '</tr>';
     });
     h += '</tbody>';
@@ -1612,9 +1741,9 @@ var CORE = (function () {
     if (!S.pairs.length) h += '<tr><td colspan="3" class="muted small" style="padding:9px">아직 분리 짝이 없습니다.</td></tr>';
     S.pairs.forEach(function (p, i) {
       h += '<tr>' +
-        '<td><select data-scope="pair" data-i="' + i + '" data-j="0">' + studentOptions(p[0]) + '</select></td>' +
-        '<td><select data-scope="pair" data-i="' + i + '" data-j="1">' + studentOptions(p[1]) + '</select></td>' +
-        '<td><button class="icon" type="button" data-act="del-pair" data-i="' + i + '" title="이 짝 지우기">✕</button></td>' +
+        '<td data-label="학생 1"><select data-scope="pair" data-i="' + i + '" data-j="0">' + studentOptions(p[0]) + '</select></td>' +
+        '<td data-label="학생 2"><select data-scope="pair" data-i="' + i + '" data-j="1">' + studentOptions(p[1]) + '</select></td>' +
+        '<td class="act"><button class="icon" type="button" data-act="del-pair" data-i="' + i + '" title="이 짝 지우기">✕</button></td>' +
       '</tr>';
     });
     h += '</tbody>';
@@ -1668,12 +1797,12 @@ var CORE = (function () {
       h += '<tr><td colspan="3" class="muted small" style="padding:9px">아직 희망 조합이 없습니다.</td></tr>';
     }
     S.wishGroups.forEach(function (g, i) {
-      h += '<tr><td class="num">' + (i + 1) + '</td><td class="wishcell">';
+      h += '<tr><td class="num" data-label="조합">' + (i + 1) + '</td><td class="wishcell" data-label="같이 있을 학생">';
       g.forEach(function (id, j) {
         h += '<select class="wishsel" data-scope="wish" data-i="' + i + '" data-j="' + j + '">' + studentOptions(id) + '</select>';
       });
       if (g.length < 5) h += '<button class="icon" type="button" data-act="wish-add" data-i="' + i + '" title="이 조합에 학생 한 명 더">＋</button>';
-      h += '</td><td><button class="icon" type="button" data-act="del-wish" data-i="' + i + '" title="이 조합 지우기">✕</button></td></tr>';
+      h += '</td><td class="act"><button class="icon" type="button" data-act="del-wish" data-i="' + i + '" title="이 조합 지우기">✕</button></td></tr>';
     });
     h += '</tbody>';
     el.innerHTML = h;
@@ -1800,7 +1929,7 @@ var CORE = (function () {
     }).join('');
   }
   function fixedOptions(s) {
-    var h = '<option value="">고정 없음</option>';
+    var h = '<option value="">정하지 않음</option>';
     S.classes.forEach(function (c, k) {
       h += '<option value="' + k + '"' + (s.fixed != null && s.fixed !== '' && Number(s.fixed) === k ? ' selected' : '') + '>' + esc(c.name) + '</option>';
     });
@@ -1808,7 +1937,7 @@ var CORE = (function () {
   }
   function renderStudents() {
     var q = ($('#search').value || '').trim();
-    var h = '<thead><tr><th class="num">#</th><th>4학년 반</th><th>5학년 반</th><th>이름</th><th>성별</th><th>태그 · 정도</th><th>힘든 점수</th><th>고정 반</th><th></th></tr></thead><tbody>';
+    var h = '<thead><tr><th class="num">#</th><th>4학년 반</th><th>5학년 반</th><th>이름</th><th>성별</th><th>태그 · 정도</th><th>힘든 점수</th><th>반드시 이 반</th><th></th></tr></thead><tbody>';
     var shown = 0;
     S.students.forEach(function (s, n) {
       if (q && String(s.name).indexOf(q) === -1) return;
@@ -1819,18 +1948,18 @@ var CORE = (function () {
       shown++;
       var sc = scoreOf(s);
       h += '<tr data-row="' + s.id + '">' +
-        '<td class="num">' + (n + 1) + '</td>' +
-        '<td><input class="w5" type="text" data-scope="student" data-id="' + s.id + '" data-field="g4" value="' + esc(s.g4) + '"></td>' +
-        '<td><input class="w5" type="text" data-scope="student" data-id="' + s.id + '" data-field="g5" value="' + esc(s.g5) + '"></td>' +
-        '<td><input class="w7" type="text" data-scope="student" data-id="' + s.id + '" data-field="name" value="' + esc(s.name) + '"></td>' +
-        '<td><select data-scope="student" data-id="' + s.id + '" data-field="gender">' +
+        '<td class="num" data-label="#">' + (n + 1) + '</td>' +
+        '<td data-label="4학년 반"><input class="w5" type="text" data-scope="student" data-id="' + s.id + '" data-field="g4" value="' + esc(s.g4) + '"></td>' +
+        '<td data-label="5학년 반"><input class="w5" type="text" data-scope="student" data-id="' + s.id + '" data-field="g5" value="' + esc(s.g5) + '"></td>' +
+        '<td data-label="이름"><input class="w7" type="text" data-scope="student" data-id="' + s.id + '" data-field="name" value="' + esc(s.name) + '"></td>' +
+        '<td data-label="성별"><select data-scope="student" data-id="' + s.id + '" data-field="gender">' +
           '<option value="남"' + (s.gender === '남' ? ' selected' : '') + '>남</option>' +
           '<option value="여"' + (s.gender === '여' ? ' selected' : '') + '>여</option>' +
         '</select></td>' +
-        '<td class="tags">' + tagChips(s) + '</td>' +
-        '<td class="pts' + (sc > 0 ? '' : ' zero') + '" data-score="' + sc + '"><input class="w3" type="number" min="0" max="50" step="1" data-scope="student" data-id="' + s.id + '" data-field="score" value="' + (s.score == null ? '' : s.score) + '" placeholder="' + (sc > 0 ? '★' + esc(fmtScore(sc)) : '0') + '" title="이 학생의 힘든 점수(★). 태그로 자동 계산되고, 직접 적으면 그 값(더 큰 값)을 씁니다."></td>' +
-        '<td><select data-scope="student" data-id="' + s.id + '" data-field="fixed">' + fixedOptions(s) + '</select></td>' +
-        '<td><button class="icon" type="button" data-act="del-student" data-id="' + s.id + '" title="학생 지우기">✕</button></td>' +
+        '<td class="tags" data-label="태그">' + tagChips(s) + '</td>' +
+        '<td class="pts' + (sc > 0 ? '' : ' zero') + '" data-label="힘든 점수" data-score="' + sc + '"><input class="w3" type="number" min="0" max="50" step="1" data-scope="student" data-id="' + s.id + '" data-field="score" value="' + (s.score == null ? '' : s.score) + '" placeholder="' + (sc > 0 ? '★' + esc(fmtScore(sc)) : '0') + '" title="이 학생의 힘든 점수(★). 태그로 자동 계산되고, 직접 적으면 그 값(더 큰 값)을 씁니다."></td>' +
+        '<td data-label="반드시 이 반"><select data-scope="student" data-id="' + s.id + '" data-field="fixed">' + fixedOptions(s) + '</select></td>' +
+        '<td class="act"><button class="icon" type="button" data-act="del-student" data-id="' + s.id + '" title="학생 지우기">✕</button></td>' +
       '</tr>';
     });
     h += '</tbody>';
@@ -1909,6 +2038,7 @@ var CORE = (function () {
     var s = { id: S.nextId++, old: '', name: '', gender: '남', tags: [], fixed: null };
     s.g5 = (g5Filter && g5Filter !== '__none') ? g5Filter : '';
     S.students.push(s);
+    S.sample = false;
     invalidate(); renderStudents();
     var inp = $('input[data-scope="student"][data-id="' + s.id + '"][data-field="name"]');
     if (inp) inp.focus();
@@ -1936,11 +2066,12 @@ var CORE = (function () {
     S.deduct = 2; S.restrictSpecial = false; S.useY3 = true;
     S.nextId = S.students.reduce(function (a, s) { return Math.max(a, s.id); }, 0) + 1;
     S.result = null;
+    S.sample = true;
     var t = CORE.autoTargets(S.students, S.classes, S.deduct);
     S.classes.forEach(function (c, k) { c.total = t.total[k]; c.male = t.male[k]; c.female = t.female[k]; });
     renderAll();
     save();
-    showBanner('info', '가상 명단 ' + S.students.length + '명을 넣었습니다(기존 6반, 태그·힘든 점수(★)·분리 짝·고정 반 예시 포함 — 점수가 붙은 학생은 ' + S.students.filter(function (s) { return scoreOf(s) > 0; }).length + '명). 위의 <b>배정 실행</b>을 눌러 보세요. 실제 명단은 <b>명단 파일 올리기</b>나 <b>빈 양식 내려받기</b>로 넣으면 됩니다.');
+    showBanner('info', '연습용 가상 명단 ' + S.students.length + '명을 넣었습니다(기존 6반, 태그·힘든 점수(★)·분리 짝·고정 반 예시 포함 — 점수가 붙은 학생은 ' + S.students.filter(function (s) { return scoreOf(s) > 0; }).length + '명). 위의 <b>배정 실행</b>을 눌러 보세요. 실제 명단은 <b>명단 파일 올리기</b>나 <b>빈 양식 내려받기</b>로 넣으면 됩니다.');
   }
 
   function normalizeGender(v) {
@@ -2108,6 +2239,7 @@ var CORE = (function () {
     }
     var built = rowsToStudents(parsed.rows, 1);
     S.students = built.students;
+    S.sample = false;
     S.pairs = [];
     S.wishGroups = [];
     S.result = null;
@@ -2418,9 +2550,11 @@ var CORE = (function () {
       if (!keep.length) { toast('새로 넣을 학생이 없습니다. 모두 이미 명단에 있는 이름입니다.', 'err'); return; }
       keep.forEach(function (s) { s.id = S.nextId++; });
       S.students = S.students.concat(keep);
+      S.sample = false;
       added = keep.length;
     } else {
       S.students = built.students;
+    S.sample = false;
       S.pairs = [];
       S.wishGroups = [];
       S.result = null;
@@ -2462,6 +2596,7 @@ var CORE = (function () {
       var norm = normalizeState(st);
       if (!norm || !norm.classes || !norm.classes.length) throw new Error('작업 파일 형식이 아닙니다.');
       S = norm;
+      S.sample = false;
       save();
       renderAll();
       switchTab('setup');
@@ -2624,7 +2759,7 @@ var CORE = (function () {
   }
   function validateSetup() {
     var N = S.students.length;
-    if (!N) return '학생 명단이 비어 있습니다. \'가상 명단 불러오기\'로 연습하거나 \'엑셀에서 붙여넣기\'로 명단을 넣어 주세요.';
+    if (!N) return '학생 명단이 비어 있습니다. \'연습용 명단으로 해보기\'로 연습하거나 \'엑셀에서 붙여넣기\'로 명단을 넣어 주세요.';
     var noName = S.students.filter(function (s) { return !String(s.name || '').trim(); }).length;
     if (noName) return '이름이 비어 있는 학생이 ' + noName + '명 있습니다. 이름을 채워 주세요.';
     if (S.classes.length < 2) return '새 반이 2개 이상이어야 합니다.';
@@ -2687,7 +2822,7 @@ var CORE = (function () {
         renderResult();
         switchTab('result');
         if (rep.problems.length) {
-          toast('배정은 끝났지만 경고 ' + rep.problems.length + '건이 있습니다. 아래 검증 결과를 확인하세요.', 'err');
+          toast('배정은 끝났지만 경고 ' + rep.problems.length + '건이 있습니다. 아래 점검 결과를 확인하세요.', 'err');
         } else {
           toast('배정 완료 — 모든 조건을 만족했습니다.', 'ok');
         }
@@ -2891,11 +3026,11 @@ var CORE = (function () {
       else {
         var missed = wish.filter(function (w) { return !w.ok; });
         wi.hidden = false;
-        wi.innerHTML = '<span class="wtag ' + (missed.length ? 'part' : 'ok') + '">희망 조합 ' + (wish.length - missed.length) + '/' + wish.length + '개 반영</span>' +
-          (missed.length
-            ? '함께 들어가지 못한 조합: ' + missed.map(function (w) { return esc(w.names.join('·')) + ' <span class="muted">(' + esc(w.classes.join(' / ')) + ')</span>'; }).join(', ') +
-              ' — 희망 조합은 강제가 아니므로 경고로 세지 않습니다.'
-            : '희망한 조합이 모두 같은 반이 됐습니다.');
+        wi.innerHTML = missed.length
+          ? '<span class="wtag part">희망 조합 ' + (wish.length - missed.length) + '/' + wish.length + '개 반영</span>' +
+            '함께 들어가지 못한 조합: ' + missed.map(function (w) { return esc(w.names.join('·')) + ' <span class="muted">(' + esc(w.classes.join(' / ')) + ')</span>'; }).join(', ') +
+            ' — 희망 조합은 강제가 아니므로 경고로 세지 않습니다.'
+          : '희망 조합 ' + wish.length + '/' + wish.length + '개 반영 — 희망한 조합이 모두 같은 반이 됐습니다.';
       }
     }
     var mm = S.result.moves ? ' · 수동 조정 ' + S.result.moves + '회' : ' · 수동 조정 없음';
@@ -2991,6 +3126,8 @@ var CORE = (function () {
     $('#tab-setup').hidden = name !== 'setup';
     $('#tab-result').hidden = name !== 'result';
     if (name === 'result') renderResult();
+    updateGuide();
+    updateActionBar();
     window.scrollTo(0, 0);
   }
   function renderAll() {
@@ -3159,7 +3296,7 @@ var CORE = (function () {
     CLOUD.updatedAt = (row && row.updated_at) || null;
     if (emptyState(st)) {
       CLOUD.dirty = !!(S.students && S.students.length);
-      cloudStatus(CLOUD.dirty ? '☁️ 서버는 비어 있음 — 편집하면 올라갑니다' : '☁️ 서버에 저장된 내용 없음', CLOUD.dirty ? 'warn' : '');
+      cloudStatus(CLOUD.dirty ? '☁️ 서버에 아직 없음 — 입력하면 자동 저장됩니다' : '☁️ 서버에 저장된 내용 없음', CLOUD.dirty ? 'warn' : '');
       return;
     }
     var norm = null;
@@ -3495,7 +3632,7 @@ var CORE = (function () {
   $('#btnClearStudents').addEventListener('click', function () {
     if (!S.students.length) return;
     if (!window.confirm('학생 명단 ' + S.students.length + '명과 분리 짝을 모두 지웁니다. 계속할까요?')) return;
-    S.students = []; S.pairs = []; S.wishGroups = []; S.result = null; renderAll(); save();
+    S.students = []; S.pairs = []; S.wishGroups = []; S.result = null; S.sample = false; renderAll(); save();
   });
   $('#btnPaste').addEventListener('click', openPaste);
   $('#pasteCancel').addEventListener('click', closePaste);
@@ -3562,8 +3699,10 @@ var CORE = (function () {
     S.wishGroups = []; invalidate(); renderWishGroups();
   });
   $('#btnRun').addEventListener('click', requestRun);
+  $('#btnBarCSV').addEventListener('click', downloadCSV);
   $('#btnRerun').addEventListener('click', requestRun);
   $('#btnDownloadCSV').addEventListener('click', downloadCSV);
+  $$('.step').forEach(function (b) { b.addEventListener('click', function () { stepClick(Number(b.dataset.step)); }); });
   $('#btnCopyTSV').addEventListener('click', copyTSV);
   $('#btnPrint').addEventListener('click', function () { window.print(); });
   $('#btnResetAll').addEventListener('click', function () {
