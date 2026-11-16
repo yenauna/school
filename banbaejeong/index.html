@@ -4212,10 +4212,10 @@ var CORE = (function () {
      · 6px 미만으로 짧게 누르면 클릭 → 학생 정보 수정 창
      · 마우스는 6px 넘게 움직이면 바로 드래그
      · 손가락은 200ms 길게 누르거나 옆으로 확실히 끌면 드래그, 세로로 먼저 움직이면 화면 스크롤 */
-  var DRAG_THRESHOLD = 6, TOUCH_HOLD_MS = 200, TOUCH_MOVE_TOLERANCE = 12, TOUCH_EDGE_SCROLL = 12;
+  var DRAG_THRESHOLD = 6, TOUCH_HOLD_MS = 200, TOUCH_MOVE_TOLERANCE = 12, TOUCH_EDGE_ZONE = 70;
   var DRAG = {
     armed: false, active: false, kind: '', id: null, chip: null, pointerId: null,
-    startX: 0, startY: 0, lastX: 0, lastY: 0, grabX: 0, grabY: 0, startedAt: 0,
+    startX: 0, startY: 0, lastX: 0, lastY: 0, grabX: 0, grabY: 0,
     holdTimer: null, ghost: null, dropEl: null, scrollDir: 0, rafId: null, justDragged: false
   };
   function dragColumnOf(el) { return (el && el.closest) ? el.closest('.col[data-k],.classcard[data-k]') : null; }
@@ -4223,7 +4223,6 @@ var CORE = (function () {
     var el = document.elementFromPoint ? document.elementFromPoint(x, y) : null;
     return dragColumnOf(el);
   }
-  function dragActive() { return DRAG.active; }
   function dragEnd() {
     clearTimeout(DRAG.holdTimer); DRAG.holdTimer = null;
     if (DRAG.rafId) { try { cancelAnimationFrame(DRAG.rafId); } catch (e) { } DRAG.rafId = null; }
@@ -4251,13 +4250,15 @@ var CORE = (function () {
     return col;
   }
   /* 화면 위·아래 끝까지 끌고 가면 카드 목록을 스스로 굴려 다른 반 위에 놓을 수 있게 한다 */
+  /* 화면 위·아래 가장자리(70px)까지 끌고 가면 카드 목록을 부드럽게 굴려 준다.
+     가장자리에 가까울수록 빨라지고, 드래그가 끝나면 dragEnd에서 rAF를 반드시 해제한다. */
   function dragScrollStep() {
     DRAG.rafId = null;
     if (!DRAG.active) return;
     if (DRAG.scrollDir) {
-      /* 화면 끝에 가까울수록 더 빨리 굴린다 */
       var edge = DRAG.scrollDir < 0 ? DRAG.lastY : (window.innerHeight - DRAG.lastY);
-      var speed = edge < 36 ? TOUCH_EDGE_SCROLL * 2 : TOUCH_EDGE_SCROLL;
+      var depth = Math.max(0, Math.min(TOUCH_EDGE_ZONE, TOUCH_EDGE_ZONE - edge));
+      var speed = 4 + Math.round(depth / TOUCH_EDGE_ZONE * 16);   /* 4~20px/프레임 */
       var before = window.scrollY;
       window.scrollBy(0, DRAG.scrollDir * speed);
       if (window.scrollY !== before) { dragGhostMove(DRAG.lastX, DRAG.lastY); dragHighlight(DRAG.lastX, DRAG.lastY); }
@@ -4309,7 +4310,6 @@ var CORE = (function () {
     DRAG.kind = e.pointerType || 'mouse';
     DRAG.startX = DRAG.lastX = e.clientX;
     DRAG.startY = DRAG.lastY = e.clientY;
-    DRAG.startedAt = Date.now();
     if (DRAG.kind === 'touch') {
       DRAG.holdTimer = setTimeout(function () {
         DRAG.holdTimer = null;
@@ -4335,7 +4335,7 @@ var CORE = (function () {
     }
     dragGhostMove(e.clientX, e.clientY);
     dragHighlight(e.clientX, e.clientY);
-    DRAG.scrollDir = e.clientY < 70 ? -1 : (e.clientY > window.innerHeight - 96 ? 1 : 0);
+    DRAG.scrollDir = e.clientY < TOUCH_EDGE_ZONE ? -1 : (e.clientY > window.innerHeight - TOUCH_EDGE_ZONE ? 1 : 0);
     if (e.cancelable) { try { e.preventDefault(); } catch (err) { } }
   }
   function dragReleaseTo(e) {

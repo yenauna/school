@@ -266,7 +266,7 @@ async function touchEnd(client) {
     assert.equal(await mobile.evaluate(() => __bbj.state().result.assign[8]), 0);
     await mobile.screenshot({ path: path.join(artifacts, 'mobile-quick-move.png') });
 
-    // (16) 손가락을 화면 아래 끝으로 끌면 목록이 스스로 굴러 아래 쪽 반에도 놓을 수 있다
+    // (16) 손가락이 화면 위·아래 가장자리(70px)에 닿으면 목록이 스스로 굴러 보이지 않는 반에도 놓을 수 있다
     await mobile.evaluate(() => {
       const st = __bbj.state();
       st.students = Array.from({ length: 36 }, (_, i) => ({ id: i + 1, name: '끌학생' + (i + 1), no: i % 6 + 1, g4: '', g5: (i % 6 + 1) + '반', gender: i % 2 ? '여' : '남', tags: [], w: {}, fixed: null }));
@@ -279,21 +279,42 @@ async function touchEnd(client) {
     const c6 = center(await box(mobile.locator('.stu[data-id="1"]')));
     await touchStart(client, c6);
     await sleep(240);
-    await touchMove(client, c6, { x: c6.x, y: 886 }, 6);
+    await touchMove(client, c6, { x: c6.x, y: 886 }, 6);       /* 아래 가장자리 */
     const scrollMid = await mobile.evaluate(() => window.scrollY);
     await sleep(700);
     const scrollLater = await mobile.evaluate(() => window.scrollY);
-    assert.ok(scrollLater > scrollMid + 20, '끌고 있는 동안 아래 끝에서 화면이 굴러야 한다(' + scrollMid + '→' + scrollLater + ')');
+    assert.ok(scrollLater > scrollMid + 20, '끌고 있는 동안 아래 가장자리에서 화면이 굴러야 한다(' + scrollMid + '→' + scrollLater + ')');
     assert.equal(await mobile.locator('.stu[data-id="1"].dragging').count(), 1, '굴러도 카드는 그대로 들려 있어야 한다');
     const visible = await mobile.locator('.col[data-k]').evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); return { k: Number(e.dataset.k), top: r.top, bottom: r.bottom, mid: r.left + r.width / 2 }; }).filter(r => r.top > 60 && r.bottom < 880));
     assert.ok(visible.length, '굴러간 뒤 화면 안에 다른 반 카드가 보여야 한다');
     const pick = visible[0];
+    const deeper = await mobile.evaluate(() => window.scrollY);
+    assert.ok(deeper > 100, '아래 쪽 반까지 굴러간다(' + deeper + ')');
     await touchMove(client, { x: c6.x, y: 880 }, { x: pick.mid, y: (pick.top + pick.bottom) / 2 }, 6);
     assert.equal(await mobile.locator('.col[data-k="' + pick.k + '"].drop-on').count(), 1);
     await mobile.screenshot({ path: path.join(artifacts, 'mobile-edge-autoscroll.png') });
     await touchEnd(client);
     assert.equal(await mobile.evaluate(() => __bbj.state().result.assign[0]), pick.k);
     assert.equal(await mobile.locator('.drag-ghost,.col.drop-on').count(), 0);
+    // 끌기가 끝나면 자동 스크롤 타이머(rAF)도 멈춘다: 가만히 있어도 화면이 더 굴러가지 않는다
+    const restY = await mobile.evaluate(() => window.scrollY);
+    await sleep(500);
+    assert.equal(await mobile.evaluate(() => window.scrollY), restY, '드래그가 끝나면 자동 스크롤이 멈춰야 한다');
+
+    // (17) 위 가장자리로 끌면 위로 굴러간다
+    const upChip = await mobile.locator('.stu[data-id="' + (pick.k * 6 + 1) + '"]').boundingBox();
+    if (upChip && upChip.y > 80 && upChip.y < 860) {
+      const from = center(upChip);
+      await touchStart(client, from);
+      await sleep(240);
+      await touchMove(client, from, { x: from.x, y: 8 }, 6);    /* 위 가장자리 */
+      const upA = await mobile.evaluate(() => window.scrollY);
+      await sleep(600);
+      const upB = await mobile.evaluate(() => window.scrollY);
+      assert.ok(upB < upA - 20, '위 가장자리에서는 화면이 위로 굴러야 한다(' + upA + '→' + upB + ')');
+      await touchEnd(client);
+      assert.equal(await mobile.locator('.drag-ghost').count(), 0);
+    }
 
     assert.deepEqual(errors, []);
     console.log('PASS Chromium: PC 이름 글자 위 마우스 드래그와 클릭 구분(6px), 카드 여백 드래그, 고정 학생 잠금·필수 조합 확인, 수정 창 빠른 반 이동, 모바일 412px 터치 롱프레스·가로 드래그·세로 스크롤 구분, 드래그 중 폴링 건너뛰기와 고스트·drop-on 표시, 터치 고정 잠금과 조합 팝업. Screenshots: ' + artifacts);
