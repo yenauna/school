@@ -31,6 +31,11 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.click('#btnSample');
  assert.equal(await page.locator('.stepsbar,[data-step]').count(),0);
  assert.match(await page.locator('.tabs #stateBadge').innerText(),/연습용 가상 명단 108명/);
+ assert.equal(await page.evaluate(()=>{
+  const groups={};__bbj.state().students.forEach(s=>(groups[s.name.slice(1)]||(groups[s.name.slice(1)]=[])).push(s));
+  const repeated=Object.values(groups).filter(g=>g.length>1);
+  return repeated.length===5&&repeated.every(g=>g.length===2&&g[0].name[0]!==g[1].name[0]);
+ }),true);
  await page.evaluate(()=>{
   const S=__bbj.state();S.pairs=[];S.wishGroups=[];S.deduct=0;S.useY3=false;
   S.tags=['특수','학습','생활','추가태그'].map(name=>({name,weight:99,max:1}));
@@ -391,6 +396,62 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
   await page.locator('.tab[data-tab="result"]').click();
  }
 
+ // Exactly seven short traffic lights; references never become hard warnings.
+ await page.setViewportSize({width:1600,height:1000});
+ await page.evaluate(()=>{
+  const st=__bbj.state();
+  st.students=['김철수','박철수','최유나','정하린'].map((name,i)=>({id:i+1,name,no:i+1,g4:'',g5:(i+1)+'반',gender:i%2?'여':'남',tags:[],w:{},fixed:null}));
+  st.classes=[{name:'가반',total:2,male:1,female:1,special:true},{name:'나반',total:2,male:1,female:1,special:true}];
+  st.pairs=[];st.requiredGroups=[];st.wishGroups=[[1,3]];st.useY3=false;
+  st.result={assign:[0,0,1,1],ids:[1,2,3,4],moves:0,ms:0};__bbj.renderAll();
+ });
+ const shortLabels=['특수','동명이인','이름만 같음','3년 같은 반','필수 분리','필수 희망','추천 희망'];
+ assert.deepEqual(await page.locator('#verdict .v').allTextContents(),shortLabels);
+ assert.equal(await page.locator('#verdict .warn').count(),2);
+ assert.equal(await page.locator('#verdict .bad').count(),0);
+ assert.equal(await page.locator('#verdict [data-check="given"]').getAttribute('title'),'가반 김철수·박철수');
+ assert.equal(await page.locator('#verdict [data-check="recommended"]').getAttribute('title'),'가반 김철수 / 나반 최유나');
+ assert.equal(await page.locator('#problemPanel').isVisible(),false);
+ assert.equal(await page.locator('#wishInfo').count(),0);
+ assert.doesNotMatch(await page.locator('#resultCard').innerText(),/김철수|박철수|최유나|정하린|남녀 균형/);
+ await page.locator('#verdict [data-check="given"]').hover();
+ await page.locator('#resultCard').scrollIntoViewIfNeeded();
+ await page.screenshot({path:path.join(artifacts,'seven-reference-signals.png')});
+ for(const width of [1280,768,412]){
+  await page.setViewportSize({width,height:900});
+  const tops=await page.locator('#verdict .v').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().y));
+  assert.ok(Math.max(...tops)-Math.min(...tops)<1);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ }
+ await page.setViewportSize({width:1600,height:1000});
+ // All five required indicators turn red, with names/classes in each tooltip.
+ await page.evaluate(()=>{
+  const st=__bbj.state();st.students[2].name=st.students[3].name='홍길동';
+  st.students[0].tags=st.students[1].tags=['특수'];st.classes[0].special=false;
+  st.students[0].g4=st.students[1].g4='1반';st.students[0].g5=st.students[1].g5='1반';
+  st.useY3=true;st.pairs=[[1,2]];st.requiredGroups=[[1,3]];__bbj.renderAll();
+ });
+ for(const key of ['special','duplicate','three-year','separate','required']){
+  assert.match(await page.locator(`#verdict [data-check="${key}"]`).getAttribute('class'),/bad/);
+  assert.match(await page.locator(`#verdict [data-check="${key}"]`).getAttribute('title'),/가반|나반/);
+  assert.match(await page.locator(`#verdict [data-check="${key}"]`).getAttribute('title'),/김철수|박철수|홍길동/);
+ }
+ assert.equal(await page.locator('#verdict .warn').count(),2);
+ assert.equal(await page.locator('#problemPanel').isVisible(),true);
+ await page.screenshot({path:path.join(artifacts,'seven-required-signals.png')});
+ // Identical full names alone are a mandatory collision, not a different-surname reference.
+ await page.evaluate(()=>{const st=__bbj.state();st.students[0].name=st.students[1].name='김철수';__bbj.renderAll()});
+ assert.match(await page.locator('#verdict [data-check="given"]').getAttribute('class'),/ok/);
+ assert.match(await page.locator('#verdict [data-check="duplicate"]').getAttribute('class'),/bad/);
+ // With all constraints satisfied and reference names separated, all seven lights are green.
+ await page.evaluate(()=>{
+  const st=__bbj.state();['김철수','박철수','최유나','정하린'].forEach((name,i)=>Object.assign(st.students[i],{name,tags:[],g4:''}));
+  st.classes[0].special=true;st.pairs=[];st.requiredGroups=[];st.useY3=false;
+  st.result.assign=[0,1,0,1];__bbj.renderAll();
+ });
+ assert.equal(await page.locator('#verdict .ok').count(),7);
+ assert.equal(await page.locator('#problemPanel').isVisible(),false);
+ assert.deepEqual(await page.locator('#verdict .v').allTextContents(),shortLabels);
  // Grouped notices live only at the bottom of conditions; roster edits update them and the special count.
  await page.setViewportSize({width:1600,height:1000});
  await page.locator('.tab[data-tab="setup"]').click();
@@ -418,6 +479,6 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.equal(await page.locator('#specialCount').innerText(),"현재 '특수' 학생 0명");
  assert.equal(await page.locator('#stateBadge').innerText(),'아직 명단이 없습니다');
  assert.deepEqual(errors,[]);
- console.log('PASS Chromium: wide monitors and all sort/layout combinations, required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, compact header badge, grouped names/special counts, zero-warning panel/toast hiding, new layout, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, responsive viewports, save/load and polling');
+ console.log('PASS Chromium: bounded demo names and seven traffic-light tooltips/colors, wide monitors and all sort/layout combinations, required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, compact header badge, grouped names/special counts, zero-warning panel/toast hiding, new layout, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, responsive viewports, save/load and polling');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -205,3 +205,16 @@ test('when special capacity is impossible, mandatory wishes stay together if quo
  assert.ok(rep.problems.some(p=>p.includes('특수')||p.includes('통합학급')));
  rep.per.forEach(p=>{assert.equal(p.count,4);assert.equal(p.male,2);assert.equal(p.female,2)});
 });
+
+test('demo roster contains exactly five disjoint different-surname given-name pairs and no full-name duplicates',()=>{
+ const sample=C.virtualRoster(),again=C.virtualRoster();
+ assert.equal(sample.students.length,108);
+ assert.deepEqual(plain(sample),plain(again));
+ assert.equal(new Set(sample.students.map(s=>s.name)).size,sample.students.length);
+ const groups=new Map();
+ sample.students.forEach(s=>{const given=s.name.slice(1);if(!groups.has(given))groups.set(given,[]);groups.get(given).push(s)});
+ const repeated=[...groups.values()].filter(g=>g.length>1);
+ assert.equal(repeated.length,5);
+ assert.equal(repeated.reduce((n,g)=>n+g.length*(g.length-1)/2,0),5);
+ repeated.forEach(g=>{assert.equal(g.length,2);assert.notEqual(g[0].name[0],g[1].name[0]);assert.notEqual(g[0].g5,g[1].g5)});
+});

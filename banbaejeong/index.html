@@ -98,8 +98,8 @@
   .banner.info{background:var(--accent-soft);border:1px solid #c9dafb;color:#1b469f}
   .actionbar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:10px 18px;display:flex;gap:10px;align-items:center;justify-content:flex-end;z-index:30;box-shadow:0 -1px 3px rgba(16,24,40,.05)}
   .actionbar .abinfo{font-size:12.5px;color:var(--muted);margin-right:auto;min-width:0}
-  .verdicts{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 10px}
-  .v{font-size:12.5px;padding:3px 10px;border-radius:999px;border:1px solid;font-weight:600}
+  .verdicts{display:flex;gap:5px;flex-wrap:nowrap;overflow-x:auto;max-width:100%;margin:0 0 10px;padding-bottom:2px}
+  .v{flex:0 0 auto;white-space:nowrap;font-size:12px;padding:3px 8px;border-radius:999px;border:1px solid;font-weight:600}
   .v.ok{background:var(--good-soft);border-color:#b6e0c6;color:#15693d}
   .v.warn{background:var(--warn-soft);border-color:#edcf9f;color:#8a5308}
   .v.bad{background:var(--bad-soft);border-color:#f0c8c4;color:#992e23}
@@ -205,11 +205,6 @@
   .sheettabs .sheet.active{background:#fff;color:#1d4ed8;border-color:#a9c3f6;margin-bottom:-1px;box-shadow:inset 0 2px 0 var(--accent)}
   .wishcell{display:flex;flex-wrap:wrap;align-items:center}
   .wishsel{margin:1px 3px 1px 0;max-width:160px}
-  .wishnote{font-size:12.6px;color:#3f4650;margin:9px 0 0;line-height:1.6}
-  .wishnote[hidden]{display:none}
-  .wishnote .wtag{font-size:12px;font-weight:600;border-radius:999px;padding:2px 9px;border:1px solid;display:inline-block;margin-right:6px}
-  .wishnote .wtag.ok{background:var(--good-soft);border-color:#b6e0c6;color:#15693d}
-  .wishnote .wtag.part{background:var(--accent-soft);border-color:#c9dafb;color:#1b469f}
   .lockrow{display:flex;gap:8px;align-items:center}
   .lockbox{max-width:400px}
   .locklogo{font-size:26px;line-height:1;margin:0 0 6px}
@@ -436,7 +431,6 @@
         <div class="row" id="resultSort" role="group" aria-label="결과 정렬"><button class="btn" type="button" data-act="result-sort" data-sort="gender">남녀·가나다순</button><button class="btn" type="button" data-act="result-sort" data-sort="origin">5학년 반·번호순</button></div>
         <div class="row" id="resultLayout" role="group" aria-label="학생 배치 보기"><button class="btn" type="button" data-act="result-layout" data-layout="one">전체 1줄</button><button class="btn" type="button" data-act="result-layout" data-layout="two">전체 2줄</button><button class="btn" type="button" data-act="result-layout" data-layout="sex">남자 1줄·여자 1줄</button></div>
       </div><div class="verdicts" id="verdict"></div>
-      <div class="wishnote" id="wishInfo"></div>
       <div class="toolbar" style="margin:12px 0 0">
         <button class="btn" type="button" id="btnRerun">다시 배정</button>
         <span class="spacer"></span>
@@ -759,6 +753,33 @@ var CORE = (function () {
         group.push(cand); wishUsed[cand.id] = 1;
       }
       if (group.length >= 2) wishGroups.push(group.map(function (s) { return s.id; }));
+    });
+
+    // A separate RNG keeps existing class sizes and example conditions unchanged.
+    var nameRnd = mulberry32(20261117), usedGiven = Object.create(null);
+    var first = ['서','하','지','민','예','윤','수','은','도','시','유','다','채','소','태','재','선','가','연','정'];
+    var last = ['준','연','우','아','원','진','현','율','희','빈','린','호','윤','영','민','서','온','은','솔','하'];
+    students.forEach(function (st,index) {
+      var pool = shuffle((st.gender === '남' ? MALE : FEMALE).slice(),nameRnd);
+      var given = pool.filter(function (name) { return !usedGiven[name]; })[0];
+      for (var attempt = 0; !given && attempt < first.length*last.length; attempt++) {
+        var offset = (index+attempt) % (first.length*last.length);
+        var candidate = first[Math.floor(offset/last.length)] + last[offset % last.length];
+        if (!usedGiven[candidate]) given = candidate;
+      }
+      usedGiven[given] = true;
+      st.name = st.name.charAt(0) + given;
+    });
+    // Introduce exactly five disjoint, two-student given-name matches with different surnames.
+    var nameOrder = shuffle(students.slice(),nameRnd), paired = {}, namePairs = 0;
+    nameOrder.forEach(function (a) {
+      if (namePairs >= 5 || paired[a.id]) return;
+      var b = nameOrder.filter(function (b) { return b.id !== a.id && !paired[b.id] && b.gender === a.gender && b.g5 !== a.g5; })[0];
+      if (!b) return;
+      var surname = b.name.charAt(0);
+      if (surname === a.name.charAt(0)) surname = SURNAME.filter(function (v) { return v !== surname; })[0];
+      b.name = surname + a.name.slice(1);
+      paired[a.id] = paired[b.id] = true; namePairs++;
     });
 
     var tags = DEFAULT_TAGS.concat(['폭력']);
@@ -2898,22 +2919,38 @@ var CORE = (function () {
 
   /* ---------- 결과 ---------- */
   function verdictHtml(rep) {
-    var v = rep.verdict, out = [];
-    out.push(v.sep === 0 ? '<span class="v ok">분리 그룹 위반 0건</span>' : '<span class="v bad">분리 그룹 위반 ' + v.sep + '건</span>');
-    var y3n = v.y3 || 0;
-    out.push(y3n === 0 ? '<span class="v ok">3년 연속 같은 반 0쌍</span>' : '<span class="v bad">3년 연속 같은 반 ' + y3n + '쌍</span>');
-    out.push(v.cap === 0 ? '<span class="v ok">반별 인원 목표대로</span>' : '<span class="v warn">인원이 목표와 다른 반 ' + v.cap + '개</span>');
-    out.push('<span class="v info">남녀 균형은 배정 시 참고</span>');
-    out.push(v.tag === 0 ? '<span class="v ok">특수학생 배정 조건 충족</span>' : '<span class="v bad">특수학생 배정 조건 위반 ' + v.tag + '건</span>');
-    out.push(v.fixed === 0 ? '<span class="v ok">고정 반 모두 반영</span>' : '<span class="v bad">고정 반 이탈 ' + v.fixed + '명</span>');
-    out.push('<span class="v ' + (v.duplicates ? 'bad' : 'ok') + '">동명이인 분리 위반 ' + v.duplicates + '건</span>');
-    out.push('<span class="v ' + (v.required ? 'bad' : 'ok') + '">필수 희망 조합 위반 ' + v.required + '건</span>');
-    if (v.wishTotal) {
-      out.push(v.wishOk === v.wishTotal
-        ? '<span class="v ok">희망 조합 ' + v.wishTotal + '/' + v.wishTotal + '개 반영</span>'
-        : '<span class="v info">희망 조합 ' + v.wishOk + '/' + v.wishTotal + '개 반영 (참고)</span>');
+    function pill(key,label,details,reference,normal) {
+      var status = details.length ? (reference ? 'warn' : 'bad') : 'ok';
+      var title = details.length ? details.join(' / ') : normal;
+      return '<span class="v ' + status + '" data-check="' + key + '" tabindex="0" title="' + esc(title) + '" aria-label="' + esc(label + ': ' + title) + '">' + label + '</span>';
     }
-    return out.join('');
+    function pairDetails(list) { return (list || []).map(function (v) { return v.cls + ' ' + v.a + '·' + v.b; }); }
+    var similar = [];
+    rep.per.forEach(function (p) {
+      var groups = Object.create(null);
+      p.members.forEach(function (i) { var name = String(S.students[i].name || '').trim(); if (name.length > 1) (groups[name.slice(1)] || (groups[name.slice(1)]=[])).push(name); });
+      Object.keys(groups).forEach(function (given) {
+        if (new Set(groups[given]).size > 1) similar.push(p.name + ' ' + groups[given].join('·'));
+      });
+    });
+    var missed = (rep.wishGroups || []).filter(function (g) { return !g.ok; }).map(function (g) {
+      var groups = Object.create(null);
+      g.members.forEach(function (i) {
+        var k = S.result.assign[i], name = rep.per[k] ? rep.per[k].name : '미배정';
+        (groups[name] || (groups[name]=[])).push(S.students[i].name);
+      });
+      return Object.keys(groups).map(function (name) { return name + ' ' + groups[name].join('·'); }).join(' / ');
+    });
+    var special = (rep.tagBad || []).map(function (v) { return v.cls + ' ' + v.name + (v.kind === 'overlap' ? ' (특수학생 중복)' : ' (통합학급 미지정)'); });
+    return [
+      pill('special','특수',special,false,'특수학생 배정 조건에 문제가 없습니다.'),
+      pill('duplicate','동명이인',pairDetails(rep.duplicateViol),false,'동명이인은 서로 다른 반입니다.'),
+      pill('given','이름만 같음',similar,true,'같은 반에 성 제외 이름이 겹치는 학생이 없습니다.'),
+      pill('three-year','3년 같은 반',pairDetails(rep.y3Viol),false,'3년 연속 같은 반인 학생이 없습니다.'),
+      pill('separate','필수 분리',pairDetails(rep.sepViol),false,'필수 분리 조합을 모두 지켰습니다.'),
+      pill('required','필수 희망',(rep.requiredViol || []).map(function (g) { return g.text; }),false,'필수 희망 조합이 모두 같은 반입니다.'),
+      pill('recommended','추천 희망',missed,true,'추천 희망 조합에 문제가 없습니다.')
+    ].join('');
   }
 
   function g5Badge(s) {
@@ -3053,8 +3090,6 @@ var CORE = (function () {
       $('#problems').innerHTML = ''; $('#problemPanel').hidden = true;
       $('#resultMeta').textContent = '';
       $('#printArea').innerHTML = '';
-      var wi0 = $('#wishInfo');
-      if (wi0) { wi0.hidden = true; wi0.innerHTML = ''; }
       return;
     }
     var rep = CORE.evaluate(S.students, S.classes, pairsAsIndex(), S.result.assign, currentOptions());
@@ -3069,20 +3104,6 @@ var CORE = (function () {
     $('#problems').innerHTML = rep.problems.length
       ? rep.problems.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('')
       : '';
-    var wi = $('#wishInfo');
-    if (wi) {
-      var wish = rep.wishGroups || [];
-      if (!wish.length) { wi.hidden = true; wi.innerHTML = ''; }
-      else {
-        var missed = wish.filter(function (w) { return !w.ok; });
-        wi.hidden = false;
-        wi.innerHTML = missed.length
-          ? '<span class="wtag part">희망 조합 ' + (wish.length - missed.length) + '/' + wish.length + '개 반영</span>' +
-            '함께 들어가지 못한 조합: ' + missed.map(function (w) { return esc(w.names.join('·')) + ' <span class="muted">(' + esc(w.classes.join(' / ')) + ')</span>'; }).join(', ') +
-            ' — 희망 조합은 강제가 아니므로 경고로 세지 않습니다.'
-          : '희망 조합 ' + wish.length + '/' + wish.length + '개 반영 — 희망한 조합이 모두 같은 반이 됐습니다.';
-      }
-    }
     var mm = S.result.moves ? ' · 수동 조정 ' + S.result.moves + '회' : ' · 수동 조정 없음';
     $('#resultMeta').textContent = '계산 ' + S.result.ms + 'ms' + mm;
     /* 모든 반을 한 줄에: 반 개수만큼 열을 만든다(좁은 화면은 CSS가 줄을 바꾼다) */
