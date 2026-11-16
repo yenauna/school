@@ -40,6 +40,7 @@
   .tab.active{background:var(--card);color:var(--text);border-color:var(--line)}
   main{padding:16px 18px 112px;max-width:1180px;margin:0 auto}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 17px;margin:0 0 14px;box-shadow:0 1px 2px rgba(16,24,40,.03)}
+  .card,.grouphdr{scroll-margin-top:64px}
   h2{font-size:15.5px;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   h3{font-size:14px;margin:0}
   .hint{color:var(--muted);font-size:12.6px;margin:0 0 10px;line-height:1.62}
@@ -76,6 +77,7 @@
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
   .toolbar .spacer{flex:1}
   .table-wrap{border:1px solid var(--line);border-radius:10px;background:#fff}
+  #classTable{max-width:720px}#tagTable{max-width:860px}#pairTable{max-width:660px}#wishTable{max-width:780px}
   table{border-collapse:collapse;width:100%;font-size:13px}
   th,td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:middle}
   thead th{background:#fafbfc;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
@@ -225,21 +227,23 @@
   }
   /* 좁은 화면: 표를 카드처럼 세로로 펼친다(가로 넘침·안쪽 스크롤 없이) */
   @media (max-width:640px){
-    #classTable,#tagTable,#pairTable,#wishTable,#studentTable{display:block;border:0;font-size:13px}
-    #classTable thead,#tagTable thead,#pairTable thead,#wishTable thead,#studentTable thead{display:none}
-    #classTable tbody,#tagTable tbody,#pairTable tbody,#wishTable tbody,#studentTable tbody{display:block}
+    #classTable,#tagTable,#pairTable,#wishTable,#studentTable,.sumtable{display:block;border:0;font-size:13px}
+    #classTable thead,#tagTable thead,#pairTable thead,#wishTable thead,#studentTable thead,.sumtable thead{display:none}
+    #classTable tbody,#tagTable tbody,#pairTable tbody,#wishTable tbody,#studentTable tbody,.sumtable tbody{display:block}
     #classTable tfoot{display:none}
-    #classTable tr,#tagTable tr,#pairTable tr,#wishTable tr,#studentTable tr{display:block;border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin:0 0 8px;background:#fff}
-    #classTable td,#tagTable td,#pairTable td,#wishTable td,#studentTable td{display:flex;gap:10px;align-items:center;border:0;padding:3px 0;min-height:32px;white-space:normal}
+    #classTable tr,#tagTable tr,#pairTable tr,#wishTable tr,#studentTable tr,.sumtable tr{display:block;border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin:0 0 8px;background:#fff}
+    #classTable td,#tagTable td,#pairTable td,#wishTable td,#studentTable td,.sumtable td{display:flex;gap:10px;align-items:center;border:0;padding:3px 0;min-height:32px;white-space:normal}
     #classTable td[data-label]::before,#tagTable td[data-label]::before,#pairTable td[data-label]::before,
-    #wishTable td[data-label]::before,#studentTable td[data-label]::before{
+    #wishTable td[data-label]::before,#studentTable td[data-label]::before,.sumtable td[data-label]::before{
       content:attr(data-label);flex:0 0 68px;color:var(--muted);font-size:11.5px;font-weight:600;
     }
     #classTable td.num,#studentTable td.num,#wishTable td.num{width:auto;text-align:left;font-weight:700;color:var(--text)}
     #classTable td input[type=text],#classTable td input[type=number],
     #studentTable td input[type=text],#studentTable td input[type=number]{width:auto;flex:1 1 auto;min-width:64px}
     #classTable td[data-label="특수반"]{justify-content:flex-start}
-    #studentTable td.tags{white-space:normal}
+    #studentTable td.tags{white-space:normal;flex-wrap:wrap}
+    .chip{flex:0 0 auto;white-space:nowrap}
+    .sumtable .table-wrap{border:0}
     #studentTable td.act,#tagTable td.act,#pairTable td.act,#wishTable td.act{justify-content:flex-end;min-height:0;padding-top:2px}
     #pairTable td select,#studentTable td select,#tagTable td select{flex:1 1 auto;min-width:0}
     .wishcell{flex:1 1 auto}
@@ -2855,21 +2859,21 @@ var CORE = (function () {
     return out.join('');
   }
   function summaryHtml(rep) {
-    var h = '<div class="table-wrap"><table><thead><tr><th>반</th><th>인원 (목표)</th><th>남 (목표)</th><th>여 (목표)</th><th>힘든 점수(★)</th>';
+    var h = '<div class="table-wrap"><table class="sumtable"><thead><tr><th>반</th><th>인원 (목표)</th><th>남 (목표)</th><th>여 (목표)</th><th>힘든 점수(★)</th>';
     rep.tagSpread.forEach(function (ts) { h += '<th>' + esc(ts.tag) + '<br><span class="muted" style="font-weight:400">★' + esc(fmtScore(ts.weight)) + '</span></th>'; });
     h += '</tr></thead><tbody>';
     rep.per.forEach(function (p) {
       var dev = p.score - rep.verdict.scoreMean;
       var bad = Math.abs(dev) > rep.verdict.scoreTol + 1e-9;
-      h += '<tr><td><b>' + esc(p.name) + '</b>' + (p.special ? ' <span class="small muted">특수반</span>' : '') + '</td>' +
-        '<td class="' + (p.count === p.target ? '' : 'bad') + '">' + p.count + ' <span class="muted">(' + p.target + ')</span></td>' +
-        '<td class="' + (Math.abs(p.male - p.targetMale) >= 2 ? 'bad' : '') + '">' + p.male + ' <span class="muted">(' + p.targetMale + ')</span></td>' +
-        '<td class="' + (Math.abs(p.female - p.targetFemale) >= 2 ? 'bad' : '') + '">' + p.female + ' <span class="muted">(' + p.targetFemale + ')</span></td>' +
-        '<td class="' + (bad ? 'bad' : '') + '"><b>★' + esc(fmtScore(p.score)) + '</b> <span class="muted">(' + (dev >= 0 ? '+' : '−') + esc(fmtScore(Math.abs(dev))) + ')</span></td>';
+      h += '<tr><td data-label="반"><b>' + esc(p.name) + '</b>' + (p.special ? ' <span class="small muted">특수반</span>' : '') + '</td>' +
+        '<td data-label="인원" class="' + (p.count === p.target ? '' : 'bad') + '">' + p.count + ' <span class="muted">(' + p.target + ')</span></td>' +
+        '<td data-label="남" class="' + (Math.abs(p.male - p.targetMale) >= 2 ? 'bad' : '') + '">' + p.male + ' <span class="muted">(' + p.targetMale + ')</span></td>' +
+        '<td data-label="여" class="' + (Math.abs(p.female - p.targetFemale) >= 2 ? 'bad' : '') + '">' + p.female + ' <span class="muted">(' + p.targetFemale + ')</span></td>' +
+        '<td data-label="힘든 점수" class="' + (bad ? 'bad' : '') + '"><b>★' + esc(fmtScore(p.score)) + '</b> <span class="muted">(' + (dev >= 0 ? '+' : '−') + esc(fmtScore(Math.abs(dev))) + ')</span></td>';
       rep.tagSpread.forEach(function (ts) {
         var n = p.tags[ts.tag] || 0;
         var badTag = ts.pinned ? (ts.pinned.indexOf(p.k) === -1 && n > 0) : n > ts.cap;
-        h += '<td class="' + (badTag ? 'bad' : '') + '">' + (n || '–') +
+        h += '<td data-label="' + esc(ts.tag) + '" class="' + (badTag ? 'bad' : '') + '">' + (n || '–') +
           (n && (p.tagScore[ts.tag] || 0) ? ' <span class="muted">★' + esc(fmtScore(p.tagScore[ts.tag])) + '</span>' : '') + '</td>';
       });
       h += '</tr>';
