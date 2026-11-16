@@ -19,11 +19,11 @@
     font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","맑은 고딕",sans-serif;
     -webkit-text-size-adjust:100%;
   }
-  header{padding:20px 18px 0;max-width:1180px;margin:0 auto}
+  header{padding:20px 18px 0;max-width:min(1760px,96vw);margin:0 auto}
   .htop{display:flex;gap:12px 20px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
   h1{font-size:20px;margin:0 0 4px;letter-spacing:-.3px}
   .sub{margin:0;color:var(--muted);font-size:12.8px;max-width:68ch}
-  .stepsbar{max-width:1180px;margin:14px auto 0;padding:0 18px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .stepsbar{max-width:min(1760px,96vw);margin:14px auto 0;padding:0 18px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
   .steps{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .step{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 13px 5px 6px;font:inherit;font-size:12.8px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap}
   .step:hover{border-color:#cfd7e4;color:#333b46}
@@ -35,10 +35,10 @@
   .statebadge{font-size:12.3px;font-weight:600;border-radius:999px;padding:5px 12px;border:1px solid var(--line);background:var(--card);color:var(--muted);white-space:nowrap}
   .statebadge.demo{background:var(--warn-soft);border-color:#eed7a8;color:#8a5308}
   .statebadge.real{background:var(--good-soft);border-color:#b9e2c8;color:#15693d}
-  .tabs{display:flex;gap:4px;padding:14px 18px 0;max-width:1180px;margin:0 auto;position:sticky;top:0;background:var(--bg);z-index:20;border-bottom:1px solid var(--line)}
+  .tabs{display:flex;gap:4px;padding:14px 18px 0;max-width:min(1760px,96vw);margin:0 auto;position:sticky;top:0;background:var(--bg);z-index:20;border-bottom:1px solid var(--line)}
   .tab{border:1px solid transparent;border-bottom:none;background:transparent;color:var(--muted);font:inherit;font-weight:600;font-size:13.5px;padding:9px 15px;border-radius:9px 9px 0 0;cursor:pointer}
   .tab.active{background:var(--card);color:var(--text);border-color:var(--line)}
-  main{padding:16px 18px 112px;max-width:1180px;margin:0 auto}
+  main{padding:16px 18px 112px;max-width:min(1760px,96vw);margin:0 auto}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 17px;margin:0 0 14px;box-shadow:0 1px 2px rgba(16,24,40,.03)}
   .card,.grouphdr{scroll-margin-top:64px}
   h2{font-size:15.5px;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -297,6 +297,12 @@
   #resultExports[hidden]{display:none}
   #resultExports{display:flex;gap:6px}
   @media(max-width:640px){#resultExports{gap:4px}#resultExports .btn{font-size:12px;padding:6px 8px}}.roster-inputs{gap:6px}.roster-inputs button{white-space:nowrap}
+  .result-views{display:flex;align-items:center;gap:8px 20px;flex-wrap:wrap;margin-bottom:8px}.result-views .row{margin:0;gap:6px}
+  .chiplist.layout-two .gender-section{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}
+  .chiplist.layout-sex{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:4px}
+  .chiplist.layout-sex .gender-section{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .gender-title{font-size:11px;font-weight:700;color:var(--muted);text-align:center;line-height:18px}
+  .layout-two .stu,.layout-sex .stu{min-width:0}.layout-two .stu .l1,.layout-sex .stu .l1{flex-wrap:wrap;gap:2px}
 </style>
 </head>
 <body class="locked">
@@ -439,7 +445,10 @@
     <div class="card" id="resultCard">
       <h2>배정 점검 결과</h2>
       <p class="hint" style="margin-top:-2px"><b>3단계</b>입니다. 아래에서 조건을 지켰는지 확인하고, 학생을 끌어 옮겨 손본 뒤 <b>4단계</b>에서 내려받으세요.</p>
-      <div class="row" id="resultSort" role="group" aria-label="결과 정렬"><button class="btn" type="button" data-act="result-sort" data-sort="gender">남녀·가나다순</button><button class="btn" type="button" data-act="result-sort" data-sort="origin">5학년 반·번호순</button></div><div class="verdicts" id="verdict"></div>
+      <div class="result-views">
+        <div class="row" id="resultSort" role="group" aria-label="결과 정렬"><button class="btn" type="button" data-act="result-sort" data-sort="gender">남녀·가나다순</button><button class="btn" type="button" data-act="result-sort" data-sort="origin">5학년 반·번호순</button></div>
+        <div class="row" id="resultLayout" role="group" aria-label="학생 배치 보기"><button class="btn" type="button" data-act="result-layout" data-layout="one">전체 1줄</button><button class="btn" type="button" data-act="result-layout" data-layout="two">전체 2줄</button><button class="btn" type="button" data-act="result-layout" data-layout="sex">남자 1줄·여자 1줄</button></div>
+      </div><div class="verdicts" id="verdict"></div>
       <p id="similarNamesResult" class="name-notice"></p>
       <div class="wishnote" id="wishInfo"></div>
       <div class="toolbar" style="margin:12px 0 0">
@@ -2940,7 +2949,7 @@ var CORE = (function () {
     return '5-' + raw;
   }
   /* 학생별 한 줄 태그 배지와 개인별 별 합계 */
-  var resultSort = 'gender';
+  var resultSort = 'gender', resultLayout = 'one';
   function tagStyle(t) {
     var i = S.tags.map(function (x) { return x.name; }).indexOf(t);
     var hue = ((Math.max(0,i) * 137.508) + 205) % 360;
@@ -2968,6 +2977,21 @@ var CORE = (function () {
     '</div>';
   }
 
+  function studentLayoutHtml(members, boys, girls, k, sepMap, y3Map, fixMap) {
+    function chips(list) { return list.map(function (idx) { return chipHtml(idx,k,sepMap,y3Map,fixMap); }).join(''); }
+    if (!members.length) return '<div class="muted small">학생 없음</div>';
+    if (resultLayout === 'sex') {
+      return '<div class="gender-section boys" aria-label="남학생"><span class="gender-title">남</span>' + chips(boys) + '</div>' +
+        '<div class="gender-section girls" aria-label="여학생"><span class="gender-title">여</span>' + chips(girls) + '</div>';
+    }
+    if (resultLayout === 'two') {
+      // Separate grids force girls onto a fresh row even when boys end on an odd cell.
+      return (boys.length ? '<div class="gender-section boys" aria-label="남학생">' + chips(boys) + '</div>' : '') +
+        (boys.length && girls.length ? '<div class="gendivider"></div>' : '') +
+        (girls.length ? '<div class="gender-section girls" aria-label="여학생">' + chips(girls) + '</div>' : '');
+    }
+    return resultSort === 'origin' ? chips(members) : chips(boys) + (boys.length && girls.length ? '<div class="gendivider"></div>' : '') + chips(girls);
+  }
   /* 반 카드 한 벌: 모든 반이 한 줄에 나란히 놓인다(넓은 화면). 남자 목록과 여자 목록 사이에 구분선 1줄. */
   function cardsHtml(rep) {
     var sepMap = {}, y3Map = {}, fixMap = {};
@@ -3014,12 +3038,8 @@ var CORE = (function () {
           (tagCards ? '<div class="tagsum">' + tagCards + '</div>' : '') +
           (warns.length ? '<div class="cwarns">' + warns.map(function (w) { return '· ' + esc(w); }).join('<br>') + '</div>' : '') +
         '</div>' +
-        '<div class="chiplist">' +
-          (resultSort === 'origin' ? members.map(function (idx) { return chipHtml(idx, p.k, sepMap, y3Map, fixMap); }).join('') :
-          boys.map(function (idx) { return chipHtml(idx, p.k, sepMap, y3Map, fixMap); }).join('') +
-          (boys.length && girls.length ? '<div class="gendivider"></div>' : '') +
-          girls.map(function (idx) { return chipHtml(idx, p.k, sepMap, y3Map, fixMap); }).join('')) +
-          (!members.length ? '<div class="muted small" style="padding:6px 4px">학생 없음</div>' : '') +
+        '<div class="chiplist layout-' + resultLayout + '">' +
+          studentLayoutHtml(members,boys,girls,p.k,sepMap,y3Map,fixMap) +
         '</div>' +
         '<button class="addstu" type="button" data-act="add-class-student" data-k="' + p.k + '">+ 학생 추가</button>' +
       '</div>';
@@ -3092,6 +3112,7 @@ var CORE = (function () {
     wrap.setAttribute('style', '--cls-count:' + (rep.per.length || 1));
     wrap.innerHTML = cardsHtml(rep);
     $$('#resultSort button').forEach(function (b) { b.classList.toggle('primary', b.dataset.sort === resultSort); b.setAttribute('aria-pressed', String(b.dataset.sort === resultSort)); });
+    $$('#resultLayout button').forEach(function (b) { b.classList.toggle('primary', b.dataset.layout === resultLayout); b.setAttribute('aria-pressed', String(b.dataset.layout === resultLayout)); });
     alignResultHeads();
     $('#printArea').innerHTML = printHtml(rep);
   }
@@ -3777,6 +3798,7 @@ var CORE = (function () {
       if (act === 'group-add') g.push(null); else if (g.length > 2) g.splice(Number(t.dataset.j),1); else g[Number(t.dataset.j)] = null;
       invalidate(); renderPairs(); renderWishGroups(); renderExtraConditions(); return;
     }
+    if (act === 'result-layout') { resultLayout = t.dataset.layout; renderResult(); return; }
     if (act === 'result-sort') { resultSort = t.dataset.sort; renderResult(); return; }
 
     if (act === 'toggle-tag') {

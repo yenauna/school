@@ -98,6 +98,59 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  const pinnedWarning=await page.locator('#problemPanel').boundingBox();
  assert.ok(pinnedWarning.y>=0&&pinnedWarning.y<120,JSON.stringify(pinnedWarning));
  await page.screenshot({path:path.join(artifacts,'sticky-long-board.png')});
+ // Wide monitor containers and all six combinations of sort/layout modes.
+ const viewBaseline=await page.evaluate(()=>({assign:__bbj.state().result.assign.slice(),problems:__bbj.state().result.report.problems.slice()}));
+ for(const width of [1280,1920,2560]){
+  await page.setViewportSize({width,height:1000});await page.waitForTimeout(30);
+  const widths=await page.locator('header,.stepsbar,.tabs,main').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().width));
+  widths.forEach(w=>assert.ok(Math.abs(w-Math.min(1760,width*.96))<2,`${width}: ${w}`));
+  const rows=await page.locator('.col').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().y));
+  assert.ok(Math.max(...rows)-Math.min(...rows)<1,`six classes should stay in one row at ${width}`);
+ }
+ await page.setViewportSize({width:1920,height:1100});
+ for(const sort of ['gender','origin'])for(const layout of ['one','two','sex']){
+  await page.locator(`[data-sort="${sort}"]`).click();
+  await page.locator(`[data-layout="${layout}"]`).click();
+  assert.equal(await page.locator(`#resultLayout [data-layout="${layout}"]`).getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('#classCards .stu').count(),114);
+  assert.deepEqual(await page.evaluate(()=>__bbj.state().result.assign),viewBaseline.assign);
+  assert.deepEqual(await page.evaluate(()=>__bbj.state().result.report.problems),viewBaseline.problems);
+  assert.equal(await page.evaluate(({sort,layout})=>[...document.querySelectorAll('.col')].every(col=>{
+   const st=__bbj.state();
+   const ordered=es=>es.every((e,i)=>{if(!i)return true;const a=st.students.find(s=>s.id===Number(es[i-1].dataset.id)),b=st.students.find(s=>s.id===Number(e.dataset.id));return sort==='origin'?(parseInt(a.g5)-parseInt(b.g5)||Number(a.no)-Number(b.no))<=0:a.name.localeCompare(b.name,'ko')<=0});
+   if(layout==='one')return new Set([...col.querySelectorAll('.stu')].map(e=>Math.round(e.getBoundingClientRect().x))).size===1;
+   const boys=[...col.querySelectorAll('.boys .stu')],girls=[...col.querySelectorAll('.girls .stu')];
+   if(!ordered(boys)||!ordered(girls)||boys.some(e=>!e.classList.contains('m'))||girls.some(e=>!e.classList.contains('f')))return false;
+   if(layout==='two'){
+    for(const list of [boys,girls]){
+     const rects=list.map(e=>e.getBoundingClientRect());
+     if(rects.length>1&&Math.abs(rects[0].y-rects[1].y)>1)return false;
+     if(rects.length>2&&rects[2].y<=rects[0].y)return false;
+    }
+    if(boys.length&&girls.length){
+     const lastBoy=Math.max(...boys.map(e=>e.getBoundingClientRect().bottom)),firstGirl=girls[0].getBoundingClientRect();
+     if(firstGirl.y<lastBoy||Math.abs(firstGirl.x-boys[0].getBoundingClientRect().x)>1)return false;
+    }
+    return true;
+   }
+   if(boys.length&&girls.length){
+    const a=boys[0].getBoundingClientRect(),b=girls[0].getBoundingClientRect();
+    if(a.x>=b.x||Math.abs(a.y-b.y)>1)return false;
+   }
+   return [boys,girls].every(list=>new Set(list.map(e=>Math.round(e.getBoundingClientRect().x))).size<=1);
+  }),{sort,layout}),true,`${sort}/${layout}`);
+  const starts=await page.locator('.chiplist').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().y));
+  assert.ok(Math.max(...starts)-Math.min(...starts)<1);
+  await page.locator('#classCards').scrollIntoViewIfNeeded();
+  await page.screenshot({path:path.join(artifacts,`wide-${sort}-${layout}.png`)});
+ }
+ for(const width of [1280,768,412])for(const layout of ['one','two','sex']){
+  await page.setViewportSize({width,height:900});await page.locator(`[data-layout="${layout}"]`).click();
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${layout} overflow at ${width}`);
+ }
+ await page.setViewportSize({width:1600,height:1000});
+ await page.locator('[data-layout="one"]').click();await page.locator('[data-sort="gender"]').click();
+
  for(const width of [1280,768,412]){
   await page.setViewportSize({width,height:900});await page.waitForTimeout(50);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`page overflow at ${width}`);
@@ -297,9 +350,15 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.deepEqual(await page.evaluate(()=>__bbj.state().classes.map(c=>[c.total,c.male,c.female])),original.classes);
  assert.deepEqual(await page.evaluate(()=>__bbj.state().result.assign),original.assign);
  // A transfer special student moved into an unchecked class is still a special violation.
- await page.locator('.stu[data-id="7"]').dragTo(page.locator('.col[data-k="2"]'));
- assert.match(await page.locator('#problems').innerText(),/통합학급 미지정.*김민준/);
- await page.click('#btnUndo');
+ for(const layout of ['two','sex']){
+  await page.locator(`[data-layout="${layout}"]`).click();
+  await page.locator('.stu[data-id="7"]').dragTo(page.locator('.col[data-k="2"]'));
+  assert.match(await page.locator('#problems').innerText(),/통합학급 미지정.*김민준/);
+  await page.click('#btnUndo');
+  assert.deepEqual(await page.evaluate(()=>__bbj.state().result.assign),original.assign);
+  assert.equal(await page.locator(`.chiplist.layout-${layout}`).count(),3);
+ }
+ await page.locator('[data-layout="one"]').click();
  await page.evaluate(()=>{document.activeElement.blur();__bbj.cloud.flush(false)});
  await page.waitForFunction(()=>!__bbj.cloud.pending());
  assert.deepEqual(await page.evaluate(()=>fakeServer.state.requiredGroups),[[1,2,3]]);
@@ -327,6 +386,6 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  }
 
  assert.deepEqual(errors,[]);
- console.log('PASS Chromium: required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, new layout/navigation, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, responsive viewports, save/load and polling');
+ console.log('PASS Chromium: wide monitors and all sort/layout combinations, required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, new layout/navigation, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, responsive viewports, save/load and polling');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});
