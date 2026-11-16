@@ -36,7 +36,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
   Object.assign(S.students[0],{tags:['특수'],w:{특수:5}});
   Object.assign(S.students[1],{tags:['학습','생활'],w:{학습:2,생활:1}});
   Object.assign(S.students[2],{tags:['추가태그'],w:{추가태그:1}});
-  S.classes.forEach(c=>{c.total=19;c.male=null;c.female=null});S.nextId=115;S.result=null;
+  S.classes.forEach((c,i)=>{c.total=19;c.male=i%2?9:10;c.female=19-c.male});S.nextId=115;S.result=null;
   __bbj.renderAll();
  });
  // New stars always start at one even if a deleted tag was previously set higher.
@@ -137,6 +137,63 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.fill('#addStuScore','9');assert.equal(await page.inputValue('#addStuScore'),'5');
  await page.screenshot({path:path.join(artifacts,'edit-five-star-limit.png')});
  await page.click('#addStuApply');
+ // Class total/gender editing, special-class toggles and deduction changes stay exact.
+ await page.locator('.tab[data-tab="setup"]').click();
+ await page.evaluate(()=>{
+  const st=__bbj.state();
+  st.students=Array.from({length:108},(_,i)=>({id:i+1,name:'목표검증'+i,gender:i%2?'여':'남',g4:'',g5:(i%6+1)+'반',tags:[],w:{},fixed:null}));
+  st.classes=Array.from({length:6},(_,i)=>({name:['가반','나반','다반','라반','마반','바반'][i],special:i<2,total:0,male:0,female:0}));
+  st.deduct=2;st.useY3=false;st.pairs=[];st.wishGroups=[];st.result=null;__bbj.renderAll();
+ });
+ const field=(k,f)=>page.locator(`#classTable input[data-k="${k}"][data-field="${f}"]`);
+ const assertSums=async()=>{
+  assert.deepEqual(await page.evaluate(()=>__bbj.state().classes.reduce((a,c)=>{if(c.total!==c.male+c.female)throw Error('row mismatch');return [a[0]+c.total,a[1]+c.male,a[2]+c.female]},[0,0,0])),[108,54,54]);
+  assert.deepEqual((await page.locator('#classTable tfoot td').allTextContents()).slice(2),['108','54','54']);
+ };
+ const runExact=async()=>{
+  const targets=await page.evaluate(()=>__bbj.state().classes.map(c=>[c.total,c.male,c.female]));
+  await page.click('#btnRun');await page.waitForFunction(()=>!!__bbj.state().result);
+  assert.deepEqual(await page.evaluate(()=>__bbj.state().result.report.per.map(p=>[p.count,p.male,p.female])),targets);
+  await page.locator('.tab[data-tab="setup"]').click();
+ };
+ await page.click('#btnAutoTargets');await assertSums();
+ await page.locator('#cardClasses').scrollIntoViewIfNeeded();
+ await page.screenshot({path:path.join(artifacts,'class-targets-108.png')});
+ assert.deepEqual(await page.evaluate(()=>__bbj.state().classes.map(c=>c.total)),[17,17,19,19,18,18]);
+ await runExact();
+ await field(2,'special').check();await assertSums();
+ await page.fill('#deduct','');assert.equal(await page.inputValue('#deduct'),'');
+ await page.locator('#deduct').pressSequentially('3');assert.equal(await page.inputValue('#deduct'),'3');await assertSums();
+ await page.click('#btnAutoTargets');await runExact();
+ const male0=Number(await field(0,'male').inputValue()),male1=Number(await field(1,'male').inputValue());
+ const female0=Number(await field(0,'female').inputValue());
+ await field(0,'male').fill(String(male0+1));
+ assert.equal(Number(await field(0,'total').inputValue()),male0+1+female0); // before blur/change
+ assert.equal(await page.evaluate(()=>__bbj.state().classes[0].total),male0+1+female0);
+ await field(1,'male').fill(String(male1-1));await assertSums();
+ const f0=Number(await field(0,'female').inputValue()),f1=Number(await field(1,'female').inputValue());
+ await field(0,'female').fill(String(f0+1));await field(1,'female').fill(String(f1-1));await assertSums();
+ await runExact();
+ const before=await page.evaluate(()=>({...__bbj.state().classes[0]}));
+ await field(0,'total').fill(String(before.total+2));
+ const changed=await page.evaluate(()=>({...__bbj.state().classes[0]}));
+ assert.equal(changed.male,Math.round((before.total+2)*before.male/(before.male+before.female)));
+ assert.equal(changed.total,changed.male+changed.female);
+ const other=await page.evaluate(()=>({...__bbj.state().classes[1]}));
+ await field(1,'male').fill(String(other.male-(changed.male-before.male)));
+ await field(1,'female').fill(String(other.female-(changed.female-before.female)));
+ await assertSums();await runExact();
+ // A globally impossible manual split must be rejected rather than approximated.
+ const m=Number(await field(0,'male').inputValue()),f=Number(await field(0,'female').inputValue());
+ await field(0,'male').fill(String(m+1));await field(0,'female').fill(String(f-1));
+ await page.click('#btnRun');
+ assert.equal(await page.evaluate(()=>__bbj.state().result),null);
+ assert.match(await page.locator('#banner').innerText(),/남녀 목표 합계가 명단과 다릅니다/);
+ await page.click('#btnAutoTargets');await assertSums();
+ await page.evaluate(()=>{const st=__bbj.state();st.students.filter(s=>s.gender==='남').slice(0,st.classes[0].male+1).forEach(s=>s.fixed=0)});
+ await page.click('#btnRun');assert.match(await page.locator('#banner').innerText(),/고정 학생이 총원 또는 남녀 목표보다/);
+ await page.evaluate(()=>__bbj.state().students.forEach(s=>s.fixed=null));
+ await runExact();
  // All warning reasons are expanded at the top, including students and class names.
  await page.evaluate(()=>{
   const st=__bbj.state();
@@ -150,6 +207,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
   st.useY3=true;st.pairs=[[1,2]];st.wishGroups=[];
   st.result={assign:[0,0,0,0],ids:[1,2,3,4],moves:0,ms:0};__bbj.renderAll();
  });
+ await page.locator('.tab[data-tab="result"]').click();
  assert.equal(await page.locator('#problems li').count(),6);
  const details=await page.locator('#problemPanel').innerText();
  for(const text of ['경고 6건','분리갑','분리을','연속갑','연속을','가반','나반','통합학급 미지정','반드시 이 반 위반'])assert.ok(details.includes(text),text);
@@ -160,6 +218,6 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.screenshot({path:path.join(artifacts,'warning-details.png')});
  console.log('Screenshots:',artifacts);
  assert.deepEqual(errors,[]);
- console.log('PASS Chromium: five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, responsive viewports, save/load and polling');
+ console.log('PASS Chromium: exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, responsive viewports, save/load and polling');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

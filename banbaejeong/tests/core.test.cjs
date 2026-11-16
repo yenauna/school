@@ -99,3 +99,44 @@ test('only important violations are warnings, with student and actual/required c
  assert.match(messages,/2반 인원이 0명.*목표는 2명/);
  assert.doesNotMatch(messages,/힘든 점수|평균|남학생|고른 분포/);
 });
+
+test('108 students: deduction applies once to total and every total/gender sum is exact',()=>{
+ const st=roster(108), cls=classes(6).map((c,i)=>({...c,special:i<2}));
+ const t=C.autoTargets(st,cls,2);
+ assert.deepEqual(plain(t.total),[17,17,19,19,18,18]);
+ assert.equal(t.total.reduce((a,b)=>a+b),108);
+ assert.equal(t.male.reduce((a,b)=>a+b),54);
+ assert.equal(t.female.reduce((a,b)=>a+b),54);
+ t.total.forEach((n,i)=>{assert.equal(n,t.male[i]+t.female[i]);assert.ok(Math.abs(t.male[i]-t.female[i])<=1)});
+});
+test('automatic targets conserve all counts for odd, skewed, tiny, all/no-special rosters',()=>{
+ for(const n of [0,1,5,17,53,108,113]) for(const k of [2,3,6,12]) for(const specialCount of [0,1,k]) for(const deduction of [0,2,6]) {
+  const st=roster(n);st.forEach((s,i)=>s.gender=i<Math.floor(n*0.7)?'남':'여');
+  const cls=classes(k).map((c,i)=>({...c,special:i<specialCount}));
+  const t=C.autoTargets(st,cls,deduction),sum=a=>a.reduce((a,b)=>a+b,0);
+  assert.equal(sum(t.total),n);assert.equal(sum(t.male),Math.floor(n*0.7));assert.equal(sum(t.female),n-Math.floor(n*0.7));
+  t.total.forEach((v,i)=>{assert.equal(v,t.male[i]+t.female[i]);assert.ok(Number.isInteger(v)&&t.male[i]>=0&&t.female[i]>=0)});
+  const adjusted=t.total.map((v,i)=>v+(cls[i].special?deduction:0));
+  if(t.total.every(v=>v>0))assert.ok(Math.max(...adjusted)-Math.min(...adjusted)<=1);
+ }
+});
+test('row edits synchronize immediately in both directions and preserve ratio',()=>{
+ const c={total:18,male:10,female:8};
+ C.syncClass(c,'male',11);assert.deepEqual(c,{total:19,male:11,female:8});
+ C.syncClass(c,'female',9);assert.deepEqual(c,{total:20,male:11,female:9});
+ C.syncClass(c,'total',24);assert.deepEqual(c,{total:24,male:13,female:11});
+ C.syncClass(c,'male',-3);assert.equal(c.male,0);assert.equal(c.total,c.male+c.female);
+ C.syncClass(c,'total','');assert.deepEqual(c,{total:0,male:0,female:0});
+ C.syncClass(c,'total',19);assert.deepEqual(c,{total:19,male:10,female:9});
+});
+test('allocation exactly matches every class and gender quota, even with strong competing constraints',()=>{
+ const st=roster(108),cls=classes(6).map((c,i)=>({...c,special:i<2}));
+ const t=C.autoTargets(st,cls,2);cls.forEach((c,i)=>Object.assign(c,{total:t.total[i],male:t.male[i],female:t.female[i]}));
+ st[0].tags=['특수'];st[0].w={특수:5};st[1].fixed=1;
+ for(const seed of [1,42,2026]) {
+  const opts={threeYear:false,pinned:{특수:[0,1]},seed,restarts:4,iters:2000,wishGroups:[[0,2,4,6]]};
+  const result=C.assign(st,cls,[[0,1,2,3,4,5]],opts),rep=C.evaluate(st,cls,[],result.assign,opts);
+  rep.per.forEach((p,i)=>{assert.equal(p.count,cls[i].total);assert.equal(p.male,cls[i].male);assert.equal(p.female,cls[i].female)});
+  assert.equal(result.assign[1],1);
+ }
+});

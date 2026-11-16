@@ -368,7 +368,7 @@
 
     <div class="grouphdr"><span class="n">2</span>반과 조건 정하기<span class="note">— 대부분은 기본값 그대로 두어도 됩니다</span></div>
     <div class="card" id="cardClasses">
-      <h2>새 반 구성</h2>
+      <h2>다음 학년도 학급 구성</h2>
       <div class="row">
         <label class="fld">새 반 개수 <input type="number" id="classCount" min="2" max="12" step="1" value="6"></label>
         <label class="fld" title="'통합학급'으로 체크한 반은 목표 인원에서 이만큼 적게 잡습니다.">통합학급은 <input type="number" id="deduct" min="0" max="6" step="1" value="2"> 명 적게</label>
@@ -805,54 +805,42 @@ var CORE = (function () {
 
   /* 반별 목표 인원·남녀 목표 자동 계산 */
   function autoTargets(students, classes, deduct) {
-    var N = students.length, K = classes.length, i;
-    var total = [], base = Math.floor(N / (K || 1)), rem = N - base * K;
-    for (i = 0; i < K; i++) total.push(base + (i < rem ? 1 : 0));
-
-    deduct = Number(deduct) || 0;
-    var removed = 0;
-    for (i = 0; i < K; i++) {
-      if (classes[i].special && deduct > 0) {
-        var d = Math.min(deduct, Math.max(0, total[i] - 1));
-        total[i] -= d; removed += d;
+    var N = students.length, K = classes.length;
+    var total = new Array(K).fill(0), male = new Array(K).fill(0);
+    deduct = Math.max(0, Math.floor(Number(deduct) || 0));
+    // Equalize total + deduction: the deduction applies once to the class total.
+    for (var n = 0; n < N && K; n++) {
+      var best = 0;
+      for (var k = 1; k < K; k++) {
+        var value = total[k] + (classes[k].special ? deduct : 0);
+        var current = total[best] + (classes[best].special ? deduct : 0);
+        if (value < current || (value === current && classes[k].special && !classes[best].special)) best = k;
       }
+      total[best]++;
     }
-    var cand = [];
-    for (i = 0; i < K; i++) if (!classes[i].special) cand.push(i);
-    if (!cand.length) { for (i = 0; i < K; i++) cand.push(i); }
-    var cursor = 0;
-    while (removed > 0 && cand.length) {
-      total[cand[cursor % cand.length]]++; removed--; cursor++;
-      if (cursor > 10000) break;
-    }
-
-    var mTotal = 0, fTotal = 0;
-    students.forEach(function (s) {
-      if (s.gender === '남') mTotal++; else if (s.gender === '여') fTotal++;
+    var boys = students.filter(function (s) { return s.gender === '남'; }).length;
+    var fractions = [], assigned = 0;
+    total.forEach(function (t,k) {
+      var ideal = N ? t * boys / N : 0;
+      male[k] = Math.floor(ideal); assigned += male[k];
+      fractions.push({k:k,part:ideal-male[k]});
     });
-    var male = [], sumM = 0;
-    for (i = 0; i < K; i++) {
-      var m = N ? Math.round(total[i] * mTotal / N) : 0;
-      if (m > total[i]) m = total[i];
-      if (m < 0) m = 0;
-      male.push(m); sumM += m;
+    fractions.sort(function (a,b) { return b.part-a.part || a.k-b.k; });
+    for (var i = 0; i < boys-assigned && i < fractions.length; i++) male[fractions[i].k]++;
+    return {total:total,male:male,female:total.map(function (t,k) { return t-male[k]; })};
+  }
+  function syncClass(c, field, value, ratio) {
+    function count(v) { return Math.max(0, Math.floor(Number(v) || 0)); }
+    if (field === 'male' || field === 'female') {
+      c[field] = count(value); c[field === 'male' ? 'female' : 'male'] = count(c[field === 'male' ? 'female' : 'male']);
+      c.total = c.male + c.female;
+    } else {
+      var oldMale = count(c.male), oldFemale = count(c.female), oldSum = oldMale+oldFemale;
+      c.total = count(value);
+      c.male = Math.round(c.total * (ratio == null ? (oldSum ? oldMale/oldSum : 0.5) : ratio));
+      c.female = c.total-c.male;
     }
-    var diff = mTotal - sumM, guard = 0;
-    while (diff !== 0 && guard++ < 500) {
-      var step = diff > 0 ? 1 : -1, bestK = -1, bestVal = Infinity;
-      for (i = 0; i < K; i++) {
-        if (step > 0 && male[i] >= total[i]) continue;
-        if (step < 0 && male[i] <= 0) continue;
-        var ratio = total[i] ? male[i] / total[i] : 0;
-        var val = step > 0 ? ratio : -ratio;
-        if (val < bestVal) { bestVal = val; bestK = i; }
-      }
-      if (bestK < 0) break;
-      male[bestK] += step; diff -= step;
-    }
-    var female = [];
-    for (i = 0; i < K; i++) female.push(total[i] - male[i]);
-    return { total: total, male: male, female: female };
+    return c;
   }
 
   /* 학생 사이의 '같은 반 금지' 연결: 직접 넣은 분리 그룹 + 3년 연속 같은 반(4·5학년 동일) */
@@ -965,8 +953,15 @@ var CORE = (function () {
 
     var male = students.map(function (s) { return s.gender === '남' ? 1 : 0; });
     var fixedOf = students.map(function (s) {
-      return (s.fixed === null || s.fixed === undefined || s.fixed === '') ? null : Number(s.fixed);
+      var k = s.fixed === null || s.fixed === undefined || s.fixed === '' ? null : Number(s.fixed);
+      return Number.isInteger(k) && k >= 0 && k < K ? k : null;
     });
+    var fixedTotal = new Array(K).fill(0), fixedMale = new Array(K).fill(0);
+    fixedOf.forEach(function (k,i) { if (k != null && k >= 0 && k < K) { fixedTotal[k]++; fixedMale[k] += male[i]; } });
+    var exactQuotas = T.reduce(function (a,b) { return a+b; },0) === N &&
+      M.reduce(function (a,b) { return a+b; },0) === male.reduce(function (a,b) { return a+b; },0) &&
+      students.every(function (s) { return s.gender === '남' || s.gender === '여'; }) &&
+      classes.every(function (c,k) { return Number.isInteger(T[k]) && Number.isInteger(M[k]) && M[k] >= 0 && M[k] <= T[k] && Number(c.female) === T[k]-M[k] && fixedMale[k] <= M[k] && fixedTotal[k]-fixedMale[k] <= T[k]-M[k]; });
     var sepOf = students.map(function () { return []; });
     var links = buildLinks(students, pairs, opts);
     links.forEach(function (l) { sepOf[l.a].push(l.b); sepOf[l.b].push(l.a); });
@@ -1120,6 +1115,7 @@ var CORE = (function () {
       for (var oi = 0; oi < order.length; oi++) {
         var si = order[oi], bestK = 0, bestScore = Infinity;
         for (var k = 0; k < K; k++) {
+          if (exactQuotas && (male[si] ? st.mc[k] >= M[k] : st.cnt[k]-st.mc[k] >= T[k]-M[k])) continue;
           var before = costClass(st, k);
           addTo(st, k, si, 1);
           var after = costClass(st, k);
@@ -1141,6 +1137,7 @@ var CORE = (function () {
           if (rnd() < 0.7) {
             var to = (rnd() * K) | 0, from = st.place[a];
             if (to === from) continue;
+            if (exactQuotas) continue; // Full quotas allow swaps only.
             var bCls = costClass(st, from) + costClass(st, to);
             var bSep = sepCur(st, a, -1), bPin = pinBad(st, a, from), bWish = wishPenCur(st, a, -1);
             st.place[a] = -1; addTo(st, from, a, -1);
@@ -1155,7 +1152,7 @@ var CORE = (function () {
             addTo(st, to, a, -1); st.place[a] = -1; addTo(st, from, a, 1); st.place[a] = from;
           } else {
             var b = movable[(rnd() * movable.length) | 0];
-            if (b === a) continue;
+            if (b === a || (exactQuotas && male[a] !== male[b])) continue;
             var ka = st.place[a], kb = st.place[b];
             if (ka === kb) continue;
             var isPair = sepOf[a].indexOf(b) !== -1;
@@ -1426,6 +1423,7 @@ var CORE = (function () {
     tagName: tagName,
     virtualRoster: virtualRoster,
     autoTargets: autoTargets,
+    syncClass: syncClass,
     tagPlans: tagPlans,
     buildLinks: buildLinks,
     assign: assign,
@@ -1484,7 +1482,7 @@ var CORE = (function () {
   /* ---------- 상태 ---------- */
   function defaultClasses(K) {
     var out = [];
-    for (var i = 0; i < K; i++) out.push({ name: classDefaultName(i), special: false, total: null, male: null, female: null });
+    for (var i = 0; i < K; i++) out.push({ name: classDefaultName(i), special: false, total: 0, male: 0, female: 0 });
     return out;
   }
   function initialState() {
@@ -1504,6 +1502,9 @@ var CORE = (function () {
       /* 예전 자료에 이름이 비어 있으면 이 자리의 기본 이름(가반·나반…)을 쓴다 */
       if (c.name == null || c.name === '') c.name = classDefaultName(k);
       c.total = num(c.total); c.male = num(c.male); c.female = num(c.female);
+      if (c.total != null && c.male != null && c.female == null) c.female = Math.max(0,c.total-c.male);
+      else if (c.total != null && c.female != null && c.male == null) c.male = Math.max(0,c.total-c.female);
+      CORE.syncClass(c,'total',c.total == null ? (c.male || 0)+(c.female || 0) : c.total);
       c.special = !!c.special;
     });
     out.classCount = out.classCount || out.classes.length;
@@ -1649,19 +1650,15 @@ var CORE = (function () {
     updateTargetHint();
   }
   function updateTargetHint() {
-    var N = S.students.length, sum = 0;
-    S.classes.forEach(function (c) { sum += Number(c.total) || 0; });
-    var el = $('#targetHint');
-    if (!N) {
-      el.className = 'status muted';
-      el.textContent = '명단을 먼저 넣으면 학생 수에 맞춰 목표를 채울 수 있습니다.';
-    } else if (sum === N) {
-      el.className = 'status ok';
-      el.textContent = '학생 ' + N + '명 · 목표 합계 ' + sum + '명 (일치)';
-    } else {
-      el.className = 'status bad';
-      el.textContent = '학생 ' + N + '명 · 목표 합계 ' + sum + '명 (' + (sum > N ? (sum - N) + '명 초과' : (N - sum) + '명 부족') + ') — 자동 맞추기를 누르거나 숫자를 고치세요';
-    }
+    var N = S.students.length, sums = [0,0,0];
+    S.classes.forEach(function (c) { sums[0] += Number(c.total)||0; sums[1] += Number(c.male)||0; sums[2] += Number(c.female)||0; });
+    var cells = $$('#classTable tfoot td'); sums.forEach(function (v,i) { if (cells[i+2]) cells[i+2].textContent = v; });
+    var boys = S.students.filter(function (s) { return s.gender === '남'; }).length, girls = S.students.filter(function (s) { return s.gender === '여'; }).length;
+    var matches = sums[0] === N && sums[1] === boys && sums[2] === girls;
+    var el = $('#targetHint'); el.className = 'status ' + (!N ? 'muted' : matches ? 'ok' : 'bad');
+    el.textContent = !N ? '명단을 먼저 넣으면 학생 수에 맞춰 목표를 채울 수 있습니다.' :
+      '목표 / 명단: 총원 ' + sums[0] + '/' + N + '명 · 남 ' + sums[1] + '/' + boys + '명 · 여 ' + sums[2] + '/' + girls + '명' +
+      (matches ? ' (모두 일치)' : ' — 자동 맞추기를 누르거나 숫자를 고치세요');
     updateAbInfo();
   }
   function updateAbInfo() {
@@ -1729,12 +1726,13 @@ var CORE = (function () {
     n = Math.max(2, Math.min(12, Math.floor(n) || 6));
     var old = S.classes, out = [];
     for (var i = 0; i < n; i++) {
-      out.push(old[i] || { name: classDefaultName(i), special: false, total: null, male: null, female: null });
+      out.push(old[i] || { name: classDefaultName(i), special: false, total: 0, male: 0, female: 0 });
     }
     S.classes = out; S.classCount = n;
     S.students.forEach(function (s) {
       if (s.fixed != null && s.fixed !== '' && Number(s.fixed) >= n) s.fixed = null;
     });
+    if (S.students.length) refreshTargets();
     invalidate(); renderClasses(); renderPairs(); renderStudents();
   }
 
@@ -2750,19 +2748,28 @@ var CORE = (function () {
     });
     if (zero.length) return zero.join(', ') + '의 목표 인원이 0명입니다. 목표 인원을 채워 주세요.';
     if (sum !== N) return '목표 인원 합계(' + sum + '명)와 학생 수(' + N + '명)가 다릅니다. \'목표 인원 자동 맞추기\'를 누르거나 숫자를 고쳐 주세요.';
-    var fixedCount = {};
+    var boys = S.students.filter(function (s) { return s.gender === '남'; }).length;
+    var girls = S.students.filter(function (s) { return s.gender === '여'; }).length;
+    if (boys+girls !== N) return '학생의 성별을 남 또는 여로 입력해 주세요.';
+    if (S.classes.some(function (c) { return !Number.isInteger(c.total) || !Number.isInteger(c.male) || !Number.isInteger(c.female) || c.male < 0 || c.female < 0 || c.total !== c.male+c.female; })) return '각 반의 목표 인원과 남녀 합계가 일치해야 합니다. 목표 인원을 수정하거나 자동 맞추기를 눌러 주세요.';
+    var targetBoys = S.classes.reduce(function (sum,c) { return sum+c.male; },0);
+    var targetGirls = S.classes.reduce(function (sum,c) { return sum+c.female; },0);
+    if (targetBoys !== boys || targetGirls !== girls) return '남녀 목표 합계가 명단과 다릅니다: 남 ' + targetBoys + '명 / 실제 ' + boys + '명, 여 ' + targetGirls + '명 / 실제 ' + girls + '명. 자동 맞추기를 누르거나 숫자를 고쳐 주세요.';
+    var fixedCount = {}, fixedBoys = {}, fixedGirls = {};
     S.students.forEach(function (s) {
       if (s.fixed == null || s.fixed === '' || s.fixed === -1) return;
       var k = Number(s.fixed);
       if (k < 0 || k >= S.classes.length) { s.fixed = null; return; }
       fixedCount[k] = (fixedCount[k] || 0) + 1;
+      var counts = s.gender === '남' ? fixedBoys : fixedGirls; counts[k] = (counts[k] || 0)+1;
     });
     var over = [];
     Object.keys(fixedCount).forEach(function (k) {
       var c = S.classes[Number(k)];
-      if (fixedCount[k] > (Number(c.total) || 0)) over.push(c.name + '(고정 ' + fixedCount[k] + '명 / 목표 ' + (Number(c.total) || 0) + '명)');
+      if ((fixedBoys[k] || 0) > c.male || (fixedGirls[k] || 0) > c.female) over.push(c.name + '(고정 남 ' + (fixedBoys[k] || 0) + '명 / 목표 ' + c.male + '명, 고정 여 ' + (fixedGirls[k] || 0) + '명 / 목표 ' + c.female + '명)');
+      else if (fixedCount[k] > (Number(c.total) || 0)) over.push(c.name + '(고정 ' + fixedCount[k] + '명 / 목표 ' + (Number(c.total) || 0) + '명)');
     });
-    if (over.length) return '고정 학생이 목표 인원보다 많은 반이 있습니다: ' + over.join(', ') + '. 목표를 늘리거나 고정을 풀어 주세요.';
+    if (over.length) return '고정 학생이 총원 또는 남녀 목표보다 많은 반이 있습니다: ' + over.join(', ') + '. 목표를 늘리거나 고정을 풀어 주세요.';
     return null;
   }
   function requestRun() {
@@ -3578,14 +3585,30 @@ var CORE = (function () {
 
   /* ---------- 이벤트 ---------- */
   function onClassField(el, commit) {
-    var k = Number(el.dataset.k), f = el.dataset.field;
-    if (!S.classes[k]) return;
-    if (f === 'special') S.classes[k].special = el.checked;
-    else if (f === 'name') S.classes[k].name = el.value.trim() || classDefaultName(k);
-    else S.classes[k][f] = num(el.value);
+    var k = Number(el.dataset.k), f = el.dataset.field, c = S.classes[k];
+    if (!c) return;
+    if (f === 'special') { c.special = el.checked; if (S.students.length) refreshTargets(); }
+    else if (f === 'name') c.name = el.value.trim() || classDefaultName(k);
+    else {
+      if (f === 'total' && el._genderRatio == null) el._genderRatio = c.male+c.female ? c.male/(c.male+c.female) : 0.5;
+      CORE.syncClass(c,f,el.value, f === 'total' ? el._genderRatio : null);
+      if (commit) delete el._genderRatio;
+      ['total','male','female'].forEach(function (field) {
+        var input = $('#classTable input[data-k="' + k + '"][data-field="' + field + '"]');
+        if (input && (commit || input !== el || el.value !== '')) input.value = c[field];
+      });
+    }
     invalidate();
-    if (commit) { renderClasses(); renderStudents(); renderTags(); }
+    if (commit && (f === 'special' || f === 'name')) { renderClasses(); renderStudents(); renderTags(); }
     else updateTargetHint();
+  }
+  function onDeductField(el, commit) {
+    var empty = el.value === '';
+    S.deduct = Math.min(6,Math.max(0,Math.floor(Number(el.value) || 0)));
+    if (el.value !== '') el.value = S.deduct;
+    if (S.students.length) refreshTargets();
+    invalidate(); renderClasses();
+    if (empty && !commit) el.value = '';
   }
   function onTagField(el, commit) {
     var i = Number(el.dataset.i), f = el.dataset.field;
@@ -3629,6 +3652,7 @@ var CORE = (function () {
     if (el.id === 'addStuScore' && addStudentDraft) { addStudentDraft.score = Math.min(5,Math.max(1,Math.floor(Number(el.value)||1))); CORE.normalizeStars(addStudentDraft); el.value = scoreOf(addStudentDraft); $('#addStuTags').innerHTML = tagChips(addStudentDraft); return; }
     if (el.id === 'pickerSearch') { renderPicker(); return; }
     if (el.id === 'search') { renderStudents(); return; }
+    if (el.id === 'deduct') { onDeductField(el); return; }
     if (el.id === 'newTagName') return;
     if (el.dataset.scope === 'student') onStudentField(el);
     else if (el.dataset.scope === 'class' && el.type !== 'checkbox') onClassField(el, false);
@@ -3649,7 +3673,7 @@ var CORE = (function () {
       return;
     }
     if (el.id === 'classCount') { setClassCount(Number(el.value)); return; }
-    if (el.id === 'deduct') { S.deduct = Math.max(0, Math.floor(Number(el.value) || 0)); invalidate(); return; }
+    if (el.id === 'deduct') { onDeductField(el,true); return; }
     if (el.id === 'restrictSpecial') { S.restrictSpecial = el.checked; invalidate(); return; }
     if (el.id === 'useY3') { S.useY3 = el.checked; invalidate(); updatePairHint(); return; }
     if (el.dataset.scope === 'wish') {
