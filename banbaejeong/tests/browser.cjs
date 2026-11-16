@@ -85,7 +85,13 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.click('#btnRun');await page.waitForFunction(()=>!!__bbj.state().result);
  assert.equal(await page.evaluate(()=>new Set(__bbj.state().result.assign.slice(0,6)).size),6);
  assert.equal(await page.locator('.col').count(),6);
- assert.equal(await page.locator('[data-layout="two"]').getAttribute('aria-pressed'),'true');
+ assert.equal(await page.locator('[data-layout="sex"]').getAttribute('aria-pressed'),'true');
+ assert.equal(await page.evaluate(()=>__bbj.state().resultLayout),'sex');
+ assert.equal(await page.inputValue('#scoreGap'),'2');
+ await page.locator('[data-layout="one"]').click();
+ assert.equal(await page.evaluate(()=>__bbj.state().resultLayout),'one');
+ await page.locator('[data-layout="sex"]').click();
+ assert.equal(await page.evaluate(()=>__bbj.state().resultLayout),'sex');
  assert.equal(await page.locator('.actionbar').isVisible(),false);
  assert.equal(await page.locator('#resultCard .result-actions button').allTextContents().then(a=>a.join('|')),'다시 배정|표로 복사|인쇄|엑셀 내려받기');
  const order=await page.locator('.result-heading,.result-views,.result-signals,#boardCard').evaluateAll(es=>es.map(e=>({top:e.getBoundingClientRect().top,bottom:e.getBoundingClientRect().bottom})));
@@ -281,7 +287,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.locator('.tab[data-tab="result"]').click();
  assert.equal(await page.evaluate(()=>__bbj.state().result.report.problems.length),6);
  const details=(await page.locator('.signal-details,.class-notes').allTextContents()).join(' ');
- for(const text of ['분리갑','분리을','연속갑','연속을','가반','나반','통합×','목표2/현재4'])assert.ok(details.includes(text),text);
+ for(const text of ['분리갑','분리을','연속갑','연속을','가반','나반','통합×','2명 부족','2명 초과'])assert.ok(details.includes(text),text);
  assert.doesNotMatch(details,/평균|힘든 점수|남학생|고른 분포/);
  assert.ok(await page.locator('.signal-details.bad').count()>0);
  assert.equal(await page.locator('#scoreBar.warn').count(),0);
@@ -354,7 +360,20 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.ok(await page.locator('.col.quota-bad').count()>=2);
  const nextClass=(original.assign[0]+1)%3;
  await page.locator('.stu[data-id="1"]').dragTo(page.locator(`.col[data-k="${nextClass}"]`));
+ assert.equal(await page.locator('#comboMoveModal').isVisible(),true);
+ assert.match(await page.locator('#comboMoveText').innerText(),/^필수 조합 새기능학생1, 새기능학생2 학생도 함께 옮기겠습니까\?/);
+ await page.click('#comboMoveNo');
+ assert.equal(await page.locator('#comboMoveModal').isVisible(),false);
+ assert.deepEqual(await page.evaluate(()=>__bbj.state().result.assign.slice(0,3)),original.assign.slice(0,3));
+ await page.locator('.stu[data-id="1"]').dragTo(page.locator(`.col[data-k="${nextClass}"]`));
+ await page.click('#comboMoveYes');
+ assert.deepEqual(await page.evaluate(()=>__bbj.state().result.assign.slice(0,3)),[nextClass,nextClass,nextClass]);
+ assert.match(await page.locator('[data-check="required"]').getAttribute('class'),/ok/);
+ // A split required group still turns red when it comes from elsewhere (here: a server-style state).
+ await page.evaluate(()=>{const st=__bbj.state();st.result.assign[1]=(st.result.assign[0]+1)%3;__bbj.renderAll()});
  assert.match(await page.locator('[data-details="required"]').innerText(),/새기능학생0/);
+ await page.evaluate(()=>{const st=__bbj.state();st.result.assign[1]=st.result.assign[0];__bbj.renderAll()});
+ assert.match(await page.locator('[data-check="required"]').getAttribute('class'),/ok/);
  await page.locator('#classCards').scrollIntoViewIfNeeded();
  const warningBox=await page.locator('.result-signals').boundingBox();
  await page.screenshot({path:path.join(artifacts,'warning-position-check.png')});
@@ -418,7 +437,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
   st.pairs=[];st.requiredGroups=[];st.wishGroups=[[1,3]];st.useY3=false;
   st.result={assign:[0,0,1,1],ids:[1,2,3,4],moves:0,ms:0};__bbj.renderAll();
  });
- const shortLabels=['특수','동명이인','이름만 같음','3년 같은 반','필수 분리','필수 희망','추천 희망','별점','남녀수'];
+ const shortLabels=['특수','동명이인','이름만 같음','3년 같은 반','필수 분리','필수 희망','추천 희망','별점','인원'];
  assert.deepEqual(await page.locator('#verdict .v').allTextContents(),shortLabels);
  assert.equal(await page.locator('#verdict .v.warn').count(),2);
  assert.equal(await page.locator('#verdict .v.bad').count(),0);
@@ -503,37 +522,46 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  });
  assert.equal(await page.locator('.signal-details.warn').count(),0);
  assert.equal(await page.locator('#referencePopup').isVisible(),false);
- assert.match(await page.locator('[data-check="score"]').getAttribute('class'),/warn/);
- assert.match(await page.locator('[data-check="gender"]').getAttribute('class'),/warn/);
+ assert.match(await page.locator('[data-check="score"]').getAttribute('class'),/bad/);
+ assert.equal(await page.locator('[data-signal="score"] .signal-details').innerText(),'다반 0점, 가반 20점');
+ assert.match(await page.locator('[data-check="count"]').getAttribute('class'),/warn/);
  assert.deepEqual(await page.evaluate(()=>__bbj.state().result.report.problems),[]);
  assert.equal(await page.locator('.col.quota-bad').count(),0);
  const cells=await page.locator('.signal').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().width));
  assert.ok(Math.max(...cells)-Math.min(...cells)<1);
- await page.locator('[data-check="score"]').hover();
+ // The star gap threshold re-judges immediately and is kept in the state.
+ await page.fill('#scoreGap','25');await page.dispatchEvent('#scoreGap','change');
+ assert.match(await page.locator('[data-check="score"]').getAttribute('class'),/ok/);
+ assert.equal(await page.locator('[data-signal="score"] .signal-details').count(),0);
+ assert.equal(await page.evaluate(()=>__bbj.state().scoreGap),25);
+ await page.fill('#scoreGap','2');await page.dispatchEvent('#scoreGap','change');
+ assert.match(await page.locator('[data-check="score"]').getAttribute('class'),/bad/);
+ assert.equal(await page.evaluate(()=>__bbj.state().scoreGap),2);
+ assert.equal(await page.evaluate(()=>[...document.querySelectorAll('#scoreGapRow span')].map(s=>s.textContent).join(' ')),'별점 높은 반과 낮은 반이 점 이상 차이날 때부터 경고 표시');
+ assert.equal(await page.inputValue('#scoreGap'),'2');
+ await page.mouse.move(0,0);
+ await page.locator('[data-check="count"]').hover();
  assert.equal(await page.locator('#referencePopup').isVisible(),true);
- assert.match(await page.locator('#referencePopup').innerText(),/가반 별점 높음/);
- assert.match(await page.locator('#referencePopup').innerText(),/다반 별점 낮음/);
- const scoreBox=await page.locator('[data-check="score"]').boundingBox(),hoverBox=await page.locator('#referencePopup').boundingBox();
+ assert.match(await page.locator('#referencePopup').innerText(),/가반 남자 많음/);
+ assert.match(await page.locator('#referencePopup').innerText(),/다반 남자 부족/);
+ const scoreBox=await page.locator('[data-check="count"]').boundingBox(),hoverBox=await page.locator('#referencePopup').boundingBox();
  assert.ok(hoverBox.y+hoverBox.height<=scoreBox.y);
- await page.screenshot({path:path.join(artifacts,'star-reference-hover.png')});
+ await page.screenshot({path:path.join(artifacts,'count-reference-hover.png')});
  await page.mouse.move(0,0);assert.equal(await page.locator('#referencePopup').isVisible(),false);
- await page.locator('[data-check="gender"]').focus();
+ await page.locator('[data-check="count"]').focus();
  assert.equal(await page.locator('#referencePopup').isVisible(),true);
- assert.match(await page.locator('#referencePopup').innerText(),/가반 남자수 많음/);
- assert.match(await page.locator('#referencePopup').innerText(),/다반 여자수 많음/);
- await page.screenshot({path:path.join(artifacts,'gender-reference-focus.png')});
  await page.keyboard.press('Escape');assert.equal(await page.locator('#referencePopup').isVisible(),false);
  await page.setViewportSize({width:412,height:900});
- await page.locator('[data-check="gender"]').hover();
+ await page.locator('[data-check="count"]').hover();
  const smallTip=await page.locator('#referencePopup').boundingBox();assert.ok(smallTip.x>=0&&smallTip.x+smallTip.width<=412);
- await page.mouse.move(0,0);await page.locator('[data-check="gender"]').blur();await page.keyboard.press('Escape');
- await page.locator('[data-check="gender"]').click();
+ await page.mouse.move(0,0);await page.locator('[data-check="count"]').blur();await page.keyboard.press('Escape');
+ await page.locator('[data-check="count"]').click();
  assert.equal(await page.locator('#referencePopup').isVisible(),true);
  await page.mouse.move(0,0);assert.equal(await page.locator('#referencePopup').isVisible(),true);
  const clickedTip=await page.locator('#referencePopup').boundingBox();assert.ok(clickedTip.x>=0&&clickedTip.x+clickedTip.width<=412&&clickedTip.y>=0&&clickedTip.y+clickedTip.height<=900);
- await page.screenshot({path:path.join(artifacts,'gender-mobile-click.png')});
- await page.locator('[data-check="gender"]').click();assert.equal(await page.locator('#referencePopup').isVisible(),false);
- await page.locator('[data-check="gender"]').click();assert.equal(await page.locator('#referencePopup').isVisible(),true);
+ await page.screenshot({path:path.join(artifacts,'count-mobile-click.png')});
+ await page.locator('[data-check="count"]').click();assert.equal(await page.locator('#referencePopup').isVisible(),false);
+ await page.locator('[data-check="count"]').click();assert.equal(await page.locator('#referencePopup').isVisible(),true);
  await page.mouse.click(5,180);assert.equal(await page.locator('#referencePopup').isVisible(),false);
  // A real touch-enabled Chromium context must open the portal by tapping, not synthetic hover.
  const touchState=await page.evaluate(()=>JSON.parse(JSON.stringify(__bbj.state())));
@@ -545,15 +573,102 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await touchPage.goto(process.env.BBJ_URL||'http://127.0.0.1:4173/banbaejeong/');
  await touchPage.waitForFunction(()=>window.__bbj&&__bbj.state().students.length===30);
  await touchPage.locator('[data-tab="result"]').tap();
- const touchPill=touchPage.locator('[data-check="gender"]');
+ const touchPill=touchPage.locator('[data-check="count"]');
  await touchPill.tap();assert.equal(await touchPage.locator('#referencePopup').isVisible(),true);
- assert.match(await touchPage.locator('#referencePopup').innerText(),/가반 남자수 많음/);
+ assert.match(await touchPage.locator('#referencePopup').innerText(),/가반 남자 많음/);
  assert.equal(await touchPage.locator('#referencePopup').evaluate(e=>{
   const r=e.getBoundingClientRect();return r.x>=0&&r.right<=innerWidth&&r.y>=0&&r.bottom<=innerHeight&&!!document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('#referencePopup');
  }),true);
  await touchPage.screenshot({path:path.join(artifacts,'gender-touch-popup.png')});
  await touchPill.tap();assert.equal(await touchPage.locator('#referencePopup').isVisible(),false);
  await touchPage.close();
+
+ // Fixed students are locked against dragging; changing their fixed class moves them at once.
+ await page.mouse.move(0,0);await page.setViewportSize({width:1600,height:1000});
+ await page.evaluate(()=>{
+  const st=__bbj.state();
+  st.students=Array.from({length:6},(_,i)=>({id:i+1,name:'고정학생'+i,no:i+1,g4:'',g5:(i+1)+'반',gender:i%2?'여':'남',tags:[],w:{},fixed:null}));
+  st.students[0].fixed=1;
+  st.classes=[{name:'가반',total:3,male:2,female:1,special:false},{name:'나반',total:3,male:1,female:2,special:false}];
+  st.requiredGroups=[];st.pairs=[];st.wishGroups=[];st.useY3=false;
+  st.result={assign:[1,1,1,0,0,0],ids:[1,2,3,4,5,6],moves:0,ms:0};__bbj.renderAll();
+ });
+ await page.locator('.tab[data-tab="result"]').click();
+ assert.equal(await page.locator('.stu[data-id="1"].locked').count(),1);
+ await page.locator('.stu[data-id="1"]').dragTo(page.locator('.col[data-k="0"]'));
+ assert.equal(await page.evaluate(()=>__bbj.state().result.assign[0]),1);
+ assert.match(await page.locator('#toast').innerText(),/고정 학생은 이름을 눌러 고정 반을 바꾼 뒤 옮기세요\./);
+ await page.waitForTimeout(60);
+ await page.locator('.stu[data-id="2"]').dragTo(page.locator('.col[data-k="0"]'));
+ assert.equal(await page.evaluate(()=>__bbj.state().result.assign[1]),0);
+ await page.click('#btnUndo');
+ assert.equal(await page.evaluate(()=>__bbj.state().result.assign[1]),1);
+ await page.locator('.stu[data-id="1"] button.nm').click();
+ await page.selectOption('#addStuFixed','0');await page.click('#addStuApply');
+ assert.equal(await page.evaluate(()=>__bbj.state().result.assign[0]),0);
+ assert.equal(await page.evaluate(()=>__bbj.state().students[0].fixed),0);
+ assert.equal(await page.locator('.stu[data-id="1"].locked').count(),1);
+ await page.locator('.stu[data-id="1"] button.nm').click();
+ await page.selectOption('#addStuFixed','');await page.click('#addStuApply');
+ assert.equal(await page.locator('.stu[data-id="1"].locked').count(),0);
+ await page.locator('.stu[data-id="1"]').dragTo(page.locator('.col[data-k="1"]'));
+ assert.equal(await page.evaluate(()=>__bbj.state().result.assign[0]),1);
+ await page.click('#btnUndo');
+ // A required-group member asks before the group is carried along.
+ await page.evaluate(()=>{const st=__bbj.state();st.requiredGroups=[[1,2]];st.result.assign=[0,0,1,1,1,1];__bbj.renderAll()});
+ await page.locator('.stu[data-id="1"]').dragTo(page.locator('.col[data-k="1"]'));
+ assert.equal(await page.locator('#comboMoveModal').isVisible(),true);
+ assert.match(await page.locator('#comboMoveText').innerText(),/필수 조합 고정학생1 학생도 함께 옮기겠습니까\?/);
+ await page.click('#comboMoveNo');
+ assert.deepEqual(await page.evaluate(()=>__bbj.state().result.assign.slice(0,2)),[0,0]);
+ await page.locator('.stu[data-id="1"]').dragTo(page.locator('.col[data-k="1"]'));
+ await page.click('#comboMoveYes');
+ assert.deepEqual(await page.evaluate(()=>__bbj.state().result.assign.slice(0,2)),[1,1]);
+ await page.click('#btnUndo');
+ assert.deepEqual(await page.evaluate(()=>__bbj.state().result.assign.slice(0,2)),[0,0]);
+ // Changing the fixed class into a class that would split a required group asks first; 아니오 also rolls the fixed value back.
+ await page.evaluate(()=>{const st=__bbj.state();st.requiredGroups=[[1,2]];st.result.assign=[0,0,1,1,1,1];st.students[0].fixed=null;__bbj.renderAll()});
+ await page.locator('.stu[data-id="1"] button.nm').click();
+ await page.selectOption('#addStuFixed','1');await page.click('#addStuApply');
+ assert.equal(await page.locator('#comboMoveModal').isVisible(),true);
+ await page.click('#comboMoveNo');
+ assert.equal(await page.evaluate(()=>__bbj.state().students[0].fixed),null);
+ assert.equal(await page.evaluate(()=>__bbj.state().result.assign[0]),0);
+ // The 인원 pill carries both the total and the gender imbalance, named inside class cards.
+ await page.evaluate(()=>{
+  const st=__bbj.state();
+  st.students=Array.from({length:6},(_,i)=>({id:i+1,name:'인원학생'+i,no:i+1,g4:'',g5:(i+1)+'반',gender:i%2?'여':'남',tags:[],w:{},fixed:null}));
+  st.classes=[{name:'가반',total:4,male:2,female:2,special:false},{name:'나반',total:2,male:1,female:1,special:false}];
+  st.requiredGroups=[];st.pairs=[];st.wishGroups=[];st.useY3=false;
+  st.result={assign:[0,0,1,1,1,1],ids:[1,2,3,4,5,6],moves:0,ms:0};__bbj.renderAll();
+ });
+ assert.equal(await page.locator('.col[data-k="0"] .class-notes').innerText(),'2명 부족 (남1 여1)');
+ assert.equal(await page.locator('.col[data-k="1"] .class-notes').innerText(),'2명 초과 (남1 여1)');
+ assert.equal(await page.locator('.col.quota-bad').count(),2);
+ assert.match(await page.locator('[data-check="count"]').getAttribute('class'),/bad/);
+ const countDetails=await page.locator('[data-signal="count"] .signal-details').innerText();
+ assert.match(countDetails,/가반 2명 부족 \(남1 여1\)/);
+ assert.match(countDetails,/나반 2명 초과 \(남1 여1\)/);
+ await page.evaluate(()=>{
+  const st=__bbj.state();
+  st.students=Array.from({length:8},(_,i)=>({id:i+1,name:'성비학생'+i,no:i+1,g4:'',g5:(i%2+1)+'반',gender:i<4?'남':'여',tags:[],w:{},fixed:null}));
+  st.classes=[{name:'가반',total:4,male:2,female:2,special:false},{name:'나반',total:4,male:2,female:2,special:false}];
+  st.result={assign:[0,0,0,0,1,1,1,1],ids:[1,2,3,4,5,6,7,8],moves:0,ms:0};__bbj.renderAll();
+ });
+ assert.equal(await page.locator('.col[data-k="0"] .class-notes').innerText(),'남자 많음');
+ assert.equal(await page.locator('.col[data-k="1"] .class-notes').innerText(),'남자 부족');
+ assert.equal(await page.locator('.col.quota-bad').count(),0);
+ assert.match(await page.locator('[data-check="count"]').getAttribute('class'),/warn/);
+ // The bottom bar stays thin on PC, phone and landscape phone; content keeps clear of it.
+ await page.locator('.tab[data-tab="setup"]').click();
+ for(const [w,h,limit] of [[1600,1000,50],[412,900,45],[900,420,40]]){
+  await page.setViewportSize({width:w,height:h});await page.waitForTimeout(60);
+  const bar=await page.locator('.actionbar').boundingBox();
+  assert.ok(bar.height<=limit,`actionbar ${w}x${h} height ${bar.height}`);
+  const pad=await page.evaluate(()=>parseFloat(getComputedStyle(document.querySelector('main')).paddingBottom));
+  assert.ok(pad>=bar.height,`main padding ${pad} < bar ${bar.height} at ${w}x${h}`);
+ }
+ await page.setViewportSize({width:1600,height:1000});await page.waitForTimeout(60);
 
 
  await page.mouse.move(0,0);await page.setViewportSize({width:1600,height:1000});
@@ -585,6 +700,6 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.equal(await page.locator('#specialCount').innerText(),"현재 '특수' 학생 0명");
  assert.equal(await page.locator('#stateBadge').innerText(),'아직 명단이 없습니다');
  assert.deepEqual(errors,[]);
- console.log('PASS Chromium: total-only targets, automatic gender proportions, mandatory group hearts, nine evenly spaced lights and hover-only references, four-row compact result, hidden bottom bar, slim default two-column view, inline signal cards and special/quota outlines, bounded demo names and seven traffic-light tooltips/colors, wide monitors and all sort/layout combinations, required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, compact header badge, grouped names/special counts, zero-warning panel/toast hiding, new layout, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, responsive viewports, save/load and polling');
+ console.log('PASS Chromium: fixed-student drag lock and fixed-class auto move, required-group companion dialog, adjustable star-gap threshold and 인원 pill with class notes, four-row compact result, hidden bottom bar, slim default male/female view, inline signal cards and special/quota outlines, bounded demo names and nine traffic-light tooltips/colors, wide monitors and all sort/layout combinations, required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, compact header badge, grouped names/special counts, zero-warning panel/toast hiding, new layout, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, thin bottom bar on PC/phone/landscape, responsive viewports, save/load and polling');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

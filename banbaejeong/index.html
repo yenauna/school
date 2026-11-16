@@ -30,7 +30,7 @@
   .tabs{display:flex;gap:4px;padding:14px 18px 0;max-width:min(1760px,96vw);margin:0 auto;position:sticky;top:0;background:var(--bg);z-index:20;border-bottom:1px solid var(--line)}
   .tab{border:1px solid transparent;border-bottom:none;background:transparent;color:var(--muted);font:inherit;font-weight:600;font-size:13.5px;padding:9px 15px;border-radius:9px 9px 0 0;cursor:pointer}
   .tab.active{background:var(--card);color:var(--text);border-color:var(--line)}
-  main{padding:16px 18px 112px;max-width:min(1760px,96vw);margin:0 auto}
+  main{padding:16px 18px 68px;max-width:min(1760px,96vw);margin:0 auto}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 17px;margin:0 0 14px;box-shadow:0 1px 2px rgba(16,24,40,.03)}
   .card,.grouphdr{scroll-margin-top:64px}
   h2{font-size:15.5px;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -96,8 +96,10 @@
   .banner.show{display:block}
   .banner.err{background:var(--bad-soft);border:1px solid #f2cdc9;color:#8f2b20}
   .banner.info{background:var(--accent-soft);border:1px solid #c9dafb;color:#1b469f}
-  .actionbar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:10px 18px;display:flex;gap:10px;align-items:center;justify-content:flex-end;z-index:30;box-shadow:0 -1px 3px rgba(16,24,40,.05)}
-  .actionbar .abinfo{font-size:12.5px;color:var(--muted);margin-right:auto;min-width:0}
+  .actionbar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:4px 14px;display:flex;gap:6px;align-items:center;justify-content:flex-end;z-index:30;box-shadow:0 -1px 3px rgba(16,24,40,.05)}
+  .actionbar .btn{padding:4px 10px;font-size:12.5px;line-height:1.3}
+  .actionbar .btn.big{padding:6px 16px;font-size:13.5px;border-radius:9px}
+  .actionbar .abinfo{font-size:11.5px;color:var(--muted);margin-right:auto;min-width:0}
   .verdicts{display:flex;gap:5px;flex-wrap:nowrap;overflow-x:auto;max-width:100%;margin:0 0 10px;padding-bottom:2px}
   .v{flex:0 0 auto;white-space:nowrap;font-size:12px;padding:3px 8px;border-radius:999px;border:1px solid;font-weight:600}
   .v.ok{background:var(--good-soft);border-color:#b6e0c6;color:#15693d}
@@ -215,7 +217,9 @@
     .card{padding:13px 12px}
     body{font-size:13.5px}
     h1{font-size:18px}
-    .actionbar{padding:9px 12px}
+    .actionbar{padding:3px 10px;gap:5px}
+    .actionbar .btn{padding:4px 8px;font-size:12px}
+    .actionbar .btn.big{padding:5px 13px;font-size:13px}
     .btn.big{padding:10px 18px;font-size:14.5px}
     #classCards{gap:7px}
     .scorebar{font-size:12px;line-height:1.7}
@@ -247,6 +251,12 @@
     .sheettabs .sheet{padding:4px 9px;font-size:12px}
     .cloudbar .btn{padding:5px 9px;font-size:12.5px}
     th,td{padding:5px 6px}
+  }
+  /* 가로로 눕힌 휴대폰처럼 높이가 짧은 화면: 고정 막대를 최대한 얇게 */
+  @media (max-height:520px){
+    .actionbar{padding:2px 10px;gap:5px}main{padding-bottom:46px}
+    .actionbar .btn{padding:3px 8px;font-size:11.5px}.actionbar .btn.big{padding:4px 12px;font-size:12.5px}
+    .actionbar .abinfo{display:none}
   }
   @media print{
     .tabs,.actionbar,.toolbar,details.help,.btn,.sheettabs,#classCards,.verdicts,.toast,#resultCard .toolbar,.cloudbar,#lockScreen{display:none!important}
@@ -291,8 +301,14 @@
   .signal-details.bad{background:var(--bad-soft);border-color:#efb1ab;color:#992e23}.signal-details.warn{background:var(--warn-soft);border-color:#edcf9f;color:#8a5308}
   #resultCard .result-views{margin-bottom:3px}#resultCard .result-views .btn{padding:2px 6px;font-size:10.5px;line-height:14px;min-height:0;border-radius:5px}
   .col.quota-bad{border-color:#dc2626;box-shadow:inset 0 0 0 1px #dc2626}.stu.viol{border-color:#dc2626;box-shadow:inset 0 0 0 1px #dc2626}
-  .class-notes{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;font-size:10.5px;color:#b91c1c}.class-notes span{border-radius:4px;background:#fff1f2;padding:1px 4px}
-  @media print{.result-heading,.result-views,.result-signals{display:none!important}}
+  .class-notes{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;font-size:10.5px;color:#b91c1c}.class-notes span{border-radius:4px;background:#fff1f2;padding:1px 4px}.class-notes span.soft{background:#fdf4e4;color:#8a5308}
+  .stu.locked{cursor:not-allowed}
+  /* 별점 경고 기준 줄: 보기 방법 바로 아래 */
+  .score-gap{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:11.5px;line-height:1.5;color:var(--muted);margin:-3px 0 9px}
+  .score-gap input{width:46px;padding:1px 4px;font-size:11.5px;line-height:1.5;text-align:right;border-radius:5px}
+  .score-gap b{font-weight:600;color:#3f4650}
+  .score-gap[hidden]{display:none!important}
+  @media print{.result-heading,.result-views,.result-signals,.score-gap{display:none!important}}
   .required-heart{font-size:12px;line-height:1;flex:0 0 auto;margin-left:1px}
   .reference-popup{position:fixed;z-index:80;max-width:min(320px,calc(100vw - 20px));max-height:50vh;overflow:auto;padding:8px 10px;border:1px solid #edcf9f;border-radius:8px;background:#fff8e7;color:#854d0e;box-shadow:0 4px 16px #0002;font-size:12px;line-height:1.6;pointer-events:auto;overflow-wrap:anywhere}
   .reference-popup[hidden]{display:none!important}.v[data-reference]{cursor:help}
@@ -315,7 +331,7 @@
     #classTable td input[type=text],#classTable td input[type=number]{min-width:0;width:100%;padding:4px;font-size:12px;height:29px}
     #classTable .mobile-class-label{display:inline;white-space:nowrap;font-size:12px}
     #classTable .integration-choice{display:flex;align-items:center;gap:3px;white-space:nowrap}
-    #classCards{gap:5px}.classcard{padding:4px}.actionbar{gap:5px;flex-wrap:wrap;padding:6px}.actionbar .abinfo{display:none}.actionbar .btn{font-size:12px;padding:6px 8px}
+    #classCards{gap:5px}.classcard{padding:4px}.actionbar{gap:4px;flex-wrap:nowrap;padding:3px 6px}.actionbar .abinfo{display:none}.actionbar .btn{font-size:11.5px;padding:4px 7px}.actionbar .btn.big{padding:5px 12px;font-size:12.5px}
   }
 </style>
 </head>
@@ -455,6 +471,11 @@
         <div class="row" id="resultSort" role="group" aria-label="결과 정렬"><button class="btn" type="button" data-act="result-sort" data-sort="gender">남녀·가나다순</button><button class="btn" type="button" data-act="result-sort" data-sort="origin">5학년 반·번호순</button></div>
         <div class="row" id="resultLayout" role="group" aria-label="학생 배치 보기"><button class="btn" type="button" data-act="result-layout" data-layout="one">전체 1줄</button><button class="btn" type="button" data-act="result-layout" data-layout="two">전체 2줄</button><button class="btn" type="button" data-act="result-layout" data-layout="sex">남자 1줄·여자 1줄</button></div>
       </div>
+      <div class="score-gap" id="scoreGapRow">
+        <span>별점 높은 반과 낮은 반이</span>
+        <input type="number" id="scoreGap" min="1" max="30" step="1" value="2" aria-label="별점 경고 기준 점수">
+        <span>점 이상 차이날 때부터 경고 표시</span>
+      </div>
       <div class="result-signals"><div class="verdicts" id="verdict" aria-live="polite"></div><button class="btn" type="button" id="btnUndo" disabled>↩ 실행 취소</button></div>
       <span id="resultMeta" hidden></span>
       <div id="boardCard"><div id="classCards"></div></div>
@@ -471,6 +492,17 @@
 </div>
 
 <div id="referencePopup" class="reference-popup" role="tooltip" hidden></div>
+
+<div class="overlay" id="comboMoveModal" role="dialog" aria-modal="true" aria-labelledby="comboMoveTitle">
+  <div class="modal" style="max-width:470px">
+    <h2 id="comboMoveTitle">필수 조합 함께 옮기기</h2>
+    <p class="hint" id="comboMoveText"></p>
+    <div class="actions">
+      <button class="btn" type="button" id="comboMoveNo">아니오 · 실행 취소</button>
+      <button class="btn primary" type="button" id="comboMoveYes">예</button>
+    </div>
+  </div>
+</div>
 
 <div class="overlay" id="pasteModal">
   <div class="modal">
@@ -1532,6 +1564,56 @@ var CORE = (function () {
     return {score:score,gender:gender};
   }
 
+  /* 별점 경고: 반별 ★ 총합의 최대−최소가 기준값(gap) 이상일 때 켠다.
+     화면에는 가장 낮은 반과 가장 높은 반의 점수를 함께 보여 준다. */
+  function scoreSpread(rep, gap) {
+    gap = Number(gap);
+    if (!isFinite(gap) || gap < 0) gap = 2;
+    var per = (rep && rep.per) || [];
+    if (per.length < 2) return { on: false, gap: gap, spread: 0, low: [], high: [], text: '', min: 0, max: 0 };
+    var min = Infinity, max = -Infinity;
+    per.forEach(function (p) { if (p.score < min) min = p.score; if (p.score > max) max = p.score; });
+    var spread = Math.round((max - min) * 100) / 100;
+    var low = [], high = [];
+    per.forEach(function (p) {
+      if (Math.abs(p.score - min) < 1e-9) low.push(p.name);
+      if (Math.abs(p.score - max) < 1e-9) high.push(p.name);
+    });
+    return {
+      on: spread >= gap - 1e-9, gap: gap, spread: spread, low: low, high: high, min: min, max: max,
+      text: low.join('·') + ' ' + fmtNum(min) + '점, ' + high.join('·') + ' ' + fmtNum(max) + '점'
+    };
+  }
+
+  /* 인원 경고: 반별 총원의 부족·초과와, 총원이 맞아도 남·여가 감원 기준에서 2명 이상 어긋난 반.
+     bad는 부족·초과(해당 반은 빨간 상태), gender는 성비만 어긋난 반(참고)이다. */
+  function countNotes(rep) {
+    var bad = [], gender = [];
+    ((rep && rep.per) || []).forEach(function (p) {
+      var target = p.target == null ? p.count : Number(p.target);
+      var diff = Number(p.count) - target;
+      if (diff) {
+        var use = diff < 0 ? '부족' : '초과';
+        var parts = [];
+        [['남', p.targetMale, p.male], ['여', p.targetFemale, p.female]].forEach(function (g) {
+          var want = Math.round(Number(g[1]) || 0), have = Number(g[2]) || 0;
+          var gapN = diff < 0 ? want - have : have - want;
+          if (gapN > 0) parts.push(g[0] + gapN);
+        });
+        var amount = Math.abs(diff);
+        var tail = amount + '명 ' + use + (parts.length ? ' (' + parts.join(' ') + ')' : '');
+        bad.push({ k: p.k, name: p.name, amount: amount, over: diff > 0, text: p.name + ' ' + tail, short: tail });
+        return;
+      }
+      var dm = Number(p.male) - Math.round(Number(p.targetMale) || 0);
+      if (Math.abs(dm) >= 2) {
+        var text = dm > 0 ? '남자 많음' : '남자 부족';
+        gender.push({ k: p.k, name: p.name, text: p.name + ' ' + text, short: text });
+      }
+    });
+    return { bad: bad, gender: gender };
+  }
+
   function fmtNum(v) {
     var n = Number(v) || 0;
     if (Math.abs(n - Math.round(n)) < 0.05) return String(Math.round(n));
@@ -1583,6 +1665,8 @@ var CORE = (function () {
     autoTargets: autoTargets,
     syncClass: syncClass,
     balanceAdvice: balanceAdvice,
+    scoreSpread: scoreSpread,
+    countNotes: countNotes,
     tagPlans: tagPlans,
     buildLinks: buildLinks,
     assign: assign,
@@ -1649,7 +1733,8 @@ var CORE = (function () {
       classCount: 6, deduct: 2, restrictSpecial: true, useY3: true,
       classes: defaultClasses(6),
       tags: CORE.DEFAULT_TAGS.map(function (t) { return { name: t, weight: CORE.defaultWeight(t), max: null }; }),
-      tagDefaultsVersion: 1, starVersion: 2, students: [], pairs: [], wishGroups: [], requiredGroups: [], nextId: 1, result: null
+      tagDefaultsVersion: 1, starVersion: 2, students: [], pairs: [], wishGroups: [], requiredGroups: [], nextId: 1, result: null,
+      scoreGap: 2, resultLayout: 'sex'
     };
   }
   /* 저장된 데이터·작업 파일이 구버전이어도 깨지지 않게 기본값을 채운다 */
@@ -1670,6 +1755,9 @@ var CORE = (function () {
     if (out.deduct == null) out.deduct = 2;
     if (out.useY3 == null) out.useY3 = true;
     out.restrictSpecial = true;
+    var gapNum = Number(out.scoreGap);
+    out.scoreGap = (isFinite(gapNum) && gapNum >= 0) ? Math.min(30, Math.round(gapNum)) : 2;
+    out.resultLayout = ['one', 'two', 'sex'].indexOf(out.resultLayout) >= 0 ? out.resultLayout : 'sex';
 
     var legacyStars = out.starVersion !== 2;
     var oldWeights = {};
@@ -3039,7 +3127,18 @@ var CORE = (function () {
       });
       return Object.keys(groups).map(function (name) { return name + ' ' + groups[name].join('·'); }).join(' / ');
     });
-    var advice=CORE.balanceAdvice(S.students,rep);
+    var score=CORE.scoreSpread(rep,S.scoreGap), counts=CORE.countNotes(rep);
+    function countPill() {
+      var hard = counts.bad.map(function (v) { return v.text; });
+      var soft = counts.gender.map(function (v) { return v.text; });
+      var isBad = hard.length > 0;
+      var status = isBad ? 'bad' : (soft.length ? 'warn' : 'ok');
+      var all = hard.concat(isBad ? soft : []);
+      var title = all.length ? all.join(' / ') : '반별 총원과 남자·여자 수가 목표에 맞습니다.';
+      var mini = isBad ? '<div class="signal-details bad" data-details="count">' + all.map(function (text) { return '<div>' + esc(text) + '</div>'; }).join('') + '</div>' : '';
+      var tip = (!isBad && soft.length) ? ' data-reference="' + esc(soft.join('\n')) + '" aria-describedby="referencePopup"' : ' title="' + esc(title) + '"';
+      return '<div class="signal" data-signal="count"><span class="v ' + status + '" data-check="count" tabindex="0"' + tip + ' aria-label="' + esc('인원: ' + title) + '">인원</span>' + mini + '</div>';
+    }
     var special = (rep.tagBad || []).map(function (v) { return v.cls + ' ' + v.name + (v.kind === 'overlap' ? ' (특수학생 중복)' : ' (통합학급 미지정)'); });
     return [
       pill('special','특수',special,false,'특수학생 배정 조건에 문제가 없습니다.'),
@@ -3049,8 +3148,8 @@ var CORE = (function () {
       pill('separate','필수 분리',pairDetails(rep.sepViol),false,'필수 분리 조합을 모두 지켰습니다.'),
       pill('required','필수 희망',(rep.requiredViol || []).map(function (g) { return g.text; }),false,'필수 희망 조합이 모두 같은 반입니다.'),
       pill('recommended','추천 희망',missed,true,'추천 희망 조합에 문제가 없습니다.'),
-      pill('score','별점',advice.score.map(function (v) { return v.text; }),true,'반별 별점이 허용 범위 안입니다.'),
-      pill('gender','남녀수',advice.gender.map(function (v) { return v.text; }),true,'반별 총원 대비 남녀 수가 허용 범위 안입니다.')
+      pill('score','별점',score.on ? [score.text] : [],false,'높은 반과 낮은 반의 별점 차이가 ' + score.gap + '점 미만입니다.'),
+      countPill()
     ].join('');
   }
 
@@ -3062,7 +3161,7 @@ var CORE = (function () {
     return '5-' + raw;
   }
   /* 학생별 한 줄 태그 배지와 개인별 별 합계 */
-  var resultSort = 'gender', resultLayout = 'two';
+  var resultSort = 'gender', resultLayout = 'sex';
   function tagStyle(t) {
     var i = S.tags.map(function (x) { return x.name; }).indexOf(t);
     var hue = ((Math.max(0,i) * 137.508) + 205) % 360;
@@ -3099,9 +3198,11 @@ var CORE = (function () {
     if (specialMap[idx]) warns.push(specialMap[idx]);
     if (fixMap[idx]) warns.push('고정 반은 ' + fixMap[idx] + '입니다');
     var cls = 'stu ' + (s.gender === '여' ? 'f' : 'm') +
-      ((sepMap[idx] || y3Map[idx] || specialMap[idx]) ? ' viol' : '') + (fixMap[idx] ? ' fixbad' : '');
+      ((sepMap[idx] || y3Map[idx] || specialMap[idx]) ? ' viol' : '') + (fixMap[idx] ? ' fixbad' : '') +
+      (s.fixed != null ? ' locked' : '');
     var isFixedHere = (s.fixed != null && s.fixed !== '' && Number(s.fixed) === k);
-    return '<div class="' + cls + '" draggable="true" data-id="' + s.id + '" data-score="' + total + '" title="4학년 ' + esc(s.g4 || '?') + ' · 5학년 ' + esc(s.g5 || '?') + (warns.length ? ' · ' + esc(warns.join(' / ')) : '') + '">' +
+    if (s.fixed != null) warns.push('고정 학생입니다. 옮기려면 이름을 눌러 고정 반을 바꾸세요');
+    return '<div class="' + cls + '" draggable="true" data-id="' + s.id + '" data-fixed="' + (s.fixed != null ? '1' : '') + '" data-score="' + total + '" title="4학년 ' + esc(s.g4 || '?') + ' · 5학년 ' + esc(s.g5 || '?') + (warns.length ? ' · ' + esc(warns.join(' / ')) : '') + '">' +
       '<div class="l1"><button type="button" class="nm" data-act="edit-student" data-id="' + s.id + '" data-k="' + k + '" title="학생 정보 수정">' + esc(s.name) + '</button>' + (heartMap[s.id]||'') +
         (isFixedHere ? '<span class="kb fix" title="반드시 이 반" aria-label="반드시 이 반">📌</span>' : '') +
         (s.transfer ? '<span class="transfer-badge">전출예정</span>' : '') + tags + '<span class="g5b" title="5학년 반">' + esc(g5Badge(s)) + '</span></div>' +
@@ -3148,9 +3249,12 @@ var CORE = (function () {
     }
 
     var h = '';
+    var countMap = {}, countReport = CORE.countNotes(rep);
+    countReport.bad.forEach(function (v) { countMap[v.k] = { text: v.short, soft: false }; });
+    countReport.gender.forEach(function (v) { if (!countMap[v.k]) countMap[v.k] = { text: v.short, soft: true }; });
     rep.per.forEach(function (p) {
-      var quotaNotes = [];
-      if (p.count !== p.target) quotaNotes.push('목표' + p.target + '/현재' + p.count);
+      var cn = countMap[p.k];
+      var quotaNotes = cn ? [cn.text] : [];
       var fixedNotes = rep.fixedBad.filter(function (f) { return p.members.indexOf(f.idx) >= 0; }).map(function (f) { return f.name + ' → ' + f.want; });
       var members = p.members.slice().sort(byGenderAndNo);
       var boys = members.filter(function (i) { return S.students[i].gender !== '여'; });
@@ -3162,14 +3266,14 @@ var CORE = (function () {
         return '<span class="student-summary" title="' + esc(studentLabel(st)) + '">' + esc(st.tags.join('·')) + esc(fmtScore(scoreOf(st))) + '</span>';
       }).join('');
 
-      h += '<div class="col' + (quotaNotes.length ? ' quota-bad' : '') + '" data-k="' + p.k + '" data-score="' + p.score + '">' +
+      h += '<div class="col' + (cn && !cn.soft ? ' quota-bad' : '') + '" data-k="' + p.k + '" data-score="' + p.score + '">' +
         '<div class="colhead">' +
           '<div class="row1"><span class="cname">' + esc(p.name) + '</span> ' +
             '<span class="ccount">' + p.count + '명</span> ' +
             '<span class="cgen">(남' + p.male + ' 여' + p.female + ')</span> ' +
             '<span class="cscore" title="이 반의 힘든 점수(★) 합계">★' + esc(fmtScore(p.score)) + '</span></div>' +
           (tagCards ? '<div class="tagsum">' + tagCards + '</div>' : '') +
-          (quotaNotes.length || fixedNotes.length ? '<div class="class-notes">' + quotaNotes.concat(fixedNotes).map(function (text) { return '<span>' + esc(text) + '</span>'; }).join('') + '</div>' : '') +
+          (quotaNotes.length || fixedNotes.length ? '<div class="class-notes">' + (cn ? '<span' + (cn.soft ? ' class="soft"' : '') + '>' + esc(cn.text) + '</span>' : '') + fixedNotes.map(function (text) { return '<span>' + esc(text) + '</span>'; }).join('') + '</div>' : '') +
         '</div>' +
         '<div class="chiplist layout-' + resultLayout + '">' +
           studentLayoutHtml(members,boys,girls,p.k,sepMap,y3Map,fixMap,specialMap,heartMap) +
@@ -3204,6 +3308,8 @@ var CORE = (function () {
   }
   function renderResult() {
     hideReferencePopup();
+    var gapEl = $('#scoreGap');
+    if (gapEl && document.activeElement !== gapEl) gapEl.value = S.scoreGap;
     var wrap = $('#classCards');
     if (!S.result) {
       wrap.setAttribute('style', '--cls-count:1');
@@ -3211,8 +3317,10 @@ var CORE = (function () {
       $('#verdict').innerHTML = ''; $('#btnUndo').disabled=true;
       $('#resultMeta').textContent = '';
       $('#printArea').innerHTML = '';
+      $('#scoreGapRow').hidden = true;
       return;
     }
+    $('#scoreGapRow').hidden = false;
     var rep = CORE.evaluate(S.students, S.classes, pairsAsIndex(), S.result.assign, currentOptions());
     S.result.report = rep;
     var floating = $('#toast');
@@ -3245,6 +3353,17 @@ var CORE = (function () {
     S = undoHistory.pop(); renderAll(); renderResult(); save();
   }
   $('#btnUndo').addEventListener('click',undoResult);
+  /* 별점 경고 기준을 바꾸면 바로 다시 판정해 저장한다 */
+  function onScoreGapChange() {
+    var el = $('#scoreGap');
+    if (!el) return;
+    var v = Number(el.value);
+    if (!isFinite(v)) v = 2;
+    v = Math.max(1, Math.min(30, Math.round(v)));
+    S.scoreGap = v;
+    if (S.result) renderResult();
+    save();
+  }
   function moveStudent(id, to) {
     if (!S.result) return;
     var idx = studentIndex(id);
@@ -3257,7 +3376,105 @@ var CORE = (function () {
     renderResult();
     window.scrollTo(0, sy);
     save();
+  }
 
+  /* ---------- 고정 학생 잠금 · 필수 희망 조합 함께 옮기기 ---------- */
+  var FIXED_LOCK_MSG = '고정 학생은 이름을 눌러 고정 반을 바꾼 뒤 옮기세요.';
+  function isFixedStudent(s) { return !!s && s.fixed != null && s.fixed !== ''; }
+  /* 필수 희망 조합으로 이어진 학생 전체(겸진 묶음도 따라간다)를 찾는다 */
+  function comboMembers(id) {
+    var parent = {}, live = {};
+    S.students.forEach(function (s) { live[s.id] = 1; });
+    function root(x) { while (parent[x] !== undefined && parent[x] !== x) x = parent[x]; return x; }
+    (S.requiredGroups || []).forEach(function (g) {
+      var ids = (g || []).map(Number).filter(function (x, i, a) { return live[x] && a.indexOf(x) === i; });
+      if (ids.length < 2) return;
+      ids.forEach(function (x) { if (parent[x] === undefined) parent[x] = x; });
+      var first = root(ids[0]);
+      ids.forEach(function (x) { var r = root(x); if (r !== first) parent[r] = first; });
+    });
+    var mine = root(Number(id)), out = [];
+    Object.keys(parent).forEach(function (k) {
+      var n = Number(k);
+      if (n !== Number(id) && root(n) === mine) out.push(n);
+    });
+    return out.sort(function (a, b) { return a - b; });
+  }
+  /* 옮기기 요청: 고정 학생은 막고, 필수 조합이 걸렸으면 함께 옮길지 묻는다 */
+  function requestMove(id, to, onCancel) {
+    if (!S.result) return false;
+    var idx = studentIndex(id);
+    if (idx < 0) return false;
+    var st = S.students[idx];
+    if (isFixedStudent(st) && Number(st.fixed) !== Number(to)) { toast(FIXED_LOCK_MSG, 'err'); return false; }
+    if (S.result.assign[idx] === to) return false;
+    var partners = comboMembers(id).filter(function (pid) {
+      var pi = studentIndex(pid);
+      if (pi < 0) return false;
+      if (isFixedStudent(S.students[pi])) return false;      /* 고정 학생은 함께 옮기지 않는다 */
+      return S.result.assign[pi] !== to;
+    });
+    if (!partners.length) { moveStudent(id, to); return true; }
+    openComboMove(id, to, partners, onCancel);
+    return true;
+  }
+  var pendingComboMove = null;
+  function closeComboMove() { pendingComboMove = null; var el = $('#comboMoveModal'); if (el) el.classList.remove('show'); }
+  function openComboMove(id, to, partners, onCancel) {
+    pendingComboMove = { id: id, to: Number(to), partners: partners || [], onCancel: onCancel || null };
+    var names = pendingComboMove.partners.map(function (pid) { var s = findStudent(pid); return s ? s.name : ''; }).filter(function (n) { return !!n; }).join(', ');
+    var target = (S.classes[pendingComboMove.to] || {}).name || '';
+    $('#comboMoveText').textContent = '필수 조합 ' + names + ' 학생도 함께 옮기겠습니까?' + (target ? ' (' + target + '으로 함께 이동)' : '');
+    $('#comboMoveModal').classList.add('show');
+    setTimeout(function () { var b = $('#comboMoveYes'); if (b && b.focus) b.focus(); }, 30);
+  }
+  function applyComboMove() {
+    var p = pendingComboMove;
+    if (!p) return;
+    closeComboMove();
+    var ids = [p.id].concat(p.partners), moved = 0;
+    pushUndo();
+    ids.forEach(function (id) {
+      var idx = studentIndex(id);
+      if (idx < 0 || S.result.assign[idx] === p.to) return;
+      S.result.assign[idx] = p.to; moved++;
+    });
+    if (!moved) { if (undoHistory.length) undoHistory.pop(); renderResult(); return; }
+    S.result.moves = (S.result.moves || 0) + moved;
+    renderResult(); save();
+  }
+  function cancelComboMove() {
+    var p = pendingComboMove;
+    closeComboMove();
+    if (p && typeof p.onCancel === 'function') p.onCancel();
+  }
+  /* 고정 반을 바꿨을 때 그 반으로 바로 옮긴다(조합이 걸렸으면 확인 뒤 이동, 취소하면 고정도 되돌린다) */
+  function moveToFixedClass(id, to, oldFixed) {
+    if (!S.result) return;
+    var idx = studentIndex(id);
+    if (idx < 0) return;
+    if (S.result.assign[idx] === to) return;
+    var revert = function () {
+      var st = findStudent(id);
+      if (!st) return;
+      st.fixed = (oldFixed == null || oldFixed === '') ? null : Number(oldFixed);
+      renderStudents(); renderResult(); save();
+    };
+    var partners = comboMembers(id).filter(function (pid) {
+      var pi = studentIndex(pid);
+      if (pi < 0) return false;
+      if (isFixedStudent(S.students[pi])) return false;
+      return S.result.assign[pi] !== to;
+    });
+    if (!partners.length) {
+      var sy = window.scrollY;
+      pushUndo();
+      S.result.assign[idx] = to;
+      S.result.moves = (S.result.moves || 0) + 1;
+      renderResult(); window.scrollTo(0, sy); save();
+      return;
+    }
+    openComboMove(id, to, partners, revert);
   }
 
   /* ---------- 배정 결과에서 학생 바로 추가 ---------- */
@@ -3317,13 +3534,15 @@ var CORE = (function () {
     var gender = ($('#addStuGender').value === '여') ? '여' : '남';
     pushUndo();
     if (editStudentId != null) {
-      var existing = findStudent(editStudentId), oldGender = existing.gender;
+      var existing = findStudent(editStudentId), oldGender = existing.gender, oldFixed = existing.fixed;
       Object.assign(existing, {name:name,no:String($('#addStuNo').value || '').trim(),g5:normClassVal($('#addStuG5').value),g4:normClassVal($('#addStuG4').value),gender:gender,tags:addStudentDraft.tags.slice(),w:Object.assign({},addStudentDraft.w),score:addStudentDraft.score,fixed:$('#addStuFixed').value === '' ? null : Number($('#addStuFixed').value)});
       CORE.normalizeStars(existing);
       var cls = S.classes[k];
       if (oldGender !== gender && cls) { if (cls.male != null) cls.male += gender === '남' ? 1 : -1; if (cls.female != null) cls.female += gender === '여' ? 1 : -1; }
       if (S.result) S.result.moves = (S.result.moves || 0) + 1;
       renderClasses(); renderTags(); renderStudents(); renderPairs(); renderWishGroups(); renderExtraConditions(); renderRosterSummary(); renderResult(); save(); closeAddStudent();
+      /* 고정 반을 다른 반으로 바꿈 → 배정 결과에서도 그 반으로 바로 이동 */
+      if (existing.fixed != null && String(oldFixed) !== String(existing.fixed)) moveToFixedClass(existing.id, Number(existing.fixed), oldFixed);
       return;
     }
     var s = {
@@ -3915,7 +4134,7 @@ var CORE = (function () {
       if (act === 'group-add') g.push(null); else if (g.length > 2) g.splice(Number(t.dataset.j),1); else g[Number(t.dataset.j)] = null;
       invalidate(); renderPairs(); renderWishGroups(); renderExtraConditions(); return;
     }
-    if (act === 'result-layout') { resultLayout = t.dataset.layout; renderResult(); return; }
+    if (act === 'result-layout') { resultLayout = t.dataset.layout; S.resultLayout = resultLayout; renderResult(); save(); return; }
     if (act === 'result-sort') { resultSort = t.dataset.sort; renderResult(); return; }
 
     if (act === 'toggle-tag') {
@@ -3956,7 +4175,15 @@ var CORE = (function () {
   document.addEventListener('dragstart', function (e) {
     var chip = e.target.closest ? e.target.closest('.stu') : null;
     if (!chip) return;
-    dragId = Number(chip.dataset.id);
+    var id = Number(chip.dataset.id), st = findStudent(id);
+    if (isFixedStudent(st)) {
+      /* 고정 학생은 끌어서 옮길 수 없다: 고정 반을 먼저 바꾸라는 안내만 보여 준다 */
+      try { e.preventDefault(); } catch (err) { }
+      dragId = null;
+      toast(FIXED_LOCK_MSG, 'err');
+      return;
+    }
+    dragId = id;
     chip.classList.add('dragging');
     try { e.dataTransfer.setData('text/plain', String(dragId)); e.dataTransfer.effectAllowed = 'move'; } catch (err) { }
   });
@@ -3984,7 +4211,7 @@ var CORE = (function () {
     col.classList.remove('over');
     var id = dragId;
     if (id == null) { try { id = Number(e.dataTransfer.getData('text/plain')); } catch (err) { } }
-    if (id != null && !isNaN(id)) moveStudent(id, Number(col.dataset.k));
+    if (id != null && !isNaN(id)) requestMove(id, Number(col.dataset.k));
   });
   document.addEventListener('pointerdown', function (e) { }, true);
 
@@ -4040,8 +4267,13 @@ var CORE = (function () {
   $('#addStudentModal').addEventListener('click', function (e) { if (e.target === this) closeAddStudent(); });
   $('#addStuName').addEventListener('keydown', function (e) { if (e.key === 'Enter') applyAddStudent(); });
   $('#addStuNo').addEventListener('keydown', function (e) { if (e.key === 'Enter') applyAddStudent(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closePaste(); closeUpload(); closeAddStudent(); closePicker(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closePaste(); closeUpload(); closeAddStudent(); closePicker(); if (pendingComboMove) cancelComboMove(); } });
 
+  $('#scoreGap').addEventListener('input', onScoreGapChange);
+  $('#scoreGap').addEventListener('change', onScoreGapChange);
+  $('#comboMoveYes').addEventListener('click', applyComboMove);
+  $('#comboMoveNo').addEventListener('click', cancelComboMove);
+  $('#comboMoveModal').addEventListener('click', function (e) { if (e.target === this) cancelComboMove(); });
   $('#btnSaveWork').addEventListener('click', saveWorkFile);
   $('#btnLoadWork').addEventListener('click', function () { $('#workFileInput').click(); });
   $('#workFileInput').addEventListener('change', function () {
@@ -4089,6 +4321,7 @@ var CORE = (function () {
   /* ---------- 시작 ---------- */
   S = loadSaved() || initialState();
   S = normalizeState(S) || initialState();
+  resultLayout = S.resultLayout || 'sex';
   if (S.students.length) syncTagsFromStudents();
   renderAll();
   updateLinkStatus();
@@ -4120,6 +4353,9 @@ var CORE = (function () {
     lock: lockApp,
     reload: cloudReloadManual,
     move: moveStudent, undo: undoResult,
+    requestMove: requestMove, applyCombo: applyComboMove, cancelCombo: cancelComboMove,
+    comboMembers: comboMembers, scoreGap: function () { return S.scoreGap; },
+    threshold: onScoreGapChange,
     renderAll: function () { renderAll(); }
   };
 })();
