@@ -85,6 +85,23 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.click('#btnRun');await page.waitForFunction(()=>!!__bbj.state().result);
  assert.equal(await page.evaluate(()=>new Set(__bbj.state().result.assign.slice(0,6)).size),6);
  assert.equal(await page.locator('.col').count(),6);
+ assert.equal(await page.locator('[data-layout="two"]').getAttribute('aria-pressed'),'true');
+ assert.equal(await page.locator('.actionbar').isVisible(),false);
+ assert.equal(await page.locator('#resultCard .result-actions button').allTextContents().then(a=>a.join('|')),'다시 배정|표로 복사|인쇄|엑셀 내려받기');
+ const order=await page.locator('.result-heading,.result-views,.result-signals,#boardCard').evaluateAll(es=>es.map(e=>({top:e.getBoundingClientRect().top,bottom:e.getBoundingClientRect().bottom})));
+ assert.equal(order.length,4);order.slice(1).forEach((r,i)=>assert.ok(r.top>=order[i].bottom-1));
+ const toggleHeight=(await page.locator('#resultSort button').first().boundingBox()).height;
+ const lampHeight=(await page.locator('#verdict .v').first().boundingBox()).height;
+ assert.ok(toggleHeight<lampHeight);
+ const undoRight=await page.locator('#btnUndo').boundingBox(),rowRight=await page.locator('.result-signals').boundingBox();
+ assert.ok(Math.abs(undoRight.x+undoRight.width-rowRight.x-rowRight.width)<2);
+ await page.locator('[data-layout="one"]').click();
+
+ await page.evaluate(()=>{window.print=()=>{window.testPrinted=true};Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.testCopied=text}}})});
+ await page.click('#btnPrint');assert.equal(await page.evaluate(()=>window.testPrinted),true);
+ await page.click('#btnCopyTSV');assert.match(await page.evaluate(()=>window.testCopied),/^5학년 반\t번호\t이름/);
+ const exportReady=page.waitForEvent('download');await page.click('#btnBarCSV');const exported=await exportReady;
+ assert.match(exported.suggestedFilename(),/^반배정결과_.*\.csv$/);
  const ys=await page.locator('.chiplist').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().y));
  assert.ok(Math.max(...ys)-Math.min(...ys)<1);
  assert.match(await page.locator('.tagsum').allTextContents().then(t=>t.join(' ')),/특수5/);
@@ -274,11 +291,11 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
   st.result={assign:[0,0,0,0],ids:[1,2,3,4],moves:0,ms:0};__bbj.renderAll();
  });
  await page.locator('.tab[data-tab="result"]').click();
- assert.equal(await page.locator('#problems li').count(),6);
- const details=await page.locator('#problemPanel').innerText();
- for(const text of ['경고 6건','분리갑','분리을','연속갑','연속을','가반','나반','통합학급 미지정','반드시 이 반 위반'])assert.ok(details.includes(text),text);
+ assert.equal(await page.evaluate(()=>__bbj.state().result.report.problems.length),6);
+ const details=(await page.locator('.signal-details,.class-notes').allTextContents()).join(' ');
+ for(const text of ['분리갑','분리을','연속갑','연속을','가반','나반','통합×','목표2/현재4'])assert.ok(details.includes(text),text);
  assert.doesNotMatch(details,/평균|힘든 점수|남학생|고른 분포/);
- assert.equal(await page.locator('#problemPanel').isVisible(),true);
+ assert.ok(await page.locator('.signal-details.bad').count()>0);
  assert.equal(await page.locator('#scoreBar.warn').count(),0);
  await page.locator('#resultCard').scrollIntoViewIfNeeded();
  await page.screenshot({path:path.join(artifacts,'warning-details.png')});
@@ -334,18 +351,22 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  for(const id of [7,8,9])assert.equal(await page.locator(`.stu[data-id="${id}"] .tag-on`).count(),0);
  assert.equal((await page.locator('.tagsum .student-summary').allTextContents()).join(' '),'특수5');
  assert.equal(await page.locator('#summaryCard,#summaryBody,#scoreBarWrap,#scoreBar').count(),0);
- for(const id of ['btnBarCSV','btnCopyTSV','btnPrint','btnUndo'])assert.equal(await page.locator(`.actionbar #${id}`).count(),1);
+ for(const id of ['btnBarCSV','btnCopyTSV','btnPrint'])assert.equal(await page.locator(`#resultActions #${id}`).count(),1);
+ assert.equal(await page.locator('.result-signals #btnUndo').count(),1);
+ assert.equal(await page.locator('.actionbar').isVisible(),false);
  assert.equal(await page.locator('#similarNamesSetup,#similarNamesResult,#tab-result #nameNotices').count(),0);
  assert.equal(await page.locator('#btnUndo').isDisabled(),true);
  // Real browser drag dispatches the app's drag/drop handlers and creates warnings immediately.
  await page.locator('.stu[data-id="7"]').dragTo(page.locator('.col[data-k="0"]'));
- assert.match(await page.locator('#problems').innerText(),/동명이인 자동 분리 위반/);
- assert.match(await page.locator('#problems').innerText(),/특수학생 중복 배정/);
+ assert.match(await page.locator('[data-details="duplicate"]').innerText(),/가반 김민준/);
+ assert.match(await page.locator('[data-details="special"]').innerText(),/김민준.*중복/);
+ assert.equal(await page.locator('.stu[data-id="5"].viol,.stu[data-id="7"].viol').count(),2);
+ assert.ok(await page.locator('.col.quota-bad').count()>=2);
  const nextClass=(original.assign[0]+1)%3;
  await page.locator('.stu[data-id="1"]').dragTo(page.locator(`.col[data-k="${nextClass}"]`));
- assert.match(await page.locator('#problems').innerText(),/필수 희망 조합 분리/);
+ assert.match(await page.locator('[data-details="required"]').innerText(),/새기능학생0/);
  await page.locator('#classCards').scrollIntoViewIfNeeded();
- const warningBox=await page.locator('#problemPanel').boundingBox();
+ const warningBox=await page.locator('.result-signals').boundingBox();
  await page.screenshot({path:path.join(artifacts,'warning-position-check.png')});
  assert.ok(warningBox.y>=0&&warningBox.y+warningBox.height<940,JSON.stringify(warningBox));
  await page.screenshot({path:path.join(artifacts,'sticky-drag-warnings.png')});
@@ -366,7 +387,8 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  for(const layout of ['two','sex']){
   await page.locator(`[data-layout="${layout}"]`).click();
   await page.locator('.stu[data-id="7"]').dragTo(page.locator('.col[data-k="2"]'));
-  assert.match(await page.locator('#problems').innerText(),/통합학급 미지정.*김민준/);
+  assert.match(await page.locator('[data-details="special"]').innerText(),/김민준.*통합×/);
+  assert.equal(await page.locator('.stu[data-id="7"].viol').count(),1);
   await page.click('#btnUndo');
   assert.deepEqual(await page.evaluate(()=>__bbj.state().result.assign),original.assign);
   assert.equal(await page.locator(`.chiplist.layout-${layout}`).count(),3);
@@ -407,13 +429,16 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  });
  const shortLabels=['특수','동명이인','이름만 같음','3년 같은 반','필수 분리','필수 희망','추천 희망'];
  assert.deepEqual(await page.locator('#verdict .v').allTextContents(),shortLabels);
- assert.equal(await page.locator('#verdict .warn').count(),2);
- assert.equal(await page.locator('#verdict .bad').count(),0);
+ assert.equal(await page.locator('#verdict .v.warn').count(),2);
+ assert.equal(await page.locator('#verdict .v.bad').count(),0);
  assert.equal(await page.locator('#verdict [data-check="given"]').getAttribute('title'),'가반 김철수·박철수');
  assert.equal(await page.locator('#verdict [data-check="recommended"]').getAttribute('title'),'가반 김철수 / 나반 최유나');
  assert.equal(await page.locator('#problemPanel').isVisible(),false);
  assert.equal(await page.locator('#wishInfo').count(),0);
- assert.doesNotMatch(await page.locator('#resultCard').innerText(),/김철수|박철수|최유나|정하린|남녀 균형/);
+ assert.equal(await page.locator('.signal-details.warn').count(),2);
+ assert.equal(await page.locator('[data-signal="given"] [data-details="given"]').innerText(),'가반 김철수 · 박철수');
+ assert.equal(await page.locator('#problemPanel,#problems').count(),0);
+ assert.equal(await page.locator('#toast.show').count(),0);
  await page.locator('#verdict [data-check="given"]').hover();
  await page.locator('#resultCard').scrollIntoViewIfNeeded();
  await page.screenshot({path:path.join(artifacts,'seven-reference-signals.png')});
@@ -436,8 +461,8 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
   assert.match(await page.locator(`#verdict [data-check="${key}"]`).getAttribute('title'),/가반|나반/);
   assert.match(await page.locator(`#verdict [data-check="${key}"]`).getAttribute('title'),/김철수|박철수|홍길동/);
  }
- assert.equal(await page.locator('#verdict .warn').count(),2);
- assert.equal(await page.locator('#problemPanel').isVisible(),true);
+ assert.equal(await page.locator('#verdict .v.warn').count(),2);
+ assert.ok(await page.locator('.signal-details.bad').count()>0);
  await page.screenshot({path:path.join(artifacts,'seven-required-signals.png')});
  // Identical full names alone are a mandatory collision, not a different-surname reference.
  await page.evaluate(()=>{const st=__bbj.state();st.students[0].name=st.students[1].name='김철수';__bbj.renderAll()});
@@ -449,7 +474,10 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
   st.classes[0].special=true;st.pairs=[];st.requiredGroups=[];st.useY3=false;
   st.result.assign=[0,1,0,1];__bbj.renderAll();
  });
- assert.equal(await page.locator('#verdict .ok').count(),7);
+ assert.equal(await page.locator('#verdict .v.ok').count(),7);
+ assert.equal(await page.locator('.signal-details').count(),0);
+ assert.equal(await page.locator('.col.quota-bad').count(),2);
+ assert.match((await page.locator('.class-notes').allTextContents()).join(' '),/남 목표1\/현재2/);
  assert.equal(await page.locator('#problemPanel').isVisible(),false);
  assert.deepEqual(await page.locator('#verdict .v').allTextContents(),shortLabels);
  // Grouped notices live only at the bottom of conditions; roster edits update them and the special count.
@@ -466,6 +494,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.equal(await page.locator('#givenNamesNotice').innerText(),'[권장] 성 제외 이름 같음 : 5-2 김철수, 5-4 박철수, 5-5 이철수 / 5-1 이찬, 5-3 박찬');
  assert.equal(await page.locator('#specialCount').innerText(),"현재 '특수' 학생 4명");
  assert.equal(await page.locator('#stateBadge').innerText(),'실제 명단 9명');
+ assert.equal(await page.locator('.actionbar').isVisible(),true);
  await page.locator('#studentTable [data-act="toggle-tag"][data-id="1"][data-tag="특수"]').click();
  assert.equal(await page.locator('#specialCount').innerText(),"현재 '특수' 학생 3명");
  page.once('dialog',d=>d.accept());
@@ -479,6 +508,6 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.equal(await page.locator('#specialCount').innerText(),"현재 '특수' 학생 0명");
  assert.equal(await page.locator('#stateBadge').innerText(),'아직 명단이 없습니다');
  assert.deepEqual(errors,[]);
- console.log('PASS Chromium: bounded demo names and seven traffic-light tooltips/colors, wide monitors and all sort/layout combinations, required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, compact header badge, grouped names/special counts, zero-warning panel/toast hiding, new layout, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, responsive viewports, save/load and polling');
+ console.log('PASS Chromium: four-row compact result, hidden bottom bar, slim default two-column view, inline signal cards and special/quota outlines, bounded demo names and seven traffic-light tooltips/colors, wide monitors and all sort/layout combinations, required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, compact header badge, grouped names/special counts, zero-warning panel/toast hiding, new layout, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, responsive viewports, save/load and polling');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});
