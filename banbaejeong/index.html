@@ -132,6 +132,11 @@
   details.sub>summary{cursor:pointer;font-size:13px;color:var(--accent-ink);font-weight:600}
   .overlay{position:fixed;inset:0;background:rgba(20,24,30,.42);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
   .overlay.show{display:flex}
+  /* 잠금 상태: 잠금 화면 하나만 그리고 뒤 화면은 그리지도 스크롤하지도 못하게 막는다.
+     body 에 locked 가 붙은 첫 페인트부터 본문이 없으므로 암호 화면이 깜빡이지 않는다. */
+  body.locked{overflow:hidden;background:#f1f5f9}
+  body.locked > *:not(#lockScreen){display:none!important}
+  body.locked #lockScreen{display:flex!important;background:#f1f5f9}
   .modal{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:640px;max-height:88vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.2)}
   .modal h2{margin-bottom:6px}
   .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
@@ -262,7 +267,7 @@
   }
 </style>
 </head>
-<body>
+<body class="locked">
 
 <header>
   <div class="htop">
@@ -522,11 +527,8 @@
       <button class="btn primary" type="button" id="lockEnter">들어가기</button>
     </div>
     <div class="msg" id="lockMsg"></div>
-    <div class="row" style="margin:10px 0 0">
-      <button class="btn" type="button" id="lockOffline">인터넷 없이 계속</button>
-      <span class="muted small" style="flex:1 1 180px">서버에 연결하지 못할 때만 쓰세요. 이 브라우저에 저장된 내용으로 시작하고, 연결되면 자동으로 저장됩니다.</span>
-    </div>
-    <p class="hint small" style="margin:12px 0 0">명단은 암호로 보호된 서버(Supabase)에 저장됩니다. 암호를 모르면 학교에서 함께 쓰는 번호를 담당 선생님께 확인하세요.</p>
+    <p class="hint small" style="margin:12px 0 0">명단은 암호로 보호된 서버(Supabase)에 저장됩니다. 암호를 모르면 학교에서 함께 쓰는 번호를 담당 선생님께 확인하세요.<br>
+      암호가 맞고 서버에 연결됐을 때만 들어갈 수 있습니다.</p>
   </div>
 </div>
 
@@ -3373,7 +3375,15 @@ var CORE = (function () {
     el.className = 'msg ' + (kind || 'bad');
     el.textContent = msg || '';
   }
+  /* 잠금 상태를 body 클래스로 알린다. CSS 가 잠금 화면 밖의 본문을 전부 감추고 스크롤도 막는다. */
+  function setLocked(on) {
+    var b = document.body;
+    if (!b || !b.classList) return;
+    if (on) b.classList.add('locked');
+    else b.classList.remove('locked');
+  }
   function lockApp(reason) {
+    setLocked(true);
     CLOUD.entered = false;
     CLOUD.passcode = '';
     CLOUD.inFlight = false;
@@ -3406,7 +3416,7 @@ var CORE = (function () {
       if (err) {
         CLOUD.passcode = '';
         if (err.code === 'PASSCODE_MISMATCH') lockMsg('암호가 맞지 않습니다. 다시 입력해 주세요.');
-        else lockMsg('서버에 연결하지 못했습니다. (' + (err.message || '네트워크') + ') 인터넷을 확인하거나 [인터넷 없이 계속]을 눌러 주세요.');
+        else lockMsg('서버에 연결하지 못했습니다. (' + (err.message || '네트워크') + ') 인터넷 연결을 확인한 뒤 다시 넣어 주세요.');
         var p = $('#lockPass');
         if (p && p.focus) p.focus();
         return;
@@ -3418,21 +3428,10 @@ var CORE = (function () {
       var i2 = $('#lockPass');
       if (i2) i2.value = '';
       lockMsg('');
+      setLocked(false);
       var row = Array.isArray(data) ? data[0] : data;
       applyServerState(row || { state: {} });
     });
-  }
-  function unlockOffline() {
-    var inp = $('#lockPass');
-    var code = inp ? String(inp.value || '').trim() : '';
-    CLOUD.passcode = code;
-    CLOUD.entered = true;
-    if (code) sessionSet(CLOUD_SESSION, code);
-    var el = $('#lockScreen');
-    if (el) el.classList.remove('show');
-    lockMsg('');
-    cloudStatus('⚠️ 오프라인 — 이 브라우저에만 저장 중', 'bad');
-    toast('이 브라우저에 저장된 내용으로 시작합니다. 인터넷이 되면 서버에 자동으로 저장됩니다.', 'ok');
   }
   function initCloud() {
     var saved = sessionGet(CLOUD_SESSION);
@@ -3441,6 +3440,7 @@ var CORE = (function () {
       CLOUD.entered = true;
       var el = $('#lockScreen');
       if (el) el.classList.remove('show');
+      setLocked(false);
       cloudStatus('☁️ 서버에 연결하는 중…', 'loading');
       cloudLoad({ auto: true });
     } else {
@@ -3675,7 +3675,6 @@ var CORE = (function () {
   $('#btnUnlinkWork').addEventListener('click', unlinkWorkFile);
   $('#lockEnter').addEventListener('click', tryUnlock);
   $('#lockPass').addEventListener('keydown', function (e) { if (e.key === 'Enter') tryUnlock(); });
-  $('#lockOffline').addEventListener('click', unlockOffline);
   $('#btnLock').addEventListener('click', function () { lockApp(''); });
   $('#btnCloudReload').addEventListener('click', cloudReloadManual);
   $('#btnConflictLoad').addEventListener('click', function () { hideConflict(); cloudReloadManual(); });
@@ -3740,7 +3739,6 @@ var CORE = (function () {
     state: function () { return S; },
     filter: function (v) { g5Filter = v; renderStudents(); return g5Filter; },
     unlock: tryUnlock,
-    offline: unlockOffline,
     lock: lockApp,
     reload: cloudReloadManual,
     renderAll: function () { renderAll(); }
