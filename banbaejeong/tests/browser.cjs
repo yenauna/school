@@ -659,6 +659,15 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.equal(await page.locator('.col[data-k="1"] .class-notes').innerText(),'남자 부족');
  assert.equal(await page.locator('.col.quota-bad').count(),0);
  assert.match(await page.locator('[data-check="count"]').getAttribute('class'),/warn/);
+ // 한쪽 성만 모자라고 다른 성은 넘치는 반은 숫자 대신 말로 보여 준다.
+ await page.evaluate(()=>{
+  const st=__bbj.state();
+  st.students=Array.from({length:16},(_,i)=>({id:i+1,name:'섬임학생'+i,no:i+1,g4:'',g5:(i%2+1)+'반',gender:i<6?'남':'여',tags:[],w:{},fixed:null}));
+  st.classes=[{name:'가반',total:9,male:5,female:4,special:false},{name:'나반',total:7,male:4,female:3,special:false}];
+  st.result={assign:st.students.map((s,i)=>[0,1,2,3,4,6,7,8].indexOf(i)>=0?0:1),ids:st.students.map(s=>s.id),moves:0,ms:0};__bbj.renderAll();
+ });
+ assert.equal(await page.locator('.col[data-k="0"] .class-notes').innerText(),'1명 부족 (여자 부족)');
+ assert.equal(await page.locator('.col[data-k="1"] .class-notes').innerText(),'1명 초과 (여자 많음)');
  // The bottom bar stays thin on PC, phone and landscape phone; content keeps clear of it.
  await page.locator('.tab[data-tab="setup"]').click();
  for(const [w,h,limit] of [[1600,1000,50],[412,900,45],[900,420,40]]){

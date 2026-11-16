@@ -1594,12 +1594,19 @@ var CORE = (function () {
       var diff = Number(p.count) - target;
       if (diff) {
         var use = diff < 0 ? '부족' : '초과';
+        /* 남·여 목표에서 얼마나 벗어났는지. 부족·초과가 같은 방향일 때만 숫자를 붙이고,
+           한쪽이 남고 한쪽이 모자라는 섞인 경우에는 어느 쪽이 어긋났는지만 적는다. */
+        var deltas = [['남', Math.round(Number(p.targetMale) || 0), Number(p.male) || 0], ['여', Math.round(Number(p.targetFemale) || 0), Number(p.female) || 0]]
+          .map(function (g) { return { tag: g[0], want: g[1], have: g[2], d: g[2] - g[1] }; });
+        var same = deltas.filter(function (g) { return diff < 0 ? g.d < 0 : g.d > 0; });
+        var mixed = deltas.some(function (g) { return diff < 0 ? g.d > 0 : g.d < 0; });
         var parts = [];
-        [['남', p.targetMale, p.male], ['여', p.targetFemale, p.female]].forEach(function (g) {
-          var want = Math.round(Number(g[1]) || 0), have = Number(g[2]) || 0;
-          var gapN = diff < 0 ? want - have : have - want;
-          if (gapN > 0) parts.push(g[0] + gapN);
-        });
+        if (same.length && !mixed) {
+          same.forEach(function (g) { parts.push(g.tag + Math.abs(g.d)); });
+        } else if (same.length) {
+          same.sort(function (a, b) { return Math.abs(b.d) - Math.abs(a.d); });
+          parts.push(same[0].tag + '자 ' + (diff < 0 ? '부족' : '많음'));
+        }
         var amount = Math.abs(diff);
         var tail = amount + '명 ' + use + (parts.length ? ' (' + parts.join(' ') + ')' : '');
         bad.push({ k: p.k, name: p.name, amount: amount, over: diff > 0, text: p.name + ' ' + tail, short: tail });
