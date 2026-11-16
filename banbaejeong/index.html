@@ -3534,8 +3534,8 @@ var CORE = (function () {
       nowSel.innerHTML = S.classes.map(function (c, i) { return '<option value="' + i + '">' + esc(c.name || ((i + 1) + '반')) + '</option>'; }).join('');
       var curK = (existing && S.result && S.result.assign) ? S.result.assign[studentIndex(existing.id)] : null;
       if (curK != null && curK >= 0) nowSel.value = String(curK);
-      if (nowWrap) nowWrap.hidden = !existing;
-      nowSel.disabled = !existing;
+      if (nowWrap) nowWrap.hidden = !existing || !S.result;
+      nowSel.disabled = !existing || !S.result;
     }
     $('#addStuTitle').textContent = existing ? '학생 수정' : '학생 추가';
     $('#addStuHint').textContent = existing ? '이 학생의 정보와 별 점수를 수정합니다. 별 총합은 최대 5점입니다.' : '명단에 넣는 동시에 이 반으로 배정됩니다. 4학년 반은 나중에 명단 탭에서 채워도 됩니다.';
