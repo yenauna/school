@@ -151,12 +151,18 @@
   /* 반별 학생 기준 태그 요약 */
   .tagsum{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
   .chiplist{padding:6px;display:flex;flex-direction:column;gap:4px}
-  .stu{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12.5px;cursor:grab}
+  /* 손가락으로 끌 때는 세로 스크롤만 브라우저에 맡기고, 가로로 끄는 손짓은 카드 이동으로 받는다 */
+  .stu{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12.5px;cursor:grab;touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   /* 남학생은 연한 하늘색, 여학생은 연한 분홍 */
   .stu.m{background:#eff6ff;border-color:#dbeafe}
   .stu.f{background:#fff1f2;border-color:#ffe4e6}
   .stu:hover{box-shadow:0 0 0 1px rgba(59,111,224,.18)}
   .stu.dragging{opacity:.4}
+  /* 끌고 있는 카드: 손가락/마우스 아래에 떠다니는 고스트 칩 */
+  .stu.drag-ghost{position:fixed;z-index:9999;pointer-events:none;opacity:.97;cursor:grabbing;transform:scale(1.03) rotate(-1.5deg);box-shadow:0 12px 26px rgba(16,24,40,.28);border-color:var(--accent);margin:0}
+  .col.drop-on,.classcard.drop-on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:#fbfdff}
+  body.stu-drag-active{cursor:grabbing;-webkit-user-select:none;user-select:none}
+  body.stu-drag-active .stu{cursor:grabbing}
   .stu.viol{border-color:#e05a4c;box-shadow:inset 0 0 0 1px #f0b7b1}
   .stu.fixbad{border-color:#e0a24c;box-shadow:inset 0 0 0 1px #eed9ae}
   .stu .l1{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
@@ -568,6 +574,10 @@
     </div>
     <label class="fld">4학년 반 <input type="text" id="addStuG4" placeholder="예: 3반"></label>
     <label class="fld">반드시 이 반(고정 반) <select id="addStuFixed"></select></label>
+    <div id="addStuNowWrap" hidden>
+      <label class="fld">현재 배정 반(빠른 이동) <select id="addStuNowClass"></select></label>
+      <p class="hint small" style="margin:5px 0 0">손가락으로 끌어 옮기기 어려울 때 여기서 반을 바꿔도 됩니다. <b>반드시 이 반</b>이 있는 학생은 고정을 먼저 풀거나 그 반으로 옮겨 주세요.</p>
+    </div>
     <div class="row"><span>태그 · 별(★)</span><div id="addStuTags"></div></div>
     <label class="fld">별 총합 (최대 5점) <input type="number" id="addStuScore" min="0" max="5" step="1" value="0"></label>
     <div class="msg" id="addStuMsg"></div>
@@ -3192,6 +3202,10 @@ var CORE = (function () {
     });
     return out;
   }
+  /* 포인터 이벤트를 쓰는 브라우저에서는 브라우저 기본 드래그를 꺼 둔다.
+     이름 버튼 위에서 기본 드래그가 걸리지 않아도 직접 끌 수 있고, 클릭과 끌기를 거리로 가른다.
+     포인터 이벤트가 없는 예전 브라우저만 예전처럼 HTML5 드래그를 쓴다. */
+  function dragAttr() { return (window.PointerEvent ? ' draggable="false"' : ' draggable="true"'); }
   function chipHtml(idx, k, sepMap, y3Map, fixMap, specialMap, heartMap) {
     var s = S.students[idx];
     var wm = tagWeightMap();
@@ -3209,7 +3223,7 @@ var CORE = (function () {
       (s.fixed != null ? ' locked' : '');
     var isFixedHere = (s.fixed != null && s.fixed !== '' && Number(s.fixed) === k);
     if (s.fixed != null) warns.push('고정 학생입니다. 옮기려면 이름을 눌러 고정 반을 바꾸세요');
-    return '<div class="' + cls + '" draggable="true" data-id="' + s.id + '" data-fixed="' + (s.fixed != null ? '1' : '') + '" data-score="' + total + '" title="4학년 ' + esc(s.g4 || '?') + ' · 5학년 ' + esc(s.g5 || '?') + (warns.length ? ' · ' + esc(warns.join(' / ')) : '') + '">' +
+    return '<div class="' + cls + '"' + dragAttr() + ' data-id="' + s.id + '" data-k="' + k + '" data-fixed="' + (s.fixed != null ? '1' : '') + '" data-score="' + total + '" title="4학년 ' + esc(s.g4 || '?') + ' · 5학년 ' + esc(s.g5 || '?') + (warns.length ? ' · ' + esc(warns.join(' / ')) : '') + '">' +
       '<div class="l1"><button type="button" class="nm" data-act="edit-student" data-id="' + s.id + '" data-k="' + k + '" title="학생 정보 수정">' + esc(s.name) + '</button>' + (heartMap[s.id]||'') +
         (isFixedHere ? '<span class="kb fix" title="반드시 이 반" aria-label="반드시 이 반">📌</span>' : '') +
         (s.transfer ? '<span class="transfer-badge">전출예정</span>' : '') + tags + '<span class="g5b" title="5학년 반">' + esc(g5Badge(s)) + '</span></div>' +
@@ -3514,6 +3528,15 @@ var CORE = (function () {
     }
     $('#addStuG4').value = existing ? existing.g4 || '' : '';
     $('#addStuFixed').innerHTML = fixedOptions(existing || {fixed:null});
+    /* 결과 화면에서 고칠 때만: 끌어 옮기기가 어려운 화면을 위해 반을 골라 바로 옮기는 선택지를 둔다 */
+    var nowWrap = $('#addStuNowWrap'), nowSel = $('#addStuNowClass');
+    if (nowSel) {
+      nowSel.innerHTML = S.classes.map(function (c, i) { return '<option value="' + i + '">' + esc(c.name || ((i + 1) + '반')) + '</option>'; }).join('');
+      var curK = (existing && S.result && S.result.assign) ? S.result.assign[studentIndex(existing.id)] : null;
+      if (curK != null && curK >= 0) nowSel.value = String(curK);
+      if (nowWrap) nowWrap.hidden = !existing;
+      nowSel.disabled = !existing;
+    }
     $('#addStuTitle').textContent = existing ? '학생 수정' : '학생 추가';
     $('#addStuHint').textContent = existing ? '이 학생의 정보와 별 점수를 수정합니다. 별 총합은 최대 5점입니다.' : '명단에 넣는 동시에 이 반으로 배정됩니다. 4학년 반은 나중에 명단 탭에서 채워도 됩니다.';
     $('#addStuApply').textContent = existing ? '수정' : '추가';
@@ -3542,6 +3565,9 @@ var CORE = (function () {
     pushUndo();
     if (editStudentId != null) {
       var existing = findStudent(editStudentId), oldGender = existing.gender, oldFixed = existing.fixed;
+      var curBefore = (S.result && S.result.assign) ? S.result.assign[studentIndex(editStudentId)] : null;
+      var nowSel = $('#addStuNowClass');
+      var nowK = (nowSel && !nowSel.disabled && nowSel.value !== '') ? Number(nowSel.value) : null;
       Object.assign(existing, {name:name,no:String($('#addStuNo').value || '').trim(),g5:normClassVal($('#addStuG5').value),g4:normClassVal($('#addStuG4').value),gender:gender,tags:addStudentDraft.tags.slice(),w:Object.assign({},addStudentDraft.w),score:addStudentDraft.score,fixed:$('#addStuFixed').value === '' ? null : Number($('#addStuFixed').value)});
       CORE.normalizeStars(existing);
       var cls = S.classes[k];
@@ -3550,6 +3576,8 @@ var CORE = (function () {
       renderClasses(); renderTags(); renderStudents(); renderPairs(); renderWishGroups(); renderExtraConditions(); renderRosterSummary(); renderResult(); save(); closeAddStudent();
       /* 고정 반을 다른 반으로 바꿈 → 배정 결과에서도 그 반으로 바로 이동 */
       if (existing.fixed != null && String(oldFixed) !== String(existing.fixed)) moveToFixedClass(existing.id, Number(existing.fixed), oldFixed);
+      /* "현재 배정 반"에서 다른 반을 골랐으면 그 반으로 옮긴다(고정 학생 잠금·필수 조합 확인은 requestMove가 한다) */
+      else if (nowK != null && curBefore != null && Number(curBefore) !== nowK) requestMove(existing.id, nowK);
       return;
     }
     var s = {
@@ -3914,7 +3942,7 @@ var CORE = (function () {
   function pollBlocked() {
     if(tab!=='result' || document.hidden || !CLOUD.entered) return true;
     if(Date.now()-lastActivity>=60000){cloudStatus('⏸ 잠시 멈춤 (화면 누르면 재개)','paused');return true;}
-    if(CLOUD.inFlight || CLOUD.dirty || savePending || document.querySelector('.overlay.show'))return true;
+    if(CLOUD.inFlight || CLOUD.dirty || savePending || (DRAG && DRAG.active) || document.querySelector('.overlay.show'))return true;
     var a=document.activeElement;return !!(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName));
   }
   function pollOnce(){
@@ -4179,12 +4207,178 @@ var CORE = (function () {
     g5Filter = (v == null || v === '') ? null : v;
     renderStudents();
   });
+  /* ---------- 배정 결과 카드 옮기기: 마우스와 손가락을 같은 포인터 흐름으로 처리 ----------
+     이름(<button class="nm">) 위에서도 끌 수 있도록 브라우저 기본 드래그 대신 포인터 이벤트로 직접 옮긴다.
+     · 6px 미만으로 짧게 누르면 클릭 → 학생 정보 수정 창
+     · 마우스는 6px 넘게 움직이면 바로 드래그
+     · 손가락은 200ms 길게 누르거나 옆으로 확실히 끌면 드래그, 세로로 먼저 움직이면 화면 스크롤 */
+  var DRAG_THRESHOLD = 6, TOUCH_HOLD_MS = 200, TOUCH_MOVE_TOLERANCE = 12, TOUCH_EDGE_SCROLL = 12;
+  var DRAG = {
+    armed: false, active: false, kind: '', id: null, chip: null, pointerId: null,
+    startX: 0, startY: 0, lastX: 0, lastY: 0, grabX: 0, grabY: 0, startedAt: 0,
+    holdTimer: null, ghost: null, dropEl: null, scrollDir: 0, rafId: null, justDragged: false
+  };
+  function dragColumnOf(el) { return (el && el.closest) ? el.closest('.col[data-k],.classcard[data-k]') : null; }
+  function dragColumnAt(x, y) {
+    var el = document.elementFromPoint ? document.elementFromPoint(x, y) : null;
+    return dragColumnOf(el);
+  }
+  function dragActive() { return DRAG.active; }
+  function dragEnd() {
+    clearTimeout(DRAG.holdTimer); DRAG.holdTimer = null;
+    if (DRAG.rafId) { try { cancelAnimationFrame(DRAG.rafId); } catch (e) { } DRAG.rafId = null; }
+    if (DRAG.ghost && DRAG.ghost.parentNode) DRAG.ghost.parentNode.removeChild(DRAG.ghost);
+    DRAG.ghost = null;
+    $$('.col.drop-on,.col.over,.classcard.drop-on,.classcard.over').forEach(function (el) { el.classList.remove('drop-on', 'over'); });
+    $$('.stu.dragging').forEach(function (el) { el.classList.remove('dragging'); });
+    document.body.classList.remove('stu-drag-active');
+    DRAG.armed = false; DRAG.active = false; DRAG.kind = ''; DRAG.id = null; DRAG.chip = null;
+    DRAG.pointerId = null; DRAG.dropEl = null; DRAG.scrollDir = 0;
+    dragId = null;
+  }
+  function dragGhostMove(x, y) {
+    if (!DRAG.ghost) return;
+    var lift = DRAG.kind === 'touch' ? 30 : 0;   /* 손가락에 카드가 가리지 않도록 조금 위에 띄운다 */
+    DRAG.ghost.style.left = (x - DRAG.grabX) + 'px';
+    DRAG.ghost.style.top = (y - DRAG.grabY - lift) + 'px';
+  }
+  function dragHighlight(x, y) {
+    var col = dragColumnAt(x, y);
+    if (col === DRAG.dropEl) return col;
+    if (DRAG.dropEl) DRAG.dropEl.classList.remove('drop-on', 'over');
+    DRAG.dropEl = col;
+    if (col) col.classList.add('drop-on', 'over');
+    return col;
+  }
+  /* 화면 위·아래 끝까지 끌고 가면 카드 목록을 스스로 굴려 다른 반 위에 놓을 수 있게 한다 */
+  function dragScrollStep() {
+    DRAG.rafId = null;
+    if (!DRAG.active) return;
+    if (DRAG.scrollDir) {
+      /* 화면 끝에 가까울수록 더 빨리 굴린다 */
+      var edge = DRAG.scrollDir < 0 ? DRAG.lastY : (window.innerHeight - DRAG.lastY);
+      var speed = edge < 36 ? TOUCH_EDGE_SCROLL * 2 : TOUCH_EDGE_SCROLL;
+      var before = window.scrollY;
+      window.scrollBy(0, DRAG.scrollDir * speed);
+      if (window.scrollY !== before) { dragGhostMove(DRAG.lastX, DRAG.lastY); dragHighlight(DRAG.lastX, DRAG.lastY); }
+    }
+    DRAG.rafId = requestAnimationFrame(dragScrollStep);
+  }
+  function dragBegin() {
+    if (!DRAG.armed || DRAG.active || !DRAG.chip) return false;
+    clearTimeout(DRAG.holdTimer); DRAG.holdTimer = null;
+    var st = findStudent(DRAG.id);
+    if (!st || !S.result || !S.result.assign) { dragEnd(); return false; }
+    if (isFixedStudent(st)) {
+      /* 고정 학생은 끌어서 옮길 수 없다: 고정 반을 먼저 바꾸라는 안내만 보여 준다 */
+      dragEnd();
+      DRAG.justDragged = true;          /* 끌어 본 손짓이 곧바로 클릭(수정 창)으로 이어지지 않게 */
+      toast(FIXED_LOCK_MSG, 'err');
+      return false;
+    }
+    var r = DRAG.chip.getBoundingClientRect();
+    DRAG.grabX = Math.max(0, Math.min(r.width, DRAG.startX - r.left));
+    DRAG.grabY = Math.max(0, Math.min(r.height, DRAG.startY - r.top));
+    DRAG.active = true; dragId = DRAG.id;
+    DRAG.chip.classList.add('dragging');
+    document.body.classList.add('stu-drag-active');
+    var g = DRAG.chip.cloneNode(true);
+    g.classList.remove('dragging'); g.classList.add('drag-ghost');
+    g.removeAttribute('data-act'); g.removeAttribute('data-id');   /* 원본과 겹쳐 찾지 않도록 */
+    g.style.width = r.width + 'px';
+    document.body.appendChild(g);
+    DRAG.ghost = g;
+    dragGhostMove(DRAG.startX, DRAG.startY);
+    try { window.getSelection().removeAllRanges(); } catch (e) { }
+    if (DRAG.kind === 'touch' && navigator.vibrate) { try { navigator.vibrate(10); } catch (e) { } }
+    if (!DRAG.rafId) DRAG.rafId = requestAnimationFrame(dragScrollStep);
+    return true;
+  }
+  function dragStartOn(e) {
+    DRAG.justDragged = false;                               /* 새로 누른 손짓은 언제나 정상 클릭으로 처리 */
+    if (DRAG.armed) return;
+    if (e.button != null && e.button !== 0) return;         /* 오른쪽·가운데 버튼은 무시 */
+    if (e.target && e.target.closest && e.target.closest('input,select,textarea')) return;
+    var chip = e.target && e.target.closest ? e.target.closest('.stu') : null;
+    if (!chip) return;
+    var id = Number(chip.dataset.id);
+    if (!id || !findStudent(id)) return;
+    DRAG.armed = true; DRAG.active = false;
+    DRAG.chip = chip; DRAG.id = id;
+    DRAG.pointerId = e.pointerId;
+    DRAG.kind = e.pointerType || 'mouse';
+    DRAG.startX = DRAG.lastX = e.clientX;
+    DRAG.startY = DRAG.lastY = e.clientY;
+    DRAG.startedAt = Date.now();
+    if (DRAG.kind === 'touch') {
+      DRAG.holdTimer = setTimeout(function () {
+        DRAG.holdTimer = null;
+        if (!DRAG.armed || DRAG.active) return;
+        if (Math.abs(DRAG.lastX - DRAG.startX) < TOUCH_MOVE_TOLERANCE && Math.abs(DRAG.lastY - DRAG.startY) < TOUCH_MOVE_TOLERANCE) dragBegin();
+      }, TOUCH_HOLD_MS);
+    }
+  }
+  function dragMoveTo(e) {
+    if (!DRAG.armed || (e.pointerId != null && e.pointerId !== DRAG.pointerId)) return;
+    DRAG.lastX = e.clientX; DRAG.lastY = e.clientY;
+    if (!DRAG.active) {
+      var dx = e.clientX - DRAG.startX, dy = e.clientY - DRAG.startY;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if (DRAG.kind === 'touch') {
+        var sideways = Math.abs(dx) >= TOUCH_MOVE_TOLERANCE && Math.abs(dx) > Math.abs(dy) * 1.8;
+        if (sideways) dragBegin();                            /* 옆으로 확실히 끌면 바로 카드 이동 */
+        else if (dist >= TOUCH_MOVE_TOLERANCE) dragEnd();      /* 세로로 먼저 움직이면 화면 스크롤 */
+        return;
+      }
+      if (dist < DRAG_THRESHOLD) return;                      /* 6px 미만은 아직 클릭 후보 */
+      if (!dragBegin()) return;
+    }
+    dragGhostMove(e.clientX, e.clientY);
+    dragHighlight(e.clientX, e.clientY);
+    DRAG.scrollDir = e.clientY < 70 ? -1 : (e.clientY > window.innerHeight - 96 ? 1 : 0);
+    if (e.cancelable) { try { e.preventDefault(); } catch (err) { } }
+  }
+  function dragReleaseTo(e) {
+    if (!DRAG.armed || (e.pointerId != null && e.pointerId !== DRAG.pointerId)) return;
+    if (!DRAG.active) { dragEnd(); return; }                  /* 짧은 탭: 그대로 클릭(학생 수정)으로 넘긴다 */
+    var id = DRAG.id;
+    var col = dragColumnAt(e.clientX, e.clientY) || DRAG.dropEl;
+    var to = col ? Number(col.getAttribute('data-k')) : null;
+    dragEnd();
+    DRAG.justDragged = true;                                  /* 끌고 난 뒤 따라오는 클릭은 무시 */
+    if (to == null || isNaN(to)) return;
+    requestMove(id, to);                                      /* 고정 학생 잠금·필수 조합 확인은 그대로 */
+  }
+  document.addEventListener('pointerdown', function (e) { dragStartOn(e); }, true);
+  document.addEventListener('pointermove', function (e) { dragMoveTo(e); }, true);
+  document.addEventListener('pointerup', function (e) { dragReleaseTo(e); }, true);
+  document.addEventListener('pointercancel', function (e) {
+    if (!DRAG.armed || (e.pointerId != null && e.pointerId !== DRAG.pointerId)) return;
+    dragEnd();
+  }, true);
+  /* 끌고 난 손짓에서 이어지는 클릭만 막는다. 새로 누른 클릭은 pointerdown에서 표시를 지우므로 그대로 동작한다. */
+  document.addEventListener('click', function (e) {
+    if (!DRAG.justDragged) return;
+    DRAG.justDragged = false;
+    if (e.target && e.target.closest && e.target.closest('.stu')) {
+      e.preventDefault(); e.stopPropagation();
+    }
+  }, true);
+  /* 길게 누르는 동안 뜨는 브라우저 메뉴를 막는다 */
+  document.addEventListener('contextmenu', function (e) {
+    if (DRAG.active || DRAG.holdTimer) e.preventDefault();
+  });
+  /* 끄는 동안에는 손가락 스크롤을 막아 카드가 화면과 함께 흘러가지 않게 한다 */
+  document.addEventListener('touchmove', function (e) {
+    if (DRAG.active && e.cancelable) e.preventDefault();
+  }, { passive: false });
+
+  /* 포인터 이벤트가 없는 예전 브라우저용 HTML5 드래그 */
   document.addEventListener('dragstart', function (e) {
     var chip = e.target.closest ? e.target.closest('.stu') : null;
     if (!chip) return;
     var id = Number(chip.dataset.id), st = findStudent(id);
     if (isFixedStudent(st)) {
-      /* 고정 학생은 끌어서 옮길 수 없다: 고정 반을 먼저 바꾸라는 안내만 보여 준다 */
       try { e.preventDefault(); } catch (err) { }
       dragId = null;
       toast(FIXED_LOCK_MSG, 'err');
@@ -4196,31 +4390,30 @@ var CORE = (function () {
   });
   document.addEventListener('dragend', function () {
     $$('.stu.dragging').forEach(function (el) { el.classList.remove('dragging'); });
-    $$('.col.over').forEach(function (el) { el.classList.remove('over'); });
+    $$('.col.over,.classcard.over').forEach(function (el) { el.classList.remove('over'); });
     dragId = null;
   });
   document.addEventListener('dragover', function (e) {
-    var col = e.target.closest ? e.target.closest('.col') : null;
+    var col = dragColumnOf(e.target);
     if (!col) return;
     e.preventDefault();
     try { e.dataTransfer.dropEffect = 'move'; } catch (err) { }
-    $$('.col.over').forEach(function (el) { if (el !== col) el.classList.remove('over'); });
+    $$('.col.over,.classcard.over').forEach(function (el) { if (el !== col) el.classList.remove('over'); });
     col.classList.add('over');
   });
   document.addEventListener('dragleave', function (e) {
-    var col = e.target.closest ? e.target.closest('.col') : null;
+    var col = dragColumnOf(e.target);
     if (col && !col.contains(e.relatedTarget)) col.classList.remove('over');
   });
   document.addEventListener('drop', function (e) {
-    var col = e.target.closest ? e.target.closest('.col') : null;
+    var col = dragColumnOf(e.target);
     if (!col) return;
     e.preventDefault();
     col.classList.remove('over');
     var id = dragId;
     if (id == null) { try { id = Number(e.dataTransfer.getData('text/plain')); } catch (err) { } }
-    if (id != null && !isNaN(id)) requestMove(id, Number(col.dataset.k));
+    if (id != null && !isNaN(id)) requestMove(id, Number(col.getAttribute('data-k')));
   });
-  document.addEventListener('pointerdown', function (e) { }, true);
 
   $$('.tab').forEach(function (b) { b.addEventListener('click', function () { switchTab(b.dataset.tab); }); });
   $('#btnAutoTargets').addEventListener('click', autoTargetsNow);
