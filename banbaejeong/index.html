@@ -23,15 +23,7 @@
   .htop{display:flex;gap:12px 20px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
   h1{font-size:20px;margin:0 0 4px;letter-spacing:-.3px}
   .sub{margin:0;color:var(--muted);font-size:12.8px;max-width:68ch}
-  .stepsbar{max-width:min(1760px,96vw);margin:14px auto 0;padding:0 18px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-  .steps{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-  .step{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 13px 5px 6px;font:inherit;font-size:12.8px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap}
-  .step:hover{border-color:#cfd7e4;color:#333b46}
-  .step .n{width:20px;height:20px;border-radius:50%;background:#eef0f4;color:#6a7280;display:inline-grid;place-items:center;font-size:11.5px;font-weight:700}
-  .step.on{background:var(--accent);border-color:var(--accent);color:#fff}
-  .step.on .n{background:rgba(255,255,255,.26);color:#fff}
-  .step.done{border-color:#c6d8f8;color:var(--accent-ink)}
-  .step.done .n{background:var(--accent-soft);color:var(--accent-ink)}
+
   .statebadge{font-size:12.3px;font-weight:600;border-radius:999px;padding:5px 12px;border:1px solid var(--line);background:var(--card);color:var(--muted);white-space:nowrap}
   .statebadge.demo{background:var(--warn-soft);border-color:#eed7a8;color:#8a5308}
   .statebadge.real{background:var(--good-soft);border-color:#b9e2c8;color:#15693d}
@@ -223,9 +215,7 @@
   .locklogo{font-size:26px;line-height:1;margin:0 0 6px}
   @media (max-width:720px){
     header{padding:16px 12px 0}
-    .stepsbar{padding:0 12px;gap:8px}
-    .steps{gap:5px}
-    .step{font-size:12.2px;padding:5px 11px 5px 5px}
+
     .tabs,main{padding-left:12px;padding-right:12px}
     .tabs{padding-top:12px}
     main{padding-bottom:118px}
@@ -266,7 +256,7 @@
     th,td{padding:5px 6px}
   }
   @media print{
-    .tabs,.actionbar,.toolbar,details.help,.btn,.stepsbar,.sheettabs,#classCards,.verdicts,.toast,#resultCard .toolbar,.cloudbar,#lockScreen{display:none!important}
+    .tabs,.actionbar,.toolbar,details.help,.btn,.sheettabs,#classCards,.verdicts,.toast,#resultCard .toolbar,.cloudbar,#lockScreen{display:none!important}
     .print-area{display:block}
     body{background:#fff}
     .card{break-inside:avoid;border-color:#ccc;box-shadow:none}
@@ -303,6 +293,10 @@
   .chiplist.layout-sex .gender-section{display:flex;flex-direction:column;gap:2px;min-width:0}
   .gender-title{font-size:11px;font-weight:700;color:var(--muted);text-align:center;line-height:18px}
   .layout-two .stu,.layout-sex .stu{min-width:0}.layout-two .stu .l1,.layout-sex .stu .l1{flex-wrap:wrap;gap:2px}
+  .tabs{align-items:center;flex-wrap:wrap}.tabs .statebadge{margin-left:auto;margin-bottom:5px}
+  .special-count{font-size:12.5px;font-weight:600;color:#475569;white-space:nowrap}
+  #nameNotices .name-notice{margin:5px 0;overflow-wrap:anywhere}
+  #problemPanel[hidden]{display:none!important}
 </style>
 </head>
 <body class="locked">
@@ -321,19 +315,10 @@
   </div>
 </header>
 
-<div class="stepsbar">
-  <div class="steps" id="stepGuide">
-    <button class="step" type="button" data-step="1"><span class="n">1</span>명단 올리기</button>
-    <button class="step" type="button" data-step="2"><span class="n">2</span>조건·반 정하기</button>
-    <button class="step" type="button" data-step="3"><span class="n">3</span>배정하고 손보기</button>
-    <button class="step" type="button" data-step="4"><span class="n">4</span>엑셀로 받기</button>
-  </div>
-  <span class="statebadge" id="stateBadge">아직 명단이 없습니다</span>
-</div>
-
 <div class="tabs">
   <button class="tab active" type="button" data-tab="setup">명단 · 조건</button>
   <button class="tab" type="button" data-tab="result">배정 결과</button>
+  <span class="statebadge" id="stateBadge">아직 명단이 없습니다</span>
 </div>
 
 <main>
@@ -367,10 +352,10 @@
       <div class="table-wrap">
         <table id="studentTable"></table>
       </div>
-      <div id="studentEmpty" class="empty" style="display:none">아직 명단이 없습니다. 위 <b>1단계 명단 올리기</b>에서 엑셀·CSV 파일을 올리거나, <b>연습용 명단</b>으로 먼저 해 보세요.</div>
+      <div id="studentEmpty" class="empty" style="display:none">아직 명단이 없습니다. 위 입력 버튼에서 엑셀·CSV 파일을 올리거나, <b>연습용 명단</b>으로 먼저 해 보세요.</div>
       </div>
     </div>
-    <div class="card" id="cardConditions"><h2>조건 정하기</h2><p id="similarNamesSetup" class="name-notice"></p>    <section class="condition-section">
+    <div class="card" id="cardConditions"><h2>조건 정하기</h2>    <section class="condition-section">
       <h3>(1) [필수] 분리 조합</h3>
       <p class="hint">한 그룹에 두 명 이상을 선택하세요. 그룹 안의 학생들은 서로 모두 다른 반에 배정합니다. 학생 수가 반 수보다 많으면 모두 분리할 수 없으므로 점검 경고를 확인하세요. <b>4학년·5학년 반이 모두 같은 학생들</b>은 여기에 넣지 않아도 6학년에 다시 같은 반이 되지 않게 자동으로 갈라 놓습니다(아래 학급 구성의 '3년 연속' 설정).</p>
 
@@ -403,6 +388,7 @@
 
 
       <section class="condition-section"><h3>(4) 전출예정</h3><p class="hint">학생을 한 명씩 등록합니다. 별 점수 계산에서 제외하고 반마다 분산합니다.</p><div id="transferList" class="group-grid"></div><button class="btn" type="button" id="btnAddTransfer">전출예정 학생 추가</button></section>
+      <section class="condition-section" id="nameNotices"><h3>이름 확인</h3><p class="name-notice" id="duplicateNamesNotice"></p><p class="name-notice" id="givenNamesNotice"></p></section>
     </div>
     <div class="card" id="cardClasses">
       <h2>다음 학년도 학급 구성</h2>
@@ -410,6 +396,7 @@
         <label class="fld">새 반 개수 <input type="number" id="classCount" min="2" max="12" step="1" value="6"></label>
         <label class="fld" title="'통합학급'으로 체크한 반은 목표 인원에서 이만큼 적게 잡습니다.">통합학급은 <input type="number" id="deduct" min="0" max="6" step="1" value="2"> 명 적게</label>
         <label class="fld"><input type="checkbox" id="restrictSpecial" hidden checked> 특수학생은 통합학급으로 체크한 반에만 배정됩니다.</label>
+        <span id="specialCount" class="special-count"></span>
         <label class="fld"><input type="checkbox" id="useY3" checked> 4·5학년에 같이 있던 학생은 6학년에 또 같은 반이 되지 않게</label>
       </div>
       <div class="table-wrap">
@@ -444,12 +431,11 @@
   <section id="tab-result" hidden>
     <div class="card" id="resultCard">
       <h2>배정 점검 결과</h2>
-      <p class="hint" style="margin-top:-2px"><b>3단계</b>입니다. 아래에서 조건을 지켰는지 확인하고, 학생을 끌어 옮겨 손본 뒤 <b>4단계</b>에서 내려받으세요.</p>
+      <p class="hint" style="margin-top:-2px">학생을 끌어 옮겨 손본 뒤, 하단 바에서 내려받으세요.</p>
       <div class="result-views">
         <div class="row" id="resultSort" role="group" aria-label="결과 정렬"><button class="btn" type="button" data-act="result-sort" data-sort="gender">남녀·가나다순</button><button class="btn" type="button" data-act="result-sort" data-sort="origin">5학년 반·번호순</button></div>
         <div class="row" id="resultLayout" role="group" aria-label="학생 배치 보기"><button class="btn" type="button" data-act="result-layout" data-layout="one">전체 1줄</button><button class="btn" type="button" data-act="result-layout" data-layout="two">전체 2줄</button><button class="btn" type="button" data-act="result-layout" data-layout="sex">남자 1줄·여자 1줄</button></div>
       </div><div class="verdicts" id="verdict"></div>
-      <p id="similarNamesResult" class="name-notice"></p>
       <div class="wishnote" id="wishInfo"></div>
       <div class="toolbar" style="margin:12px 0 0">
         <button class="btn" type="button" id="btnRerun">다시 배정</button>
@@ -1683,7 +1669,7 @@ var CORE = (function () {
     if (undoHistory) undoHistory = [];
     if (S.result) { S.result = null; if (tab === 'result') renderResult(); }
     saveSoon();
-    renderRosterSummary();
+    renderRosterSummary(); renderSpecialCount();
   }
 
   /* ---------- 공통 ---------- */
@@ -1697,14 +1683,21 @@ var CORE = (function () {
   function toast(msg, kind) {
     var el = $('#toast');
     if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
+    el._resultNotice = false;
     el.className = 'toast show ' + (kind || 'err');
     el.textContent = msg;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { el.className = 'toast'; }, 4200);
   }
 
+  function resultToast(msg, kind) {
+    if (!S.result || !S.result.report || !S.result.report.problems.length) return;
+    toast(msg,kind); $('#toast')._resultNotice = true;
+  }
+
   /* ---------- 새 반 구성 ---------- */
   function renderClasses() {
+    renderSpecialCount();
     var st = 0, sm = 0, sf = 0;
     var h = '<thead><tr><th>반</th><th>통합학급</th><th>목표 인원</th><th>남</th><th>여</th></tr></thead><tbody>';
     S.classes.forEach(function (c, k) {
@@ -1739,20 +1732,11 @@ var CORE = (function () {
   }
   function updateAbInfo() {
     $('#abInfo').textContent = '학생 ' + S.students.length + '명 · 새 반 ' + S.classes.length + '개' + (S.result ? ' · 배정 결과 있음' : '');
-    updateGuide();
+    updateStateBadge();
     updateActionBar();
   }
-  /* ---------- 1→2→3→4 단계 안내 ---------- */
-  function updateGuide() {
-    var n = S.students.length, has = !!(S.result && S.result.assign);
-    var cur = !n ? 1 : (!has ? 2 : 3);
-    $$('.step').forEach(function (b) {
-      var k = Number(b.dataset.step);
-      b.classList.toggle('on', k === cur);
-      b.classList.toggle('done', k < cur);
-    });
-    var badge = $('#stateBadge');
-    if (!badge) return;
+  function updateStateBadge() {
+    var n = S.students.length, badge = $('#stateBadge');
     if (!n) { badge.className = 'statebadge'; badge.textContent = '아직 명단이 없습니다'; }
     else if (S.sample) { badge.className = 'statebadge demo'; badge.textContent = '연습용 가상 명단 ' + n + '명'; }
     else { badge.className = 'statebadge real'; badge.textContent = '실제 명단 ' + n + '명'; }
@@ -1769,27 +1753,6 @@ var CORE = (function () {
     var el = $(sel);
     if (!el || !el.scrollIntoView) return;
     try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { el.scrollIntoView(); }
-  }
-  function stepClick(k) {
-    if (k <= 2) {
-      switchTab('setup');
-      setTimeout(function () { scrollToCard(k === 1 ? '#cardRoster' : '#cardConditions'); }, 30);
-      return;
-    }
-    if (k === 3) {
-      if (!S.students.length) {
-        toast('먼저 1단계에서 명단을 올려 주세요.', 'err');
-        switchTab('setup');
-        setTimeout(function () { scrollToCard('#cardRoster'); }, 30);
-        return;
-      }
-      if (S.result) { switchTab('result'); setTimeout(function () { scrollToCard('#boardCard'); }, 30); return; }
-      requestRun();
-      return;
-    }
-    if (!S.result) { toast('배정을 먼저 실행하면 CSV로 내려받을 수 있습니다.', 'err'); stepClick(3); return; }
-    switchTab('result');
-    setTimeout(function () { $('#btnBarCSV').focus(); }, 30);
   }
   function autoTargetsNow() {
     if (!S.students.length) { toast('먼저 학생 명단을 넣어 주세요.', 'err'); return; }
@@ -1877,12 +1840,23 @@ var CORE = (function () {
     renderNameNotices();
   }
   function renderNameNotices() {
-    var groups = Object.create(null);
-    S.students.forEach(function (s) { var name=String(s.name || '').trim(); if (name.length>1) (groups[name.slice(1)] || (groups[name.slice(1)]=[])).push(s); });
-    var notices = Object.keys(groups).filter(function (name) { return new Set(groups[name].map(function (s) { return s.name; })).size > 1; }).map(function (name) {
-      return '성 제외 이름이 같은 학생이 있어요: ' + groups[name].map(function (s) { return '5-' + (classNum(s.g5) || '?') + ' ' + s.name; }).join(', ');
+    var exact = Object.create(null), given = Object.create(null);
+    S.students.forEach(function (s) {
+      var name = String(s.name || '').trim(); if (!name) return;
+      (exact[name] || (exact[name]=[])).push(s);
+      if (name.length > 1) (given[name.slice(1)] || (given[name.slice(1)]=[])).push(s);
     });
-    ['#similarNamesSetup','#similarNamesResult'].forEach(function (id) { $(id).textContent = notices.join(' / '); });
+    function describe(group) {
+      return group.slice().sort(function (a,b) { return (classNum(a.g5) || 999)-(classNum(b.g5) || 999) || Number(a.no || 999)-Number(b.no || 999); }).map(function (s) { return '5-' + (classNum(s.g5) || '?') + ' ' + s.name; }).join(', ');
+    }
+    var duplicates = Object.keys(exact).filter(function (name) { return exact[name].length > 1; }).map(function (name) { return describe(exact[name]); });
+    var similar = Object.keys(given).filter(function (name) { return new Set(given[name].map(function (s) { return String(s.name || '').trim(); })).size > 1; }).map(function (name) { return describe(given[name]); });
+    $('#duplicateNamesNotice').textContent = '[필수] 동명이인 : ' + (duplicates.join(' / ') || '없음');
+    $('#givenNamesNotice').textContent = '[권장] 성 제외 이름 같음 : ' + (similar.join(' / ') || '없음');
+  }
+  function renderSpecialCount() {
+    var count = S.students.filter(function (s) { return (s.tags || []).indexOf('특수') !== -1; }).length;
+    $('#specialCount').textContent = "현재 '특수' 학생 " + count + '명';
   }
   function renderPairs() { renderGroupCards('pair', S.pairs, '#pairTable'); updatePairHint(); }
   var pickerTarget = null, pickerClass = '', pickerOpener = null;
@@ -1993,6 +1967,7 @@ var CORE = (function () {
     return h;
   }
   function renderStudents() {
+    renderSpecialCount();
     var q = ($('#search').value || '').trim();
     var h = '<thead><tr><th>번호</th><th>4학년 반</th><th>5학년 반</th><th>이름</th><th>성별</th><th>태그 · 정도</th><th>힘든 점수</th><th>반드시 이 반</th><th></th></tr></thead><tbody>';
     var shown = 0;
@@ -2909,9 +2884,9 @@ var CORE = (function () {
         switchTab('result');
         if (rep.problems.length) {
           scrollToCard('#resultCard');
-          toast('배정은 끝났지만 경고 ' + rep.problems.length + '건이 있습니다. 상단의 구체적인 사유를 확인하세요.', 'err');
+          resultToast('배정은 끝났지만 경고 ' + rep.problems.length + '건이 있습니다. 상단의 구체적인 사유를 확인하세요.', 'err');
         } else {
-          toast('배정 완료 — 모든 조건을 만족했습니다.', 'ok');
+          resultToast('배정 완료 — 모든 조건을 만족했습니다.', 'ok');
         }
       } catch (ex) {
         showBanner('err', '배정 중 문제가 생겼습니다: ' + esc(ex.message));
@@ -3084,14 +3059,16 @@ var CORE = (function () {
     }
     var rep = CORE.evaluate(S.students, S.classes, pairsAsIndex(), S.result.assign, currentOptions());
     S.result.report = rep;
+    var floating = $('#toast');
+    if (!rep.problems.length && floating && (floating._resultNotice || floating.classList.contains('ok'))) { clearTimeout(toastTimer); floating.className='toast'; }
     $('#verdict').innerHTML = verdictHtml(rep); renderNameNotices();
     $('#btnUndo').disabled = !undoHistory.length;
-    $('#problemPanel').hidden = false;
+    $('#problemPanel').hidden = rep.problems.length === 0;
     $('#problemPanel').classList.toggle('has-problems', rep.problems.length > 0);
-    $('#problemTitle').textContent = rep.problems.length ? '경고 ' + rep.problems.length + '건 — 아래 사유를 확인해 주세요' : '주요 배정 제약 위반 없음';
+    $('#problemTitle').textContent = rep.problems.length ? '경고 ' + rep.problems.length + '건 — 아래 사유를 확인해 주세요' : '';
     $('#problems').innerHTML = rep.problems.length
       ? rep.problems.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('')
-      : '<li class="muted" style="color:#1a7f4b">분리 조합·필수 희망 조합·동명이인 분리·통합학급·지정 반·반별 인원 조건을 모두 만족합니다.</li>';
+      : '';
     var wi = $('#wishInfo');
     if (wi) {
       var wish = rep.wishGroups || [];
@@ -3129,7 +3106,7 @@ var CORE = (function () {
   }
   function undoResult() {
     if (!undoHistory.length) return;
-    S = undoHistory.pop(); renderAll(); renderResult(); save(); toast('직전 결과 조작을 되돌렸습니다.','ok');
+    S = undoHistory.pop(); renderAll(); renderResult(); save(); resultToast('직전 결과 조작을 되돌렸습니다.','ok');
   }
   $('#btnUndo').addEventListener('click',undoResult);
   function moveStudent(id, to) {
@@ -3150,13 +3127,13 @@ var CORE = (function () {
     var mine = rep.sepViol.filter(function (v) { return v.ai === idx || v.bi === idx; });
     var mineY3 = (rep.y3Viol || []).filter(function (v) { return v.ai === idx || v.bi === idx; });
     if (mine.length) {
-      toast(s.name + ' — ' + mine[0].a + ' ↔ ' + mine[0].b + ' 같은 반이 되면 안 됩니다.', 'err');
+      resultToast(s.name + ' — ' + mine[0].a + ' ↔ ' + mine[0].b + ' 같은 반이 되면 안 됩니다.', 'err');
     } else if (mineY3.length) {
-      toast(s.name + ' — ' + mineY3[0].a + ' ↔ ' + mineY3[0].b + ' 4·5학년에 같은 반이었습니다. 3년 연속 같은 반입니다.', 'err');
+      resultToast(s.name + ' — ' + mineY3[0].a + ' ↔ ' + mineY3[0].b + ' 4·5학년에 같은 반이었습니다. 3년 연속 같은 반입니다.', 'err');
     } else if (rep.problems.length) {
-      toast(s.name + ' → ' + S.classes[to].name + toScore + '으로 옮겼습니다. 경고 ' + rep.problems.length + '건.', 'err');
+      resultToast(s.name + ' → ' + S.classes[to].name + toScore + '으로 옮겼습니다. 경고 ' + rep.problems.length + '건.', 'err');
     } else {
-      toast(s.name + ' → ' + S.classes[to].name + toScore + '으로 옮겼습니다. 문제 없습니다.', 'ok');
+      resultToast(s.name + ' → ' + S.classes[to].name + toScore + '으로 옮겼습니다. 문제 없습니다.', 'ok');
     }
   }
 
@@ -3222,7 +3199,7 @@ var CORE = (function () {
       if (oldGender !== gender && cls) { if (cls.male != null) cls.male += gender === '남' ? 1 : -1; if (cls.female != null) cls.female += gender === '여' ? 1 : -1; }
       S.result.moves = (S.result.moves || 0) + 1;
       renderClasses(); renderTags(); renderStudents(); renderPairs(); renderWishGroups(); renderResult(); save(); closeAddStudent();
-      toast(name + ' 학생 정보를 수정했습니다.', 'ok'); return;
+      resultToast(name + ' 학생 정보를 수정했습니다.', 'ok'); return;
     }
     var s = {
       id: S.nextId++, no: String($('#addStuNo').value || '').trim(),
@@ -3249,7 +3226,7 @@ var CORE = (function () {
     updateTargetHint();
     save();
     closeAddStudent();
-    toast(name + ' 학생을 ' + ((S.classes[k] && S.classes[k].name) || '') + ' 반에 넣었습니다.', 'ok');
+    resultToast(name + ' 학생을 ' + ((S.classes[k] && S.classes[k].name) || '') + ' 반에 넣었습니다.', 'ok');
   }
 
   /* ---------- 내보내기 ---------- */
@@ -3958,7 +3935,6 @@ var CORE = (function () {
   $('#btnBarCSV').addEventListener('click', downloadCSV);
   $('#btnRerun').addEventListener('click', requestRun);
 
-  $$('.step').forEach(function (b) { b.addEventListener('click', function () { stepClick(Number(b.dataset.step)); }); });
   $('#btnCopyTSV').addEventListener('click', copyTSV);
   $('#btnPrint').addEventListener('click', function () { window.print(); });
   $('#btnResetAll').addEventListener('click', function () {

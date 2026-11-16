@@ -29,6 +29,8 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.equal(await page.locator('#pairBulk,#wishBulk,#tagTable input[type=number]').count(),0);
  assert.match(await page.locator('#cardClasses').innerText(),/특수학생은 통합학급으로 체크한 반에만 배정됩니다\./);
  await page.click('#btnSample');
+ assert.equal(await page.locator('.stepsbar,[data-step]').count(),0);
+ assert.match(await page.locator('.tabs #stateBadge').innerText(),/연습용 가상 명단 108명/);
  await page.evaluate(()=>{
   const S=__bbj.state();S.pairs=[];S.wishGroups=[];S.deduct=0;S.useY3=false;
   S.tags=['특수','학습','생활','추가태그'].map(name=>({name,weight:99,max:1}));
@@ -95,14 +97,15 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.locator('#classCards').scrollIntoViewIfNeeded();
  await page.screenshot({path:path.join(artifacts,'results.png')});
  await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
- const pinnedWarning=await page.locator('#problemPanel').boundingBox();
- assert.ok(pinnedWarning.y>=0&&pinnedWarning.y<120,JSON.stringify(pinnedWarning));
+ assert.equal(await page.locator('#problemPanel').isVisible(),false);
+ assert.equal(await page.locator('#problems li').count(),0);
+ assert.equal(await page.locator('#toast.show').count(),0);
  await page.screenshot({path:path.join(artifacts,'sticky-long-board.png')});
  // Wide monitor containers and all six combinations of sort/layout modes.
  const viewBaseline=await page.evaluate(()=>({assign:__bbj.state().result.assign.slice(),problems:__bbj.state().result.report.problems.slice()}));
  for(const width of [1280,1920,2560]){
   await page.setViewportSize({width,height:1000});await page.waitForTimeout(30);
-  const widths=await page.locator('header,.stepsbar,.tabs,main').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().width));
+  const widths=await page.locator('header,.tabs,main').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().width));
   widths.forEach(w=>assert.ok(Math.abs(w-Math.min(1760,width*.96))<2,`${width}: ${w}`));
   const rows=await page.locator('.col').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().y));
   assert.ok(Math.max(...rows)-Math.min(...rows)<1,`six classes should stay in one row at ${width}`);
@@ -296,7 +299,10 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.locator('#tagTable .managed-tag').filter({hasText:'추가태그'}).locator('button').click();
  assert.equal(await page.locator('#tagTable .managed-tag').count(),4);
  assert.equal(await page.locator('#tagTable table,#tagTable input,#tagTable th').count(),0);
- assert.match(await page.locator('#similarNamesSetup').innerText(),/성 제외 이름이 같은 학생이 있어요: 5-3 김서연, 5-4 이서연/);
+ assert.equal(await page.locator('#givenNamesNotice').innerText(),'[권장] 성 제외 이름 같음 : 5-3 김서연, 5-4 이서연');
+ assert.equal(await page.locator('#duplicateNamesNotice').innerText(),'[필수] 동명이인 : 5-1 김민준, 5-5 김민준');
+ assert.equal(await page.locator('#cardConditions > :last-child').getAttribute('id'),'nameNotices');
+ assert.equal(await page.locator('#specialCount').innerText(),"현재 '특수' 학생 2명");
  await page.click('#btnAddRequired');
  for(let j=0;j<3;j++){
   if(j===2)await page.locator('#requiredTable [data-act="group-add"]').click();
@@ -324,7 +330,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.equal((await page.locator('.tagsum .student-summary').allTextContents()).join(' '),'특수5');
  assert.equal(await page.locator('#summaryCard,#summaryBody,#scoreBarWrap,#scoreBar').count(),0);
  for(const id of ['btnBarCSV','btnCopyTSV','btnPrint','btnUndo'])assert.equal(await page.locator(`.actionbar #${id}`).count(),1);
- assert.match(await page.locator('#similarNamesResult').innerText(),/김서연.*이서연/);
+ assert.equal(await page.locator('#similarNamesSetup,#similarNamesResult,#tab-result #nameNotices').count(),0);
  assert.equal(await page.locator('#btnUndo').isDisabled(),true);
  // Real browser drag dispatches the app's drag/drop handlers and creates warnings immediately.
  await page.locator('.stu[data-id="7"]').dragTo(page.locator('.col[data-k="0"]'));
@@ -341,6 +347,8 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.click('#btnUndo');assert.equal(await page.evaluate(()=>__bbj.state().result.assign[0]),original.assign[0]);
  await page.click('#btnUndo');assert.deepEqual(await page.evaluate(()=>__bbj.state().result.assign),original.assign);
  assert.equal(await page.locator('#btnUndo').isDisabled(),true);
+ assert.equal(await page.locator('#problemPanel').isVisible(),false);
+ assert.equal(await page.locator('#toast.show').count(),0);
  await page.locator('.col[data-k="0"] [data-act="add-class-student"]').click();
  await page.fill('#addStuName','되돌릴학생');await page.click('#addStuApply');
  assert.equal(await page.evaluate(()=>__bbj.state().students.length),13);
@@ -368,15 +376,13 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.deepEqual(await page.evaluate(()=>__bbj.state().requiredGroups),[[1,2,3]]);
  assert.equal(await page.evaluate(()=>__bbj.state().students[6].w.특수),5);
  assert.equal(await page.evaluate(()=>__bbj.state().result.report.verdict.scoreTotal),5);
- await page.click('[data-step="2"]');
- await page.waitForFunction(()=>{const r=document.querySelector('#cardConditions').getBoundingClientRect();return r.y>=0&&r.y<150});
- await page.click('[data-step="1"]');
- await page.waitForFunction(()=>{const r=document.querySelector('#cardRoster').getBoundingClientRect();return r.y>=0&&r.y<150});
+ await page.locator('.tab[data-tab="setup"]').click();
+ assert.equal(await page.locator('.stepsbar,#stepGuide,[data-step]').count(),0);
+ await page.locator('#cardRoster').scrollIntoViewIfNeeded();
  await page.screenshot({path:path.join(artifacts,'roster-toolbar-tags.png')});
- await page.click('[data-step="3"]');
- await page.waitForFunction(()=>!document.querySelector('#tab-result').hidden);
- await page.click('[data-step="4"]');
- await page.waitForFunction(()=>document.activeElement.id==='btnBarCSV');
+ await page.locator('.tab[data-tab="result"]').click();
+ assert.equal(await page.locator('#problemPanel').isVisible(),false);
+ assert.equal(await page.locator('#toast.show').count(),0);
  for(const width of [1280,768,412]){
   await page.setViewportSize({width,height:900});await page.waitForTimeout(30);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`new result overflow at ${width}`);
@@ -385,7 +391,33 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
   await page.locator('.tab[data-tab="result"]').click();
  }
 
+ // Grouped notices live only at the bottom of conditions; roster edits update them and the special count.
+ await page.setViewportSize({width:1600,height:1000});
+ await page.locator('.tab[data-tab="setup"]').click();
+ await page.evaluate(()=>{
+  const st=__bbj.state(),names=['홍길동','홍길동','손흥민','손흥민','김철수','박철수','이철수','이찬','박찬'];
+  const grades=[1,3,4,5,2,4,5,1,3];
+  st.students=names.map((name,i)=>({id:i+1,name,no:i+1,g4:'',g5:grades[i]+'반',gender:i%2?'여':'남',tags:i<4?['특수']:[],w:{},fixed:null}));
+  st.tags=['특수','학습','생활','학부모'].map(name=>({name,weight:1,max:null}));
+  st.requiredGroups=[];st.pairs=[];st.wishGroups=[];st.result=null;st.sample=false;st.nextId=10;__bbj.renderAll();
+ });
+ assert.equal(await page.locator('#duplicateNamesNotice').innerText(),'[필수] 동명이인 : 5-1 홍길동, 5-3 홍길동 / 5-4 손흥민, 5-5 손흥민');
+ assert.equal(await page.locator('#givenNamesNotice').innerText(),'[권장] 성 제외 이름 같음 : 5-2 김철수, 5-4 박철수, 5-5 이철수 / 5-1 이찬, 5-3 박찬');
+ assert.equal(await page.locator('#specialCount').innerText(),"현재 '특수' 학생 4명");
+ assert.equal(await page.locator('#stateBadge').innerText(),'실제 명단 9명');
+ await page.locator('#studentTable [data-act="toggle-tag"][data-id="1"][data-tag="특수"]').click();
+ assert.equal(await page.locator('#specialCount').innerText(),"현재 '특수' 학생 3명");
+ page.once('dialog',d=>d.accept());
+ await page.locator('#tagTable .managed-tag').filter({hasText:'특수'}).locator('button').click();
+ assert.equal(await page.locator('#specialCount').innerText(),"현재 '특수' 학생 0명");
+ await page.locator('#nameNotices').scrollIntoViewIfNeeded();
+ await page.screenshot({path:path.join(artifacts,'grouped-name-notices.png')});
+ await page.evaluate(()=>{__bbj.state().students=[];__bbj.renderAll()});
+ assert.equal(await page.locator('#duplicateNamesNotice').innerText(),'[필수] 동명이인 : 없음');
+ assert.equal(await page.locator('#givenNamesNotice').innerText(),'[권장] 성 제외 이름 같음 : 없음');
+ assert.equal(await page.locator('#specialCount').innerText(),"현재 '특수' 학생 0명");
+ assert.equal(await page.locator('#stateBadge').innerText(),'아직 명단이 없습니다');
  assert.deepEqual(errors,[]);
- console.log('PASS Chromium: wide monitors and all sort/layout combinations, required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, new layout/navigation, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, responsive viewports, save/load and polling');
+ console.log('PASS Chromium: wide monitors and all sort/layout combinations, required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, compact header badge, grouped names/special counts, zero-warning panel/toast hiding, new layout, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, responsive viewports, save/load and polling');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});
