@@ -92,6 +92,39 @@ const fs=require('node:fs'),path=require('node:path'),os=require('node:os');
  await page.fill('#addStuG4','4반');await page.selectOption('#addStuFixed','1');await page.click('#addStuApply');
  assert.equal(await page.evaluate(()=>__bbj.state().students[0].g4),'4반');
  assert.equal(await page.evaluate(()=>__bbj.state().students[0].fixed),1);
+ // Compact class rows and all four condition grids at desktop and phone widths.
+ await page.evaluate(()=>{
+  const s=__bbj.state();s.classes=Array.from({length:6},(_,k)=>({name:['가','나','다','라','마','바'][k]+'반',total:1,special:k<2}));s.classCount=6;s.result=null;
+  s.pairs=[[1,2],[2,3],[3,4],[4,5]];s.pairModes=['one','all','all','all'];s.requiredGroups=[[1,2],[2,3],[3,4],[4,5]];s.wishGroups=[[1,2],[2,3],[3,4],[4,5]];
+  s.students.forEach((st,i)=>st.transfer=i<4);__bbj.renderAll();
+ });
+ for(const width of [640,412,320]){
+  await page.setViewportSize({width,height:900});
+  const rows=await page.locator('#classTable tbody tr').evaluateAll(es=>es.map(e=>{
+   const rect=key=>e.querySelector('[data-field='+key+']').getBoundingClientRect();
+   const name=rect('name'),total=rect('total'),special=rect('special');
+   return {height:e.getBoundingClientRect().height,sameLine:Math.max(name.top,total.top,special.top)-Math.min(name.top,total.top,special.top)<12,ordered:name.right<=total.left&&total.right<special.left};
+  }));
+  assert.equal(rows.length,6);rows.forEach(r=>assert.ok(r.height<=42&&r.sameLine&&r.ordered,JSON.stringify({width,r})));
+  for(const selector of ['#pairTable','#requiredTable','#wishTable','#transferList']){
+   const boxes=await page.locator(selector+' .group-card').evaluateAll(es=>es.map(e=>({x:e.getBoundingClientRect().x,y:e.getBoundingClientRect().y,overflow:e.scrollWidth>e.clientWidth+1})));
+   assert.ok(boxes[0].x<boxes[1].x&&Math.abs(boxes[0].y-boxes[1].y)<1&&boxes[2].x===boxes[0].x,selector+' '+width);
+   assert.ok(boxes.every(b=>!b.overflow),selector+' overflow '+width);
+  }
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await page.locator('#cardClasses').scrollIntoViewIfNeeded();
+  await page.screenshot({path:path.join(artifacts,'compact-classes-'+width+'.png')});
+  await page.locator('#pairTable').scrollIntoViewIfNeeded();
+  await page.screenshot({path:path.join(artifacts,'compact-conditions-'+width+'.png')});
+ }
+ await page.locator('#classTable [data-field=total]').first().fill('5');await page.locator('#search').click();
+ assert.equal(await page.evaluate(()=>__bbj.state().classes[0].total),5);
+ await page.locator('#classTable .integration-choice').first().click();assert.equal(await page.evaluate(()=>__bbj.state().classes[0].special),false);
+ await page.setViewportSize({width:1600,height:1000});
+ for(const selector of ['#pairTable','#requiredTable','#wishTable','#transferList']){
+  assert.ok(await page.locator(selector+' .group-card').first().evaluate(e=>e.getBoundingClientRect().width<240));
+ }
+ await page.locator('#pairTable').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(artifacts,'compact-conditions-desktop.png')});
  assert.deepEqual(errors,[]);
  console.log('PASS Chromium: explicit merge save, concurrent retry, unsaved update, colliding IDs, separation modes, live result polling, idle/resume, fixed class editor, compact mobile roster. Screenshots: '+artifacts);
  }finally{await browser.close();}
