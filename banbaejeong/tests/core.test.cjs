@@ -10,7 +10,7 @@ const plain = value => JSON.parse(JSON.stringify(value));
 const roster = n => Array.from({ length:n }, (_,i) => ({ id:i+1,name:`학생${i}`,gender:i%2?'여':'남',tags:[],g4:'',g5:`${i%6+1}반`,no:i+1 }));
 const classes = n => Array.from({length:n}, (_,i)=>({ name:`${i+1}반`,total:2,male:1,female:1 }));
 test('default and legacy tag names distinguish student tags from class options',()=>{
- assert.deepEqual(plain(C.DEFAULT_TAGS),['특수','학습','생활']);
+ assert.deepEqual(plain(C.DEFAULT_TAGS),['특수','학습','생활','학부모']);
  for(const name of ['특수','특수반','통합학급']) assert.equal(C.tagName(name),'특수');
 });
 test('individual stars, default one, manual total and five-star limit',()=>{
@@ -139,4 +139,69 @@ test('allocation exactly matches every class and gender quota, even with strong 
   rep.per.forEach((p,i)=>{assert.equal(p.count,cls[i].total);assert.equal(p.male,cls[i].male);assert.equal(p.female,cls[i].female)});
   assert.equal(result.assign[1],1);
  }
+});
+
+test('required wishes merge transitively, duplicate names split, and special capacity is respected',()=>{
+ const st=roster(12),cls=classes(3).map((c,i)=>({...c,total:4,male:2,female:2,special:i<2}));
+ st[4].name=st[6].name='김민준';st[4].fixed=0;
+ for(const i of [4,6]){st[i].tags=['특수'];st[i].w={특수:5}}
+ for(const i of [6,7,8]){st[i].transfer=true;st[i].tags=i===6?['특수']:['학습'];st[i].w={[st[i].tags[0]]:5}}
+ const opts={seed:42,threeYear:false,requiredGroups:[[0,1],[1,2]],pinned:{특수:[0,1]},restarts:4,iters:3000};
+ const result=C.assign(st,cls,[],opts),rep=C.evaluate(st,cls,[],result.assign,opts);
+ assert.equal(result.assign[0],result.assign[1]);assert.equal(result.assign[1],result.assign[2]);
+ assert.notEqual(result.assign[4],result.assign[6]);assert.equal(result.assign[4],0);
+ assert.equal(new Set([6,7,8].map(i=>result.assign[i])).size,3);
+ assert.equal(rep.verdict.scoreTotal,5);assert.equal(C.studentScore(st[6]),0);
+ assert.equal(C.starsOf(st[6],'특수'),0);
+ assert.deepEqual(plain(rep.problems),[]);
+ rep.per.forEach(p=>{assert.equal(p.count,4);assert.equal(p.male,2);assert.equal(p.female,2);assert.ok((p.tags.특수||0)<=1)});
+});
+test('manual duplicate-name collisions and split required groups always produce detailed warnings',()=>{
+ const st=roster(4),cls=classes(2);st[0].name=st[1].name='김민준';
+ const rep=C.evaluate(st,cls,[],[0,0,0,1],{threeYear:false,requiredGroups:[[2,3]],wishGroups:[[0,3]]});
+ assert.equal(rep.duplicateViol.length,1);assert.equal(rep.requiredViol.length,1);
+ assert.match(rep.problems.join(' '),/동명이인 자동 분리 위반.*김민준.*1반/);
+ assert.match(rep.problems.join(' '),/필수 희망 조합 분리.*학생2.*1반.*학생3.*2반/);
+ assert.doesNotMatch(rep.problems.join(' '),/추천/);
+});
+test('special students in unchecked classes and overlaps in checked classes are both warnings',()=>{
+ const st=roster(4),cls=classes(2);cls[0].special=true;
+ st.slice(0,3).forEach(s=>{s.tags=['특수']});
+ const rep=C.evaluate(st,cls,[],[0,0,1,1],{threeYear:false});
+ assert.match(rep.problems.join(' '),/특수학생 중복 배정: 1반.*학생0.*학생1/);
+ assert.match(rep.problems.join(' '),/통합학급 미지정: 학생2.*2반/);
+});
+test('transfer score exclusion preserves saved personal stars and removes them from score summaries',()=>{
+ const st=roster(4),cls=classes(2);
+ Object.assign(st[0],{transfer:true,tags:['학습'],w:{학습:5},score:5});
+ C.normalizeStars(st[0]);assert.equal(st[0].w.학습,5);
+ const rep=C.evaluate(st,cls,[],[0,0,1,1],{threeYear:false});
+ assert.equal(rep.verdict.scoreTotal,0);assert.equal(rep.per[0].tagScore.학습,0);
+ st[0].transfer=false;assert.equal(C.studentScore(st[0]),5);
+});
+
+test('required twins stay together even when the previous-class rule conflicts, and the conflict is warned',()=>{
+ const st=roster(8),cls=classes(2).map(c=>({...c,total:4,male:2,female:2}));
+ st[0].g4=st[1].g4='1반';st[0].g5=st[1].g5='1반';
+ const opts={seed:14,threeYear:true,requiredGroups:[[0,1]],restarts:2,iters:1000};
+ const res=C.assign(st,cls,[],opts),rep=C.evaluate(st,cls,[],res.assign,opts);
+ assert.equal(res.assign[0],res.assign[1]);assert.equal(rep.requiredViol.length,0);
+ assert.match(rep.problems.join(' '),/3년 연속 같은 반/);
+});
+test('matching given names and missed recommended groups are not hard warnings',()=>{
+ const st=roster(4),cls=classes(2);st[0].name='김서연';st[1].name='이서연';
+ const opts={threeYear:false,wishGroups:[[0,3]]};
+ assert.equal(C.buildLinks(st,[],opts).length,0);
+ const rep=C.evaluate(st,cls,[],[0,0,1,1],opts);
+ assert.deepEqual(plain(rep.problems),[]);assert.equal(rep.wishGroups[0].ok,false);
+});
+
+test('when special capacity is impossible, mandatory wishes stay together if quota-feasible and other violations are warned',()=>{
+ const st=roster(8),cls=classes(2).map((c,i)=>({...c,total:4,male:2,female:2,special:i===0}));
+ for(const i of [2,4,6])st[i].tags=['특수'];
+ const opts={seed:22,threeYear:false,requiredGroups:[[0,1]],pinned:{특수:[0]},restarts:2,iters:500};
+ const result=C.assign(st,cls,[],opts),rep=C.evaluate(st,cls,[],result.assign,opts);
+ assert.equal(result.assign[0],result.assign[1]);assert.equal(rep.requiredViol.length,0);
+ assert.ok(rep.problems.some(p=>p.includes('특수')||p.includes('통합학급')));
+ rep.per.forEach(p=>{assert.equal(p.count,4);assert.equal(p.male,2);assert.equal(p.female,2)});
 });
