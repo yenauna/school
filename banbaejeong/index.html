@@ -296,6 +296,20 @@
   .required-heart{font-size:12px;line-height:1;flex:0 0 auto;margin-left:1px}
   .reference-popup{position:fixed;z-index:80;max-width:min(320px,calc(100vw - 20px));max-height:50vh;overflow:auto;padding:8px 10px;border:1px solid #edcf9f;border-radius:8px;background:#fff8e7;color:#854d0e;box-shadow:0 4px 16px #0002;font-size:12px;line-height:1.6;pointer-events:none;overflow-wrap:anywhere}
   .reference-popup[hidden]{display:none!important}.v[data-reference]{cursor:help}
+
+  #btnCloudReload{margin-right:auto}
+  .mobile-edit{display:none}.pair-modes{display:flex;gap:4px;margin:5px 0}.pair-divider{border:0;border-top:1px solid var(--line);margin:5px 0}
+  .stu .kb.fix{font-size:9px;line-height:1;padding:0 1px;flex:0 0 auto;white-space:nowrap}.stu .l1{flex-wrap:nowrap}.stu .nm{flex-shrink:0}
+  @media(max-width:640px){
+    #studentTable tr{display:flex;align-items:center;flex-wrap:wrap;gap:3px;padding:3px 5px;margin:0 0 3px;border-radius:5px}
+    #studentTable td{display:none!important;min-height:0;padding:0}
+    #studentTable td[data-label="이름"],#studentTable td[data-label="번호"],#studentTable td[data-label="성별"],#studentTable td.mobile-edit{display:flex!important}
+    #studentTable td::before{display:none!important}#studentTable td.mobile-edit{margin-left:auto}
+    #studentTable td input,#studentTable td select{font-size:12px;padding:3px!important;height:26px;min-width:0!important}
+    #studentTable td[data-label="이름"] input{width:83px}#studentTable td[data-label="번호"] input{width:36px}
+    .card{padding:8px}.group-card{padding:7px}.group-member .btn{padding:4px 6px;font-size:12px}.group-grid{gap:6px}
+    #classCards{gap:5px}.classcard{padding:4px}.actionbar{gap:5px;flex-wrap:wrap;padding:6px}.actionbar .abinfo{display:none}.actionbar .btn{font-size:12px;padding:6px 8px}
+  }
 </style>
 </head>
 <body class="locked">
@@ -304,11 +318,11 @@
   <div class="htop">
     <div>
       <h1>반배정 도우미</h1>
-      <p class="sub">4·5학년 반과 이름·성별·태그를 넣으면, <b>같이 두면 안 되는 학생</b>과 <b>반별 부담(★)</b>이 고르게 되도록 6학년 반을 새로 짜 줍니다. 명단은 암호로 잠긴 서버에 자동 저장되어, 같은 암호를 쓰는 선생님과 함께 쓸 수 있습니다.</p>
+      <p class="sub">4·5학년 반과 이름·성별·태그를 넣으면, <b>같이 두면 안 되는 학생</b>과 <b>반별 부담(★)</b>이 고르게 되도록 6학년 반을 새로 짜 줍니다. 명단·조건은 저장 버튼으로 서버에 병합 저장되어, 같은 암호를 쓰는 선생님과 함께 쓸 수 있습니다.</p>
     </div>
     <div class="cloudbar">
       <span class="cloud" id="cloudStatus">🔒 잠김</span>
-      <button class="btn sm" type="button" id="btnCloudReload" title="다른 선생님이 저장한 최신 내용을 서버에서 다시 받아옵니다.">다른 선생님 수정 불러오기</button>
+
       <button class="btn sm ghost" type="button" id="btnLock">잠금</button>
     </div>
   </div>
@@ -323,10 +337,10 @@
 <main>
   <div id="banner" class="banner"></div>
   <div class="conflict" id="conflictBar" hidden>
-    <b>다른 선생님이 먼저 저장했습니다.</b> 서버에 더 새로운 내용이 있습니다. 어느 쪽을 쓸지 골라 주세요.
+    <b>다른 선생님이 먼저 저장했습니다.</b> 서버 최신 내용을 받아 내 수정과 병합할 수 있습니다.
     <div class="row" style="margin:8px 0 0">
       <button class="btn primary" type="button" id="btnConflictLoad">최신 내용 불러오기</button>
-      <button class="btn" type="button" id="btnConflictForce">내 내용 덮어쓰기</button>
+      <button class="btn" type="button" id="btnConflictForce">내 수정 병합 저장</button>
       <span class="muted small" id="conflictMsg"></span>
     </div>
   </div>
@@ -408,7 +422,7 @@
     <details class="panel" id="backupPanel">
       <summary>백업·관리 <span class="note">— 작업 파일 저장, 다른 컴퓨터로 옮기기, 처음부터 다시</span></summary>
       <div class="inner">
-      <p class="hint" style="margin-top:0"><b>명단은 이미 서버에 자동 저장됩니다</b>: 같은 암호로 다른 컴퓨터·다른 선생님 화면에서 열면 서버의 최신 내용이 그대로 나옵니다. 아래 <b>작업 파일(JSON)</b>은 서버와 상관없이 남겨 두는 <b>백업</b>입니다(USB에 옮기듯 이 파일 하나로도 복원됩니다). CSV는 배정 결과만 담기므로 작업 이어받기는 JSON으로 합니다. <b>크롬 계정 동기화로는 넘어가지 않습니다</b>.</p>
+      <p class="hint" style="margin-top:0"><b>명단·조건은 아래 저장 버튼으로 병합 저장합니다</b>: 같은 암호로 다른 컴퓨터·다른 선생님 화면에서 열면 서버의 최신 내용이 그대로 나옵니다. 아래 <b>작업 파일(JSON)</b>은 서버와 상관없이 남겨 두는 <b>백업</b>입니다(USB에 옮기듯 이 파일 하나로도 복원됩니다). CSV는 배정 결과만 담기므로 작업 이어받기는 JSON으로 합니다. <b>크롬 계정 동기화로는 넘어가지 않습니다</b>.</p>
       <div class="row" style="margin-bottom:0">
         <button class="btn primary" type="button" id="btnSaveWork">작업 파일 저장 (.json)</button>
         <button class="btn" type="button" id="btnLoadWork">작업 파일 불러오기</button>
@@ -443,6 +457,8 @@
 </main>
 
 <div class="actionbar">
+  <button class="btn sm" type="button" id="btnCloudReload">다른 반 내역 업데이트</button>
+  <button class="btn primary" type="button" id="btnCloudSave">저장</button>
   <div class="abinfo" id="abInfo">학생 0명</div>
   <button class="btn primary big" type="button" id="btnRun">배정 실행</button>
 </div>
@@ -511,6 +527,8 @@
       <label class="fld">성별 <select id="addStuGender"><option value="남">남</option><option value="여">여</option></select></label>
       <label class="fld">5학년 반 <input type="text" id="addStuG5" style="width:90px" placeholder="예: 3반"></label>
     </div>
+    <label class="fld">4학년 반 <input type="text" id="addStuG4" placeholder="예: 3반"></label>
+    <label class="fld">반드시 이 반(고정 반) <select id="addStuFixed"></select></label>
     <div class="row"><span>태그 · 별(★)</span><div id="addStuTags"></div></div>
     <label class="fld">별 총합 (최대 5점) <input type="number" id="addStuScore" min="0" max="5" step="1" value="0"></label>
     <div class="msg" id="addStuMsg"></div>
@@ -836,9 +854,11 @@ var CORE = (function () {
       var e = { a: Math.min(a, b), b: Math.max(a, b), manual: !!manual, y3: !!y3, duplicate: !!duplicate };
       map[key] = e; links.push(e);
     }
-    (pairs || []).forEach(function (p) {
+    (pairs || []).forEach(function (group) {
+      var p = Array.isArray(group) ? group : group.members || [];
+      var mode = group.mode || 'all';
       p.forEach(function (a, i) { p.slice(i + 1).forEach(function (b) {
-        if (a != null && b != null && a !== '' && b !== '') add(Number(a), Number(b), true, false);
+        if ((mode !== 'one' || i === 0) && a != null && b != null && a !== '' && b !== '') add(Number(a), Number(b), true, false);
       }); });
     });
     var names = Object.create(null);
@@ -1659,7 +1679,9 @@ var CORE = (function () {
     });
     out.starVersion = 2;
     if (!Array.isArray(out.pairs)) out.pairs = [];
-    out.pairs = out.pairs.filter(Array.isArray).map(function (g) { return g.map(function (id) { return id == null || id === '' ? null : Number(id); }); });
+    out.pairs = out.pairs.filter(function(g){return Array.isArray(g) || (g && Array.isArray(g.members));});
+    out.pairModes = out.pairs.map(function (g,i) { return (g.mode || (out.pairModes || [])[i]) === 'one' ? 'one' : 'all'; });
+    out.pairs = out.pairs.map(function (g) { return (Array.isArray(g) ? g : g.members || []).map(function (id) { return id == null || id === '' ? null : Number(id); }); });
     /* 같은 반 희망 조합: 학생 id 배열의 배열. 없는 학생은 빼고 두 명 미만은 버린다 */
     if (!Array.isArray(out.wishGroups)) out.wishGroups = [];
     var liveIds = {};
@@ -1887,7 +1909,9 @@ var CORE = (function () {
     var h = '';
     groups.forEach(function (g, i) {
       h += '<article class="group-card"><div class="row"><b>' + (kind === 'pair' ? '분리 그룹 ' : kind === 'required' ? '필수 희망 조합 ' : '추천 희망 조합 ') + (i + 1) + '</b><button type="button" class="icon" data-act="del-' + kind + '" data-i="' + i + '" aria-label="그룹 삭제">✕</button></div>';
+      if (kind === 'pair') h += '<div class="pair-modes">' + ['all','one'].map(function (mode) { return '<button class="btn sm ' + (((S.pairModes||[])[i]||'all')===mode?'primary':'') + '" data-act="pair-mode" data-i="'+i+'" data-mode="'+mode+'">'+(mode==='all'?'서로서로':'한 명을')+'</button>'; }).join('')+'</div>';
       g.forEach(function (id, j) {
+        if (kind === 'pair' && j === 1 && (S.pairModes||[])[i] === 'one') h += '<hr class="pair-divider">';
         var st = findStudent(id);
         h += '<div class="group-member"><button type="button" class="btn" data-act="pick-student" data-kind="' + kind + '" data-i="' + i + '" data-j="' + j + '">' + (st ? esc(studentLabel(st)) : '학생 선택') + '</button><button type="button" class="icon" data-act="remove-member" data-kind="' + kind + '" data-i="' + i + '" data-j="' + j + '" aria-label="학생 제거">−</button></div>';
       });
@@ -2012,6 +2036,7 @@ var CORE = (function () {
         '</select></td>' +
         '<td class="tags" data-label="태그">' + (s.transfer ? '<span class="transfer-badge">전출예정</span>' : '') + tagChips(s) + '</td>' +
         '<td class="pts' + (sc > 0 ? '' : ' zero') + '" data-label="힘든 점수" data-score="' + sc + '"><input class="w3" type="number" min="0" max="5" step="1" data-scope="student" data-id="' + s.id + '" data-field="score" value="' + (s.score == null ? '' : Math.min(5,s.score)) + '" placeholder="' + (sc > 0 ? '★' + esc(fmtScore(sc)) : '0') + '" title="이 학생의 별 총합입니다. 비워 두면 태그별 별 수를 합산합니다."></td>' +
+        '<td data-label="수정" class="mobile-edit"><button class="btn sm" data-act="roster-edit" data-id="'+s.id+'">수정</button></td>' +
         '<td data-label="반드시 이 반"><select data-scope="student" data-id="' + s.id + '" data-field="fixed">' + fixedOptions(s) + '</select></td>' +
         '<td class="act"><button class="icon" type="button" data-act="del-student" data-id="' + s.id + '" title="학생 지우기">✕</button></td>' +
       '</tr>';
@@ -2103,7 +2128,7 @@ var CORE = (function () {
     if (idx < 0) return;
     S.students.splice(idx, 1);
     S.requiredGroups = (S.requiredGroups || []).map(function (g) { return g.filter(function (x) { return Number(x) !== Number(id); }); }).filter(function (g) { return g.length >= 2; });
-    S.pairs = S.pairs.map(function (g) { return g.filter(function (x) { return Number(x) !== Number(id); }); }).filter(function (g) { return g.length >= 2; });
+    var keptModes=[]; S.pairs = S.pairs.map(function(g,i){var mode=(S.pairModes||[])[i]||'all';if(mode==='one' && Number(g[0])===Number(id))return [];var members=g.filter(function(x){return Number(x)!==Number(id);});if(members.length>=2)keptModes.push(mode);return members;}).filter(function(g){return g.length>=2;}); S.pairModes=keptModes;
     S.wishGroups = S.wishGroups.map(function (g) {
       return (g || []).filter(function (x) { return Number(x) !== Number(id); });
     }).filter(function (g) { return g.length >= 2; });
@@ -2115,7 +2140,7 @@ var CORE = (function () {
     if (S.students.length && !window.confirm('지금 명단을 지우고 가상 명단으로 바꿉니다. 계속할까요?')) return;
     var r = CORE.virtualRoster();
     S.students = r.students.map(CORE.normalizeStars);
-    S.pairs = r.pairs.slice();
+    S.pairs = r.pairs.slice(); S.pairModes=[];
     S.requiredGroups = [];
     S.wishGroups = (r.wishGroups || []).map(function (g) { return g.slice(); });
     S.tags = r.tags.map(function (t) { return { name: t, weight: (r.tagWeights && r.tagWeights[t] != null) ? r.tagWeights[t] : CORE.defaultWeight(t), max: null }; });
@@ -2310,7 +2335,7 @@ var CORE = (function () {
     var built = rowsToStudents(parsed.rows, 1);
     S.students = built.students;
     S.sample = false;
-    S.pairs = [];
+    S.pairs = []; S.pairModes=[];
     S.wishGroups = []; S.requiredGroups = [];
     S.result = null;
     S.nextId = S.students.reduce(function (a, s) { return Math.max(a, s.id); }, 0) + 1;
@@ -2629,7 +2654,7 @@ var CORE = (function () {
     } else {
       S.students = built.students;
     S.sample = false;
-      S.pairs = [];
+      S.pairs = []; S.pairModes=[];
       S.wishGroups = []; S.requiredGroups = [];
       S.result = null;
       S.nextId = S.students.reduce(function (a, s) { return Math.max(a, s.id); }, 0) + 1;
@@ -2811,7 +2836,10 @@ var CORE = (function () {
   }
   function pairsAsIndex() {
     var map = {}; S.students.forEach(function (s, i) { map[s.id] = i; });
-    return S.pairs.map(function (g) { return g.filter(function (id) { return id != null && map[id] != null; }).map(function (id) { return map[id]; }); }).filter(function (g) { return g.length >= 2; });
+    return S.pairs.map(function (g,i) {
+      var members = g.map(function (id) { return id != null && map[id] != null ? map[id] : null; });
+      return {members:members,mode:(S.pairModes||[])[i] || 'all'};
+    }).filter(function (g) { return g.members.filter(function (id) { return id != null; }).length >= 2; });
   }
   /* 희망 조합을 학생 id → 배열 번호로 바꿔 배정 엔진에 넘긴다 */
   function wishGroupsAsIndex() {
@@ -3028,7 +3056,7 @@ var CORE = (function () {
     var isFixedHere = (s.fixed != null && s.fixed !== '' && Number(s.fixed) === k);
     return '<div class="' + cls + '" draggable="true" data-id="' + s.id + '" data-score="' + total + '" title="4학년 ' + esc(s.g4 || '?') + ' · 5학년 ' + esc(s.g5 || '?') + (warns.length ? ' · ' + esc(warns.join(' / ')) : '') + '">' +
       '<div class="l1"><button type="button" class="nm" data-act="edit-student" data-id="' + s.id + '" data-k="' + k + '" title="학생 정보 수정">' + esc(s.name) + '</button>' + (heartMap[s.id]||'') +
-        (isFixedHere ? '<span class="kb fix">고정</span>' : '') +
+        (isFixedHere ? '<span class="kb fix" title="반드시 이 반" aria-label="반드시 이 반">📌</span>' : '') +
         (s.transfer ? '<span class="transfer-badge">전출예정</span>' : '') + tags + '<span class="g5b" title="5학년 반">' + esc(g5Badge(s)) + '</span></div>' +
     '</div>';
   }
@@ -3213,6 +3241,8 @@ var CORE = (function () {
       $('#addStuName').value = existing.name; $('#addStuNo').value = existing.no || '';
       $('#addStuGender').value = existing.gender; $('#addStuG5').value = existing.g5 || '';
     }
+    $('#addStuG4').value = existing ? existing.g4 || '' : '';
+    $('#addStuFixed').innerHTML = fixedOptions(existing || {fixed:null});
     $('#addStuTitle').textContent = existing ? '학생 수정' : '학생 추가';
     $('#addStuHint').textContent = existing ? '이 학생의 정보와 별 점수를 수정합니다. 별 총합은 최대 5점입니다.' : '명단에 넣는 동시에 이 반으로 배정됩니다. 4학년 반은 나중에 명단 탭에서 채워도 됩니다.';
     $('#addStuApply').textContent = existing ? '수정' : '추가';
@@ -3234,25 +3264,25 @@ var CORE = (function () {
     var msg = $('#addStuMsg');
     var name = String($('#addStuName').value || '').trim();
     if (!name) { msg.className = 'msg bad'; msg.textContent = '이름을 입력해 주세요.'; return; }
-    if (!S.result || !S.result.assign) { msg.className = 'msg bad'; msg.textContent = '배정 결과가 없습니다. 먼저 배정을 실행해 주세요.'; return; }
+    if ((!S.result || !S.result.assign) && editStudentId == null) { msg.className = 'msg bad'; msg.textContent = '배정 결과가 없습니다. 먼저 배정을 실행해 주세요.'; return; }
     var k = Number(addTargetClass);
     if (!(k >= 0 && k < S.classes.length)) k = 0;
     var gender = ($('#addStuGender').value === '여') ? '여' : '남';
     pushUndo();
     if (editStudentId != null) {
       var existing = findStudent(editStudentId), oldGender = existing.gender;
-      Object.assign(existing, {name:name,no:String($('#addStuNo').value || '').trim(),g5:normClassVal($('#addStuG5').value),gender:gender,tags:addStudentDraft.tags.slice(),w:Object.assign({},addStudentDraft.w),score:addStudentDraft.score});
+      Object.assign(existing, {name:name,no:String($('#addStuNo').value || '').trim(),g5:normClassVal($('#addStuG5').value),g4:normClassVal($('#addStuG4').value),gender:gender,tags:addStudentDraft.tags.slice(),w:Object.assign({},addStudentDraft.w),score:addStudentDraft.score,fixed:$('#addStuFixed').value === '' ? null : Number($('#addStuFixed').value)});
       CORE.normalizeStars(existing);
       var cls = S.classes[k];
       if (oldGender !== gender && cls) { if (cls.male != null) cls.male += gender === '남' ? 1 : -1; if (cls.female != null) cls.female += gender === '여' ? 1 : -1; }
-      S.result.moves = (S.result.moves || 0) + 1;
-      renderClasses(); renderTags(); renderStudents(); renderPairs(); renderWishGroups(); renderResult(); save(); closeAddStudent();
+      if (S.result) S.result.moves = (S.result.moves || 0) + 1;
+      renderClasses(); renderTags(); renderStudents(); renderPairs(); renderWishGroups(); renderExtraConditions(); renderRosterSummary(); renderResult(); save(); closeAddStudent();
       return;
     }
     var s = {
       id: S.nextId++, no: String($('#addStuNo').value || '').trim(),
-      g4: '', g5: normClassVal($('#addStuG5').value), name: name, gender: gender,
-      tags: addStudentDraft.tags.slice(), w: Object.assign({},addStudentDraft.w), score: addStudentDraft.score, fixed: null
+      g4: normClassVal($('#addStuG4').value), g5: normClassVal($('#addStuG5').value), name: name, gender: gender,
+      tags: addStudentDraft.tags.slice(), w: Object.assign({},addStudentDraft.w), score: addStudentDraft.score, fixed: $('#addStuFixed').value === '' ? null : Number($('#addStuFixed').value)
     };
     CORE.normalizeStars(s);
     S.students.push(s);
@@ -3324,7 +3354,9 @@ var CORE = (function () {
 
   /* ---------- 탭·초기화 ---------- */
   function switchTab(name) {
+    clearTimeout(CLOUD.timer);
     tab = name;
+    if(name==='result')lastActivity=Date.now();
     $$('.tab').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === name); });
     $('#tab-setup').hidden = name !== 'setup';
     $('#tab-result').hidden = name !== 'result';
@@ -3350,7 +3382,7 @@ var CORE = (function () {
     passcode: '', entered: false,
     revision: 0, updatedAt: null, lastSavedAt: null,
     timer: null, inFlight: false, pending: false, dirty: false,
-    status: 'locked', transport: null
+    status: 'locked', transport: null, baseline: null
   };
 
   function sessionGet(k) { try { return (typeof sessionStorage !== 'undefined') ? sessionStorage.getItem(k) : null; } catch (e) { return null; } }
@@ -3422,7 +3454,8 @@ var CORE = (function () {
     if (!CLOUD.entered) return;
     CLOUD.dirty = true;
     clearTimeout(CLOUD.timer);
-    CLOUD.timer = setTimeout(function () { cloudFlush(false); }, CLOUD_DEBOUNCE);
+    if (tab !== 'result') { cloudStatus('수정됨 — 저장을 눌러 주세요','warn'); return; }
+    CLOUD.timer = setTimeout(function () { if (tab === 'result') cloudFlush(false); }, CLOUD_DEBOUNCE);
   }
   function showConflict() {
     var el = $('#conflictBar');
@@ -3470,8 +3503,10 @@ var CORE = (function () {
       if (isNaN(CLOUD.revision)) CLOUD.revision = CLOUD.revision + 1;
       CLOUD.updatedAt = (row && row.updated_at) || null;
       hideConflict();
+      CLOUD.baseline = JSON.parse(JSON.stringify(body.p_state));
       cloudSaved();
-      if (CLOUD.pending) { CLOUD.pending = false; cloudFlush(false); }
+      if (CLOUD.pending) { CLOUD.pending = false; if (tab === 'result') cloudFlush(false); }
+      if (tab !== 'result' && CLOUD.dirty) cloudStatus('수정됨 — 저장을 눌러 주세요','warn');
     });
   }
 
@@ -3494,11 +3529,13 @@ var CORE = (function () {
   function applyServerState(row, opts) {
     opts = opts || {};
     var st = row && row.state;
+    CLOUD.baseline = JSON.parse(JSON.stringify(emptyState(st) ? initialState() : normalizeState(JSON.parse(JSON.stringify(st)))));
+    CLOUD.dirty = false;
     CLOUD.revision = Number(row && row.revision) || 0;
     CLOUD.updatedAt = (row && row.updated_at) || null;
     if (emptyState(st)) {
       CLOUD.dirty = !!(S.students && S.students.length);
-      cloudStatus(CLOUD.dirty ? '☁️ 서버에 아직 없음 — 입력하면 자동 저장됩니다' : '☁️ 서버에 저장된 내용 없음', CLOUD.dirty ? 'warn' : '');
+      cloudStatus(CLOUD.dirty ? '☁️ 서버에 아직 없음 — 저장을 눌러 주세요' : '☁️ 서버에 저장된 내용 없음', CLOUD.dirty ? 'warn' : '');
       return;
     }
     var norm = null;
@@ -3535,72 +3572,89 @@ var CORE = (function () {
       applyServerState(row, { toast: opts.toast });
     });
   }
-  /* [서버에서 새로고침]: 먼저 받아 보고, 지금 내용과 다를 때만 확인을 받고 바꾼다. */
-  function cloudReloadManual() {
-    if (!CLOUD.entered) { lockApp(''); return; }
-    cloudStatus('☁️ 서버에서 불러오는 중…', 'loading');
-    cloudCall('banbaejeong_load', { p_workspace_id: CLOUD_WORKSPACE, p_passcode: CLOUD.passcode }, function (err, data) {
-      if (err) {
-        if (err.code === 'PASSCODE_MISMATCH') { lockApp('암호가 맞지 않습니다. 다시 입력해 주세요.'); return; }
-        cloudStatus('⚠️ 서버에 연결하지 못했습니다 (오프라인)', 'bad');
-        toast('서버에 연결하지 못했습니다. 이 브라우저에 저장된 내용으로 계속합니다.', 'err');
-        return;
+  /* Three-way merge: local edits win only where this browser changed the baseline. */
+  function mergeState(base, local, remote) {
+    function equal(a,b) { return JSON.stringify(a) === JSON.stringify(b); }
+    function merge(b,l,r) {
+      if (equal(b,l)) return r;
+      if (equal(b,r) || equal(l,r)) return l;
+      if (b && l && r && !Array.isArray(b) && typeof b==='object' && typeof l==='object' && typeof r==='object') {
+        var out={}; new Set(Object.keys(b).concat(Object.keys(l),Object.keys(r))).forEach(function(k){ var v=merge(b[k],l[k],r[k]); if(v!==undefined) out[k]=v; }); return out;
       }
-      var row = Array.isArray(data) ? data[0] : data;
-      if (row && !emptyState(row.state) && sameState(row.state, S)) {
-        CLOUD.revision = Number(row.revision) || 0;
-        hideConflict();
-        cloudSaved();
-        toast('서버 내용과 같습니다.', 'ok');
-        return;
-      }
-      var msg = (row && emptyState(row.state))
-        ? '서버에는 아직 저장된 내용이 없습니다.'
-        : '서버에 더 새로운 내용이 있습니다.';
-      if (!window.confirm(msg + '\n서버 내용으로 바꾸면 이 브라우저의 지금 내용은 사라집니다. 계속할까요?')) {
-        cloudStatus(CLOUD.lastSavedAt ? '☁️ 저장됨 (' + agoText(CLOUD.lastSavedAt) + ')' : '☁️ 서버 연결됨', 'ok');
-        return;
-      }
-      applyServerState(row, { toast: true });
-      hideConflict();
+      return l;
+    }
+    base=base||initialState(); local=JSON.parse(JSON.stringify(local)); remote=JSON.parse(JSON.stringify(remote));
+    var baseIds={}, remap={}, next=1;
+    (base.students||[]).forEach(function(st){baseIds[st.id]=true;});
+    (remote.students||[]).concat(local.students||[]).forEach(function(st){next=Math.max(next,Number(st.id)+1);});
+    (local.students||[]).forEach(function(st){
+      if(!baseIds[st.id] && (remote.students||[]).some(function(r){return r.id===st.id && !equal(r,st);})) { remap[st.id]=next; st.id=next++; }
+    });
+    ['pairs','requiredGroups','wishGroups'].forEach(function(key){ (local[key]||[]).forEach(function(g){g.forEach(function(id,i){if(remap[id])g[i]=remap[id];});}); });
+    var out=merge(base,local,remote);
+    function keyed(key,keyOf) {
+      var bm={},lm={},rm={}; (base[key]||[]).forEach(function(v){bm[keyOf(v)]=v;}); (local[key]||[]).forEach(function(v){lm[keyOf(v)]=v;}); (remote[key]||[]).forEach(function(v){rm[keyOf(v)]=v;});
+      return Array.from(new Set(Object.keys(rm).concat(Object.keys(lm)))).map(function(k){return merge(bm[k],lm[k],rm[k]);}).filter(function(v){return v!==undefined;});
+    }
+    out.students=keyed('students',function(st){return st.id;});
+    out.tags=keyed('tags',function(t){return t.name;});
+    ['wishGroups','requiredGroups'].forEach(function(key){out[key]=keyed(key,JSON.stringify);});
+    var bg=Object.assign({},base),lg=Object.assign({},local),rg=Object.assign({},remote);
+    [bg,lg,rg].forEach(function(st){st.sep=(st.pairs||[]).map(function(g,i){return {members:g,mode:(st.pairModes||[])[i]||'all'};});});
+    var originalBase=base,originalLocal=local,originalRemote=remote; base=bg;local=lg;remote=rg;
+    var sep=keyed('sep',function(g){return JSON.stringify(g.members);});
+    base=originalBase;local=originalLocal;remote=originalRemote;
+    out.pairs=sep.map(function(g){return g.members;});out.pairModes=sep.map(function(g){return g.mode;});
+    out.classes=Array.from({length:Math.max((remote.classes||[]).length,(local.classes||[]).length)},function(_,i){return merge((base.classes||[])[i],(local.classes||[])[i],(remote.classes||[])[i]);}).filter(Boolean);out.classCount=out.classes.length;
+    if (!equal(out.students,remote.students) || !equal(out.classes,remote.classes) || !equal(out.pairs,remote.pairs) || !equal(out.pairModes,remote.pairModes) || !equal(out.wishGroups,remote.wishGroups) || !equal(out.requiredGroups,remote.requiredGroups)) out.result=null;
+    out.nextId=next;
+    return normalizeState(out);
+  }
+  function cloudMerge(saveRemote, attempt) {
+    if(!CLOUD.entered || CLOUD.inFlight) return;
+    clearTimeout(CLOUD.timer); clearTimeout(saveTimer); savePending=false;
+    try { localStorage.setItem(STORAGE_KEY,JSON.stringify(S)); } catch(e) {}
+    CLOUD.inFlight=true;
+    cloudStatus(saveRemote?'병합 저장 중…':'다른 반 내역 업데이트 중…','loading');
+    cloudCall('banbaejeong_load',{p_workspace_id:CLOUD_WORKSPACE,p_passcode:CLOUD.passcode},function(err,data){
+      if(err){CLOUD.inFlight=false;cloudStatus('서버 연결 오류 — 수정 내용 유지','bad');return;}
+      var row=Array.isArray(data)?data[0]:data;
+      var remote=emptyState(row.state)?initialState():normalizeState(JSON.parse(JSON.stringify(row.state)));
+      var merged=mergeState(CLOUD.baseline,cloudPayload(),remote);
+      if(!saveRemote){ CLOUD.inFlight=false;applyServerState({state:merged,revision:row.revision});CLOUD.baseline=JSON.parse(JSON.stringify(remote));CLOUD.dirty=!sameState(merged,remote);if(CLOUD.dirty)cloudStatus('다른 반 반영됨 · 내 수정은 저장 대기','warn');return; }
+      var sentLocal=JSON.stringify(cloudPayload());
+      cloudCall('banbaejeong_save',{p_workspace_id:CLOUD_WORKSPACE,p_passcode:CLOUD.passcode,p_state:merged,p_expected_revision:Number(row.revision)||0},function(err,data){
+        CLOUD.inFlight=false;
+        if(err){CLOUD.dirty=true;cloudStatus('저장 오류 — 수정 내용 유지','bad');return;}
+        var saved=Array.isArray(data)?data[0]:data;
+        if(saved && saved.conflict){if((attempt||0)<3)cloudMerge(true,(attempt||0)+1);else {CLOUD.dirty=true;cloudStatus('다른 반 저장 중 — 다시 저장해 주세요','warn');}return;}
+        var current=cloudPayload();
+        applyServerState({state:merged,revision:saved.revision,updated_at:saved.updated_at});
+        if(sentLocal!==JSON.stringify(current)){S=mergeState(JSON.parse(sentLocal),current,merged);CLOUD.dirty=true;try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));}catch(e){}renderAll();cloudStatus('저장됨 · 추가 수정은 저장 대기','warn');}
+        toast('다른 반 내역을 보존해 저장했습니다.','ok');
+      });
     });
   }
+  function cloudReloadManual() { cloudMerge(false); }
 
-  /* ---------- 10초 자동 새로고침: 다른 선생님이 저장한 수정을 조용히 받아온다 ----------
-     서버를 10초마다 한 번씩만 읽어(revision) 새 내용이 있을 때만 화면을 바꾼다.
-     저장 중이거나 저장할 것이 남아 있거나, 입력 중이거나, 창(모달)이 떠 있으면 그 주기는 건너뛴다. */
-  var POLL_MS = 10000, POLL_TIMER = null;
+  var POLL_MS=1000,POLL_TIMER=null,lastActivity=Date.now(),polling=false;
   function pollBlocked() {
-    if (!CLOUD.entered) return true;
-    if (CLOUD.inFlight || CLOUD.dirty || savePending) return true;
-    if (document.querySelector('.overlay.show')) return true;
-    var a = document.activeElement;
-    if (a && a.tagName && /^(INPUT|SELECT|TEXTAREA)$/.test(String(a.tagName).toUpperCase())) return true;
-    return false;
+    if(tab!=='result' || document.hidden || !CLOUD.entered) return true;
+    if(Date.now()-lastActivity>=60000){cloudStatus('⏸ 잠시 멈춤 (화면 누르면 재개)','paused');return true;}
+    if(CLOUD.inFlight || CLOUD.dirty || savePending || document.querySelector('.overlay.show'))return true;
+    var a=document.activeElement;return !!(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName));
   }
-  function pollOnce() {
-    if (pollBlocked()) return false;
-    cloudCall('banbaejeong_load', { p_workspace_id: CLOUD_WORKSPACE, p_passcode: CLOUD.passcode }, function (err, data) {
-      if (err) return;                                  /* 조용히 넘어간다(헤더 표시도 건드리지 않는다) */
-      var row = Array.isArray(data) ? data[0] : data;
-      var rev = Number(row && row.revision) || 0;
-      if (!(rev > CLOUD.revision)) return;               /* 서버가 더 새롭지 않으면 아무것도 하지 않는다 */
-      var st = row && row.state;
-      if (emptyState(st) || sameState(st, S)) {          /* 내용이 같으면 revision 만 맞춘다 */
-        CLOUD.revision = rev;
-        CLOUD.updatedAt = (row && row.updated_at) || null;
-        return;
-      }
-      applyServerState(row, { silent: true });
-      toast('다른 선생님의 수정 내용을 반영했습니다.', 'ok');
-    });
-    return true;
+  function pollOnce(){
+    if(pollBlocked() || polling)return false;
+    polling=true;
+    cloudCall('banbaejeong_load',{p_workspace_id:CLOUD_WORKSPACE,p_passcode:CLOUD.passcode},function(err,data){
+      polling=false;if(err || pollBlocked())return;
+      var row=Array.isArray(data)?data[0]:data;
+      if(Number(row.revision)>CLOUD.revision)applyServerState(row,{silent:true});
+    });return true;
   }
-  function startPolling() {
-    if (POLL_TIMER !== null) return;
-    if (typeof setInterval !== 'function') return;
-    POLL_TIMER = setInterval(pollOnce, POLL_MS);
-  }
+  function startPolling(){if(POLL_TIMER===null)POLL_TIMER=setInterval(pollOnce,POLL_MS);}
+  ['pointerdown','touchstart','mousemove','scroll','keydown'].forEach(function(type){document.addEventListener(type,function(){var paused=Date.now()-lastActivity>=60000;lastActivity=Date.now();if(paused && tab==='result'){cloudStatus('실시간 업데이트 재개','ok');pollOnce();}},{passive:true,capture:true});});
 
   /* ---------- 잠금 화면 ---------- */
   function lockMsg(msg, kind) {
@@ -3807,6 +3861,8 @@ var CORE = (function () {
     }
     if (act === 'remove-transfer') { findStudent(t.dataset.id).transfer=false; invalidate(); renderExtraConditions(); renderStudents(); return; }
     if (act === 'del-required') { S.requiredGroups.splice(Number(t.dataset.i),1); invalidate(); renderExtraConditions(); return; }
+    if (act === 'pair-mode') { if (!S.pairModes) S.pairModes=[]; S.pairModes[Number(t.dataset.i)]=t.dataset.mode; invalidate(); renderPairs(); return; }
+    if (act === 'roster-edit') { openAddStudent(0,Number(t.dataset.id)); return; }
     if (act === 'group-add' || act === 'remove-member') {
       var g = groupsFor(t.dataset.kind)[Number(t.dataset.i)];
       if (act === 'group-add') g.push(null); else if (g.length > 2) g.splice(Number(t.dataset.j),1); else g[Number(t.dataset.j)] = null;
@@ -3831,7 +3887,7 @@ var CORE = (function () {
     }
     if (act === 'tag-mul') return;   /* 배수 선택은 change에서 처리 */
     if (act === 'del-tag') { deleteTag(Number(t.dataset.i)); return; }
-    if (act === 'del-pair') { S.pairs.splice(Number(t.dataset.i), 1); invalidate(); renderPairs(); return; }
+    if (act === 'del-pair') { S.pairs.splice(Number(t.dataset.i), 1); if(S.pairModes) S.pairModes.splice(Number(t.dataset.i),1); invalidate(); renderPairs(); return; }
     if (act === 'wish-add') {
       var wg = S.wishGroups[Number(t.dataset.i)];
       if (wg && wg.length < 5) { wg.push(null); invalidate(); renderWishGroups(); }
@@ -3895,12 +3951,13 @@ var CORE = (function () {
   });
   $('#btnAddPair').addEventListener('click', function () {
     if (!S.students.length) { toast('학생 명단을 먼저 넣어 주세요.', 'err'); return; }
+    if(!S.pairModes)S.pairModes=[]; S.pairModes[S.pairs.length]='all';
     S.pairs.push([null, null]); invalidate(); renderPairs();
   });
   $('#btnClearPairs').addEventListener('click', function () {
     if (!S.pairs.length) return;
     if (!window.confirm('분리 그룹 ' + S.pairs.length + '개를 모두 지웁니다. 계속할까요?')) return;
-    S.pairs = []; invalidate(); renderPairs();
+    S.pairs = []; S.pairModes=[]; invalidate(); renderPairs();
   });
 
   $('#btnSample').addEventListener('click', loadSample);
@@ -3908,7 +3965,7 @@ var CORE = (function () {
   $('#btnClearStudents').addEventListener('click', function () {
     if (!S.students.length) return;
     if (!window.confirm('학생 명단 ' + S.students.length + '명과 분리 그룹을 모두 지웁니다. 계속할까요?')) return;
-    S.students = []; S.pairs = []; S.wishGroups = []; S.requiredGroups = []; S.result = null; S.sample = false; renderAll(); save();
+    S.students = []; S.pairs = []; S.pairModes=[]; S.wishGroups = []; S.requiredGroups = []; S.result = null; S.sample = false; renderAll(); save();
   });
   $('#btnPaste').addEventListener('click', openPaste);
   $('#pasteCancel').addEventListener('click', closePaste);
@@ -3954,12 +4011,12 @@ var CORE = (function () {
   $('#lockEnter').addEventListener('click', tryUnlock);
   $('#lockPass').addEventListener('keydown', function (e) { if (e.key === 'Enter') tryUnlock(); });
   $('#btnLock').addEventListener('click', function () { lockApp(''); });
+  $('#btnCloudSave').addEventListener('click',function(){cloudMerge(true);});
   $('#btnCloudReload').addEventListener('click', cloudReloadManual);
   $('#btnConflictLoad').addEventListener('click', function () { hideConflict(); cloudReloadManual(); });
   $('#btnConflictForce').addEventListener('click', function () {
     hideConflict();
-    toast('이 브라우저의 내용으로 서버를 덮어씁니다.', 'ok');
-    cloudFlush(true);
+    cloudMerge(true);
   });
 
   $('#btnAddWish').addEventListener('click', addWishGroup);
@@ -4005,6 +4062,8 @@ var CORE = (function () {
       flush: function (force) { cloudFlush(!!force); },
       load: function () { cloudLoad({}); },
       poll: function () { return pollOnce(); },
+      merge: mergeState,
+      idle: function(ms){lastActivity=Date.now()-ms;},
       pollMs: function () { return POLL_MS; },
       pollBlocked: function () { return pollBlocked(); }
     },

@@ -184,7 +184,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.evaluate(()=>{document.activeElement.blur();__bbj.cloud.flush(false)});
  await page.waitForFunction(()=>!__bbj.cloud.pending());
  assert.ok(await page.evaluate(()=>fakeServer.calls.some(c=>c.path==='banbaejeong_save'&&c.body.p_passcode==='2026')));
- assert.equal(await page.evaluate(()=>__bbj.cloud.pollMs()),10000);
+ assert.equal(await page.evaluate(()=>__bbj.cloud.pollMs()),1000);
  await page.evaluate(()=>{fakeServer.state=JSON.parse(JSON.stringify(__bbj.state()));fakeServer.state.students[0].name='새로고침확인';fakeServer.revision++;__bbj.cloud.poll()});
  await page.waitForFunction(()=>__bbj.state().students[0].name==='새로고침확인');
  // Legacy shared data keeps two-member pairs and converts tag weights exactly once.

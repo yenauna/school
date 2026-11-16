@@ -54,7 +54,7 @@ test('individual star totals balance and special pinning/wishes remain supported
 test('CSV export API and core markers remain compatible',()=>{
  const st=roster(2);const csv=C.csv(st,classes(2),[0,1]);
  assert.match(csv,/5학년 반/); assert.match(csv,/학생0/);
- assert.match(html,/var POLL_MS = 10000/);
+ assert.match(html,/var POLL_MS=1000/);
  assert.match(html,/'banbaejeong_load'/); assert.match(html,/'banbaejeong_save'/);
  assert.doesNotMatch(html,/pairBulk|wishBulk/);
 });
@@ -256,3 +256,13 @@ test('star references flag excessive highs/lows without adding problems and excl
  st.forEach(s=>s.transfer=true);const zeros={per:rep.per.map(p=>({...p,score:0}))};
  assert.equal(C.balanceAdvice(st,zeros).score.length,0);
 });
+
+ test('one-anchor separation permits lower members together and warns only on anchor collisions',()=>{
+ const students=Array.from({length:4},(_,i)=>({id:i+1,name:'학생'+i,gender:i%2?'여':'남',tags:[]}));
+ const classes=[{name:'가반',total:2},{name:'나반',total:2}];
+ const opts={threeYear:false,autoGender:true};
+ assert.equal(C.evaluate(students,classes,[{members:[0,1,2],mode:'one'}],[0,1,1,0],opts).sepViol.length,0);
+ assert.equal(C.evaluate(students,classes,[{members:[0,1,2],mode:'one'}],[0,0,1,1],opts).sepViol.length,1);
+ const result=C.assign(students,classes,[{members:[0,1,2],mode:'one'}],opts);
+ assert.notEqual(result.assign[0],result.assign[1]);assert.notEqual(result.assign[0],result.assign[2]);
+ });
