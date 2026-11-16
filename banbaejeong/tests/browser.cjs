@@ -220,61 +220,49 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.fill('#addStuScore','9');assert.equal(await page.inputValue('#addStuScore'),'5');
  await page.screenshot({path:path.join(artifacts,'edit-five-star-limit.png')});
  await page.click('#addStuApply');
- // Class total/gender editing, special-class toggles and deduction changes stay exact.
+ // Totals only: no male/female targets, automatic gender balance, exact capacity.
  await page.locator('.tab[data-tab="setup"]').click();
  await page.evaluate(()=>{
   const st=__bbj.state();
   st.students=Array.from({length:108},(_,i)=>({id:i+1,name:'목표검증'+i,gender:i%2?'여':'남',g4:'',g5:(i%6+1)+'반',tags:[],w:{},fixed:null}));
-  st.classes=Array.from({length:6},(_,i)=>({name:['가반','나반','다반','라반','마반','바반'][i],special:i<2,total:0,male:0,female:0}));
-  st.deduct=2;st.useY3=false;st.pairs=[];st.wishGroups=[];st.result=null;__bbj.renderAll();
+  st.classes=Array.from({length:6},(_,i)=>({name:['가반','나반','다반','라반','마반','바반'][i],special:i<2,total:0,male:999,female:0}));
+  st.deduct=2;st.useY3=false;st.pairs=[];st.requiredGroups=[];st.wishGroups=[];st.result=null;__bbj.renderAll();
  });
  const field=(k,f)=>page.locator(`#classTable input[data-k="${k}"][data-field="${f}"]`);
+ assert.deepEqual(await page.locator('#classTable th').allTextContents(),['반','통합학급','목표 인원']);
+ assert.equal(await page.locator('#classTable [data-field="male"],#classTable [data-field="female"]').count(),0);
  const assertSums=async()=>{
-  assert.deepEqual(await page.evaluate(()=>__bbj.state().classes.reduce((a,c)=>{if(c.total!==c.male+c.female)throw Error('row mismatch');return [a[0]+c.total,a[1]+c.male,a[2]+c.female]},[0,0,0])),[108,54,54]);
-  assert.deepEqual((await page.locator('#classTable tfoot td').allTextContents()).slice(2),['108','54','54']);
+  assert.equal(await page.evaluate(()=>__bbj.state().classes.reduce((sum,c)=>sum+c.total,0)),108);
+  assert.deepEqual((await page.locator('#classTable tfoot td').allTextContents()).slice(2),['108']);
  };
  const runExact=async()=>{
-  const targets=await page.evaluate(()=>__bbj.state().classes.map(c=>[c.total,c.male,c.female]));
+  const targets=await page.evaluate(()=>__bbj.state().classes.map(c=>c.total));
   await page.click('#btnRun');await page.waitForFunction(()=>!!__bbj.state().result);
-  assert.deepEqual(await page.evaluate(()=>__bbj.state().result.report.per.map(p=>[p.count,p.male,p.female])),targets);
+  assert.deepEqual(await page.evaluate(()=>__bbj.state().result.report.per.map(p=>p.count)),targets);
+  assert.equal(await page.evaluate(()=>__bbj.state().result.report.per.reduce((sum,p)=>sum+p.male,0)),54);
+  assert.equal(await page.evaluate(()=>__bbj.state().result.report.per.every(p=>Math.abs(p.male-p.female)<=1)),true);
   await page.locator('.tab[data-tab="setup"]').click();
  };
  await page.click('#btnAutoTargets');await assertSums();
  await page.locator('#cardClasses').scrollIntoViewIfNeeded();
- await page.screenshot({path:path.join(artifacts,'class-targets-108.png')});
+ await page.screenshot({path:path.join(artifacts,'total-only-targets.png')});
  assert.deepEqual(await page.evaluate(()=>__bbj.state().classes.map(c=>c.total)),[17,17,19,19,18,18]);
+ // Stale values in an old work file must not act as hidden gender constraints.
+ await page.evaluate(()=>__bbj.state().classes.forEach(c=>{c.male=999;c.female=0}));
  await runExact();
  await field(2,'special').check();await assertSums();
  await page.fill('#deduct','');assert.equal(await page.inputValue('#deduct'),'');
- await page.locator('#deduct').pressSequentially('3');assert.equal(await page.inputValue('#deduct'),'3');await assertSums();
+ await page.locator('#deduct').pressSequentially('3');await assertSums();
  await page.click('#btnAutoTargets');await runExact();
- const male0=Number(await field(0,'male').inputValue()),male1=Number(await field(1,'male').inputValue());
- const female0=Number(await field(0,'female').inputValue());
- await field(0,'male').fill(String(male0+1));
- assert.equal(Number(await field(0,'total').inputValue()),male0+1+female0); // before blur/change
- assert.equal(await page.evaluate(()=>__bbj.state().classes[0].total),male0+1+female0);
- await field(1,'male').fill(String(male1-1));await assertSums();
- const f0=Number(await field(0,'female').inputValue()),f1=Number(await field(1,'female').inputValue());
- await field(0,'female').fill(String(f0+1));await field(1,'female').fill(String(f1-1));await assertSums();
- await runExact();
- const before=await page.evaluate(()=>({...__bbj.state().classes[0]}));
- await field(0,'total').fill(String(before.total+2));
- const changed=await page.evaluate(()=>({...__bbj.state().classes[0]}));
- assert.equal(changed.male,Math.round((before.total+2)*before.male/(before.male+before.female)));
- assert.equal(changed.total,changed.male+changed.female);
- const other=await page.evaluate(()=>({...__bbj.state().classes[1]}));
- await field(1,'male').fill(String(other.male-(changed.male-before.male)));
- await field(1,'female').fill(String(other.female-(changed.female-before.female)));
+ const totals=await page.evaluate(()=>__bbj.state().classes.map(c=>c.total));
+ await field(0,'total').fill(String(totals[0]+2));await field(1,'total').fill(String(totals[1]-2));
  await assertSums();await runExact();
- // A globally impossible manual split must be rejected rather than approximated.
- const m=Number(await field(0,'male').inputValue()),f=Number(await field(0,'female').inputValue());
- await field(0,'male').fill(String(m+1));await field(0,'female').fill(String(f-1));
- await page.click('#btnRun');
+ await field(0,'total').fill(String(totals[0]+3));await page.click('#btnRun');
  assert.equal(await page.evaluate(()=>__bbj.state().result),null);
- assert.match(await page.locator('#banner').innerText(),/남녀 목표 합계가 명단과 다릅니다/);
+ assert.match(await page.locator('#banner').innerText(),/목표 인원 합계/);
  await page.click('#btnAutoTargets');await assertSums();
- await page.evaluate(()=>{const st=__bbj.state();st.students.filter(s=>s.gender==='남').slice(0,st.classes[0].male+1).forEach(s=>s.fixed=0)});
- await page.click('#btnRun');assert.match(await page.locator('#banner').innerText(),/고정 학생이 총원 또는 남녀 목표보다/);
+ await page.evaluate(()=>{const st=__bbj.state();st.students.slice(0,st.classes[0].total+1).forEach(s=>s.fixed=0)});
+ await page.click('#btnRun');assert.match(await page.locator('#banner').innerText(),/고정 학생이 목표 총원보다/);
  await page.evaluate(()=>__bbj.state().students.forEach(s=>s.fixed=null));
  await runExact();
  // All warning reasons are expanded at the top, including students and class names.
@@ -343,6 +331,8 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.click('#btnRun');await page.waitForFunction(()=>!!__bbj.state().result);
  const original=await page.evaluate(()=>({assign:__bbj.state().result.assign.slice(),classes:__bbj.state().classes.map(c=>[c.total,c.male,c.female]),nextId:__bbj.state().nextId}));
  assert.equal(new Set(original.assign.slice(0,3)).size,1);
+ assert.equal(await page.locator('.required-heart').count(),3);
+ assert.equal((await page.locator('.required-heart').evaluateAll(es=>[...new Set(es.map(e=>getComputedStyle(e).color))])).length,1);
  assert.notEqual(original.assign[4],original.assign[6]);
  assert.equal(new Set([6,7,8].map(i=>original.assign[i])).size,3);
  assert.equal(await page.evaluate(()=>__bbj.state().result.report.verdict.scoreTotal),5);
@@ -402,6 +392,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.waitForFunction(()=>__bbj.cloud.revision()===fakeServer.revision);
  assert.deepEqual(await page.evaluate(()=>__bbj.state().requiredGroups),[[1,2,3]]);
  assert.equal(await page.evaluate(()=>__bbj.state().students[6].w.특수),5);
+ assert.equal(await page.locator('.required-heart').count(),3);
  assert.equal(await page.evaluate(()=>__bbj.state().result.report.verdict.scoreTotal),5);
  await page.locator('.tab[data-tab="setup"]').click();
  assert.equal(await page.locator('.stepsbar,#stepGuide,[data-step]').count(),0);
@@ -427,21 +418,25 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
   st.pairs=[];st.requiredGroups=[];st.wishGroups=[[1,3]];st.useY3=false;
   st.result={assign:[0,0,1,1],ids:[1,2,3,4],moves:0,ms:0};__bbj.renderAll();
  });
- const shortLabels=['특수','동명이인','이름만 같음','3년 같은 반','필수 분리','필수 희망','추천 희망'];
+ const shortLabels=['특수','동명이인','이름만 같음','3년 같은 반','필수 분리','필수 희망','추천 희망','별점','남녀수'];
  assert.deepEqual(await page.locator('#verdict .v').allTextContents(),shortLabels);
  assert.equal(await page.locator('#verdict .v.warn').count(),2);
  assert.equal(await page.locator('#verdict .v.bad').count(),0);
- assert.equal(await page.locator('#verdict [data-check="given"]').getAttribute('title'),'가반 김철수·박철수');
- assert.equal(await page.locator('#verdict [data-check="recommended"]').getAttribute('title'),'가반 김철수 / 나반 최유나');
+ assert.equal(await page.locator('#verdict [data-check="given"]').getAttribute('data-reference'),'가반 김철수·박철수');
+ assert.equal(await page.locator('#verdict [data-check="recommended"]').getAttribute('data-reference'),'가반 김철수 / 나반 최유나');
  assert.equal(await page.locator('#problemPanel').isVisible(),false);
  assert.equal(await page.locator('#wishInfo').count(),0);
- assert.equal(await page.locator('.signal-details.warn').count(),2);
- assert.equal(await page.locator('[data-signal="given"] [data-details="given"]').innerText(),'가반 김철수 · 박철수');
+ assert.equal(await page.locator('.signal-details.warn').count(),0);
+ assert.equal(await page.locator('[data-signal="given"] .signal-details').count(),0);
+ assert.equal(await page.locator('#referencePopup').isVisible(),false);
  assert.equal(await page.locator('#problemPanel,#problems').count(),0);
  assert.equal(await page.locator('#toast.show').count(),0);
  await page.locator('#verdict [data-check="given"]').hover();
+ assert.equal(await page.locator('#referencePopup').isVisible(),true);
+ assert.equal(await page.locator('#referencePopup').innerText(),'가반 김철수·박철수');
  await page.locator('#resultCard').scrollIntoViewIfNeeded();
- await page.screenshot({path:path.join(artifacts,'seven-reference-signals.png')});
+ await page.screenshot({path:path.join(artifacts,'reference-hover-signals.png')});
+ await page.mouse.move(0,0);assert.equal(await page.locator('#referencePopup').isVisible(),false);
  for(const width of [1280,768,412]){
   await page.setViewportSize({width,height:900});
   const tops=await page.locator('#verdict .v').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().y));
@@ -474,12 +469,64 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
   st.classes[0].special=true;st.pairs=[];st.requiredGroups=[];st.useY3=false;
   st.result.assign=[0,1,0,1];__bbj.renderAll();
  });
- assert.equal(await page.locator('#verdict .v.ok').count(),7);
+ assert.equal(await page.locator('#verdict .v.ok').count(),9);
  assert.equal(await page.locator('.signal-details').count(),0);
- assert.equal(await page.locator('.col.quota-bad').count(),2);
- assert.match((await page.locator('.class-notes').allTextContents()).join(' '),/남 목표1\/현재2/);
+ assert.equal(await page.locator('.col.quota-bad').count(),0);
  assert.equal(await page.locator('#problemPanel').isVisible(),false);
  assert.deepEqual(await page.locator('#verdict .v').allTextContents(),shortLabels);
+ // Same-color hearts follow connected required groups in every layout.
+ await page.setViewportSize({width:1600,height:1000});
+ await page.evaluate(()=>{
+  const st=__bbj.state();st.students=Array.from({length:8},(_,i)=>({id:i+1,name:'하트학생'+i,no:i+1,g4:'',g5:(i%6+1)+'반',gender:i%2?'여':'남',tags:[],w:{},fixed:null}));
+  st.classes=[{name:'가반',total:4,special:false},{name:'나반',total:4,special:false}];
+  st.requiredGroups=[[1,2],[2,3],[5,6]];st.pairs=[];st.wishGroups=[];st.useY3=false;
+  st.result={assign:[0,0,0,0,1,1,1,1],ids:[1,2,3,4,5,6,7,8],moves:0,ms:0};__bbj.renderAll();
+ });
+ let heartColors;
+ for(const layout of ['one','two','sex']){
+  await page.locator(`[data-layout="${layout}"]`).click();
+  assert.equal(await page.locator('.required-heart').count(),5);
+  const colors=await page.locator('.required-heart').evaluateAll(es=>Object.fromEntries(es.map(e=>[e.closest('.stu').dataset.id,getComputedStyle(e).color])));
+  assert.equal(colors['1'],colors['2']);assert.equal(colors['2'],colors['3']);assert.equal(colors['5'],colors['6']);assert.notEqual(colors['1'],colors['5']);
+  if(heartColors)assert.deepEqual(colors,heartColors);else heartColors=colors;
+  assert.equal(await page.locator('.stu[data-id="4"] .required-heart').count(),0);
+  assert.equal(await page.locator('.required-heart').evaluateAll(es=>es.every(e=>e.textContent==='♥'&&e.previousElementSibling.classList.contains('nm'))),true);
+ }
+ await page.screenshot({path:path.join(artifacts,'required-group-hearts.png')});
+ // All reference details remain hidden until hover/focus, including stars and proportional gender counts.
+ await page.mouse.move(0,0);
+ await page.evaluate(()=>{
+  const st=__bbj.state();
+  st.students=Array.from({length:30},(_,i)=>({id:i+1,name:'참고학생'+i,no:i+1,g4:'',g5:(i%6+1)+'반',gender:(i<10?i<8:i<20?i<15:i<22)?'남':'여',tags:(i<4||(i>=10&&i<12))?['학습']:[],w:{학습:5},fixed:null}));
+  st.classes=['가반','나반','다반'].map(name=>({name,total:10,special:false}));st.requiredGroups=[];st.pairs=[];st.wishGroups=[];st.useY3=false;
+  st.result={assign:st.students.map((_,i)=>Math.floor(i/10)),ids:st.students.map(s=>s.id),moves:0,ms:0};__bbj.renderAll();
+ });
+ assert.equal(await page.locator('.signal-details.warn').count(),0);
+ assert.equal(await page.locator('#referencePopup').isVisible(),false);
+ assert.match(await page.locator('[data-check="score"]').getAttribute('class'),/warn/);
+ assert.match(await page.locator('[data-check="gender"]').getAttribute('class'),/warn/);
+ assert.deepEqual(await page.evaluate(()=>__bbj.state().result.report.problems),[]);
+ assert.equal(await page.locator('.col.quota-bad').count(),0);
+ const cells=await page.locator('.signal').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().width));
+ assert.ok(Math.max(...cells)-Math.min(...cells)<1);
+ await page.locator('[data-check="score"]').hover();
+ assert.equal(await page.locator('#referencePopup').isVisible(),true);
+ assert.match(await page.locator('#referencePopup').innerText(),/가반 별점 높음/);
+ assert.match(await page.locator('#referencePopup').innerText(),/다반 별점 낮음/);
+ const scoreBox=await page.locator('[data-check="score"]').boundingBox(),hoverBox=await page.locator('#referencePopup').boundingBox();
+ assert.ok(hoverBox.y+hoverBox.height<=scoreBox.y);
+ await page.screenshot({path:path.join(artifacts,'star-reference-hover.png')});
+ await page.mouse.move(0,0);assert.equal(await page.locator('#referencePopup').isVisible(),false);
+ await page.locator('[data-check="gender"]').focus();
+ assert.equal(await page.locator('#referencePopup').isVisible(),true);
+ assert.match(await page.locator('#referencePopup').innerText(),/가반 남자수 많음/);
+ assert.match(await page.locator('#referencePopup').innerText(),/다반 여자수 많음/);
+ await page.screenshot({path:path.join(artifacts,'gender-reference-focus.png')});
+ await page.keyboard.press('Escape');assert.equal(await page.locator('#referencePopup').isVisible(),false);
+ await page.setViewportSize({width:412,height:900});
+ await page.locator('[data-check="gender"]').hover();
+ const smallTip=await page.locator('#referencePopup').boundingBox();assert.ok(smallTip.x>=0&&smallTip.x+smallTip.width<=412);
+ await page.mouse.move(0,0);await page.setViewportSize({width:1600,height:1000});
  // Grouped notices live only at the bottom of conditions; roster edits update them and the special count.
  await page.setViewportSize({width:1600,height:1000});
  await page.locator('.tab[data-tab="setup"]').click();
@@ -508,6 +555,6 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.equal(await page.locator('#specialCount').innerText(),"현재 '특수' 학생 0명");
  assert.equal(await page.locator('#stateBadge').innerText(),'아직 명단이 없습니다');
  assert.deepEqual(errors,[]);
- console.log('PASS Chromium: four-row compact result, hidden bottom bar, slim default two-column view, inline signal cards and special/quota outlines, bounded demo names and seven traffic-light tooltips/colors, wide monitors and all sort/layout combinations, required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, compact header badge, grouped names/special counts, zero-warning panel/toast hiding, new layout, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, responsive viewports, save/load and polling');
+ console.log('PASS Chromium: total-only targets, automatic gender proportions, mandatory group hearts, nine evenly spaced lights and hover-only references, four-row compact result, hidden bottom bar, slim default two-column view, inline signal cards and special/quota outlines, bounded demo names and seven traffic-light tooltips/colors, wide monitors and all sort/layout combinations, required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, compact header badge, grouped names/special counts, zero-warning panel/toast hiding, new layout, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, responsive viewports, save/load and polling');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

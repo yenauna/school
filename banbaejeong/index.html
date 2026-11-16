@@ -285,7 +285,7 @@
   .actionbar[hidden],body.result-view .actionbar{display:none!important}body.result-view main{padding-bottom:16px}
   .result-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}.result-heading h2{margin:0}.result-actions{display:flex;gap:6px;flex-wrap:wrap}
   .result-signals{display:flex;align-items:flex-start;gap:12px;margin:8px 0 14px}.result-signals #btnUndo{margin-left:auto;flex:0 0 auto}
-  .result-signals .verdicts{display:grid;grid-template-columns:repeat(7,minmax(100px,1fr));gap:8px;flex:0 1 1120px;min-width:0;overflow-x:auto;margin:0;padding:0 0 3px}
+  .result-signals .verdicts{display:grid;grid-template-columns:repeat(9,minmax(80px,1fr));gap:8px;flex:1 1 auto;min-width:0;overflow-x:auto;margin:0;padding:0 0 3px}
   .signal{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0}.signal .v{font-size:12px;line-height:18px;padding:5px 8px}
   .signal-details{align-self:stretch;border:1px solid;border-radius:7px;padding:5px 6px;font-size:11px;line-height:1.45;display:grid;gap:3px;overflow-wrap:anywhere}
   .signal-details.bad{background:var(--bad-soft);border-color:#efb1ab;color:#992e23}.signal-details.warn{background:var(--warn-soft);border-color:#edcf9f;color:#8a5308}
@@ -293,6 +293,9 @@
   .col.quota-bad{border-color:#dc2626;box-shadow:inset 0 0 0 1px #dc2626}.stu.viol{border-color:#dc2626;box-shadow:inset 0 0 0 1px #dc2626}
   .class-notes{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;font-size:10.5px;color:#b91c1c}.class-notes span{border-radius:4px;background:#fff1f2;padding:1px 4px}
   @media print{.result-heading,.result-views,.result-signals{display:none!important}}
+  .required-heart{font-size:12px;line-height:1;flex:0 0 auto;margin-left:1px}
+  .reference-popup{position:fixed;z-index:80;max-width:min(320px,calc(100vw - 20px));max-height:50vh;overflow:auto;padding:8px 10px;border:1px solid #edcf9f;border-radius:8px;background:#fff8e7;color:#854d0e;box-shadow:0 4px 16px #0002;font-size:12px;line-height:1.6;pointer-events:none;overflow-wrap:anywhere}
+  .reference-popup[hidden]{display:none!important}.v[data-reference]{cursor:help}
 </style>
 </head>
 <body class="locked">
@@ -443,6 +446,8 @@
   <div class="abinfo" id="abInfo">학생 0명</div>
   <button class="btn primary big" type="button" id="btnRun">배정 실행</button>
 </div>
+
+<div id="referencePopup" class="reference-popup" role="tooltip" hidden></div>
 
 <div class="overlay" id="pasteModal">
   <div class="modal">
@@ -916,9 +921,10 @@ var CORE = (function () {
       }
     });
     if (conflict || units.some(function (u) { return !u.allowed.length; })) return null;
+    var remaining = classes.map(function (c) { return c.total; });
     var m = classes.map(function (c) { return c.male; }), f = classes.map(function (c) { return c.female; });
     var sp = new Array(K).fill(0), tr = new Array(K).fill(0), score = new Array(K).fill(0), at = new Array(units.length).fill(-1), visits = 0;
-    function choices(u) { return u.allowed.filter(function (k) { return m[k] >= u.male && f[k] >= u.female && (opts.relaxSpecial || sp[k]+u.special <= 1) && !u.edges.some(function (v) { return at[v] === k; }); }); }
+    function choices(u) { return u.allowed.filter(function (k) { return (opts.totalOnly ? remaining[k] >= u.members.length : m[k] >= u.male && f[k] >= u.female) && (opts.relaxSpecial || sp[k]+u.special <= 1) && !u.edges.some(function (v) { return at[v] === k; }); }); }
     function search(left) {
       if (!left) return true;
       if (++visits > 60000) return false;
@@ -927,12 +933,12 @@ var CORE = (function () {
         var cs = choices(units[i]); if (!cs.length) return false;
         if (chosen < 0 || cs.length < candidates.length || (cs.length === candidates.length && units[i].members.length+units[i].edges.length > units[chosen].members.length+units[chosen].edges.length)) { chosen=i; candidates=cs; }
       }
-      var u = units[chosen], jitter = candidates.map(function (k) { return {k:k,value:tr[k]*u.transfer*12000+score[k]*u.score*80+rnd()}; });
+      var u = units[chosen], jitter = candidates.map(function (k) { return {k:k,value:tr[k]*u.transfer*12000+score[k]*u.score*80+(opts.totalOnly ? (u.male*u.male-2*m[k]*u.male+u.female*u.female-2*f[k]*u.female)*500 : 0)+rnd()}; });
       jitter.sort(function (a,b) { return a.value-b.value; });
       for (var j = 0; j < jitter.length; j++) {
-        var k = jitter[j].k; at[chosen]=k; m[k]-=u.male; f[k]-=u.female; sp[k]+=u.special; tr[k]+=u.transfer; score[k]+=u.score;
+        var k = jitter[j].k; at[chosen]=k; remaining[k]-=u.members.length; m[k]-=u.male; f[k]-=u.female; sp[k]+=u.special; tr[k]+=u.transfer; score[k]+=u.score;
         if (search(left-1)) return true;
-        at[chosen]=-1; m[k]+=u.male; f[k]+=u.female; sp[k]-=u.special; tr[k]-=u.transfer; score[k]-=u.score;
+        at[chosen]=-1; remaining[k]+=u.members.length; m[k]+=u.male; f[k]+=u.female; sp[k]-=u.special; tr[k]-=u.transfer; score[k]-=u.score;
       }
       return false;
     }
@@ -946,7 +952,9 @@ var CORE = (function () {
     var N = students.length, K = classes.length;
     var rnd = mulberry32(opts.seed == null ? 12345 : opts.seed);
     var T = classes.map(function (c) { return Number(c.total) || 0; });
-    var M = classes.map(function (c) { return Number(c.male) || 0; });
+    var autoGender = opts.autoGender === true || classes.some(function (c) { return c.male == null || c.female == null; });
+    var rosterMale = students.filter(function (s) { return s.gender === '남'; }).length;
+    var M = classes.map(function (c,k) { return autoGender ? (N ? T[k]*rosterMale/N : 0) : Number(c.male) || 0; });
 
     var plans = tagPlans(students, K, opts);
     var tagNames = plans.map(function (p) { return p.name; });
@@ -990,10 +998,11 @@ var CORE = (function () {
     });
     var fixedTotal = new Array(K).fill(0), fixedMale = new Array(K).fill(0);
     fixedOf.forEach(function (k,i) { if (k != null && k >= 0 && k < K) { fixedTotal[k]++; fixedMale[k] += male[i]; } });
-    var exactQuotas = T.reduce(function (a,b) { return a+b; },0) === N &&
-      M.reduce(function (a,b) { return a+b; },0) === male.reduce(function (a,b) { return a+b; },0) &&
-      students.every(function (s) { return s.gender === '남' || s.gender === '여'; }) &&
-      classes.every(function (c,k) { return Number.isInteger(T[k]) && Number.isInteger(M[k]) && M[k] >= 0 && M[k] <= T[k] && Number(c.female) === T[k]-M[k] && fixedMale[k] <= M[k] && fixedTotal[k]-fixedMale[k] <= T[k]-M[k]; });
+    var validTotals = T.reduce(function (a,b) { return a+b; },0) === N && T.every(function (t,k) { return Number.isInteger(t) && t >= 0 && fixedTotal[k] <= t; });
+    var exactQuotas = validTotals && students.every(function (s) { return s.gender === '남' || s.gender === '여'; }) && (autoGender ||
+      (M.reduce(function (a,b) { return a+b; },0) === rosterMale && classes.every(function (c,k) { return Number.isInteger(M[k]) && M[k] >= 0 && M[k] <= T[k] && Number(c.female) === T[k]-M[k] && fixedMale[k] <= M[k] && fixedTotal[k]-fixedMale[k] <= T[k]-M[k]; })));
+    var placementClasses = autoGender ? classes.map(function (c,k) { return Object.assign({},c,{male:M[k],female:T[k]-M[k]}); }) : classes;
+    var placementOptions = Object.assign({},opts,{totalOnly:autoGender});
     var sepOf = students.map(function () { return []; });
     var links = buildLinks(students, pairs, opts);
     links.forEach(function (l) { sepOf[l.a].push(l.b); sepOf[l.b].push(l.a); });
@@ -1129,9 +1138,9 @@ var CORE = (function () {
     var iters = Math.max(200, opts.iters || 4000);
     var best = null, bestCost = Infinity, r, i;
 
-    var hardBase = exactQuotas ? hardPlacement(students,classes,links,opts,rnd) : null;
+    var hardBase = exactQuotas ? hardPlacement(students,placementClasses,links,placementOptions,rnd) : null;
     // If constraints conflict, retain mandatory together-groups whenever quotas permit; report other violations explicitly.
-    if (!hardBase && exactQuotas && (opts.requiredGroups || []).length) hardBase = hardPlacement(students,classes,[],Object.assign({},opts,{relaxSpecial:true}),rnd);
+    if (!hardBase && exactQuotas && (opts.requiredGroups || []).length) hardBase = hardPlacement(students,placementClasses,[],Object.assign({},placementOptions,{relaxSpecial:true}),rnd);
     for (r = 0; r < restarts; r++) {
       var st = newState();
       var hard = hardBase;
@@ -1156,7 +1165,7 @@ var CORE = (function () {
       for (var oi = 0; oi < order.length; oi++) {
         var si = order[oi], bestK = 0, bestScore = Infinity;
         for (var k = 0; k < K; k++) {
-          if (exactQuotas && (male[si] ? st.mc[k] >= M[k] : st.cnt[k]-st.mc[k] >= T[k]-M[k])) continue;
+          if (exactQuotas && (autoGender ? st.cnt[k] >= T[k] : (male[si] ? st.mc[k] >= M[k] : st.cnt[k]-st.mc[k] >= T[k]-M[k]))) continue;
           var before = costClass(st, k);
           addTo(st, k, si, 1);
           var after = costClass(st, k);
@@ -1193,7 +1202,7 @@ var CORE = (function () {
             addTo(st, to, a, -1); st.place[a] = -1; addTo(st, from, a, 1); st.place[a] = from;
           } else {
             var b = movable[(rnd() * movable.length) | 0];
-            if (b === a || (exactQuotas && male[a] !== male[b])) continue;
+            if (b === a || (exactQuotas && !autoGender && male[a] !== male[b])) continue;
             var ka = st.place[a], kb = st.place[b];
             if (ka === kb) continue;
             if (hard) {
@@ -1239,10 +1248,12 @@ var CORE = (function () {
     var plans = tagPlans(students, K, opts || {});
     var tagNames = plans.map(function (p) { return p.name; });
 
+    var autoGender = opts && opts.autoGender === true || classes.some(function (c) { return c.male == null || c.female == null; });
+    var maleRatio = students.length ? students.filter(function (s) { return s.gender === '남'; }).length/students.length : 0;
     var per = classes.map(function (c, k) {
       return {
         k: k, name: c.name, target: Number(c.total) || 0,
-        targetMale: Number(c.male) || 0, targetFemale: Number(c.female) || 0,
+        targetMale: autoGender ? (Number(c.total)||0)*maleRatio : Number(c.male)||0, targetFemale: autoGender ? (Number(c.total)||0)*(1-maleRatio) : Number(c.female)||0,
         count: 0, male: 0, female: 0, tags: {}, tagScore: {}, score: 0, scored: 0, members: []
       };
     });
@@ -1440,6 +1451,26 @@ var CORE = (function () {
     };
   }
 
+  function balanceAdvice(students, rep) {
+    var score = [], gender = [], N = students.length;
+    var boys = students.filter(function (s) { return s.gender === '남'; }).length;
+    var girls = students.filter(function (s) { return s.gender === '여'; }).length;
+    var mean = rep.per.length ? rep.per.reduce(function (sum,p) { return sum+p.score; },0)/rep.per.length : 0;
+    var largest = students.reduce(function (max,s) { return Math.max(max,studentScore(s)); },0);
+    // Allow one indivisible student's stars, or 25% of the class average, whichever is greater.
+    var tolerance = Math.max(2,largest,mean*0.25);
+    rep.per.forEach(function (p) {
+      var delta = p.score-mean;
+      if (Math.abs(delta) > tolerance+1e-9) score.push({k:p.k,text:p.name+' 별점 '+(delta>0?'높음':'낮음')});
+      if (!N) return;
+      [['남자수',p.male,p.count*boys/N],['여자수',p.female,p.count*girls/N]].forEach(function (entry) {
+        var diff = entry[1]-entry[2];
+        if (Math.abs(diff) >= 2-1e-9) gender.push({k:p.k,text:p.name+' '+entry[0]+' '+(diff>0?'많음':'적음')});
+      });
+    });
+    return {score:score,gender:gender};
+  }
+
   function fmtNum(v) {
     var n = Number(v) || 0;
     if (Math.abs(n - Math.round(n)) < 0.05) return String(Math.round(n));
@@ -1490,6 +1521,7 @@ var CORE = (function () {
     virtualRoster: virtualRoster,
     autoTargets: autoTargets,
     syncClass: syncClass,
+    balanceAdvice: balanceAdvice,
     tagPlans: tagPlans,
     buildLinks: buildLinks,
     assign: assign,
@@ -1703,36 +1735,22 @@ var CORE = (function () {
   /* ---------- 새 반 구성 ---------- */
   function renderClasses() {
     renderSpecialCount();
-    var st = 0, sm = 0, sf = 0;
-    var h = '<thead><tr><th>반</th><th>통합학급</th><th>목표 인원</th><th>남</th><th>여</th></tr></thead><tbody>';
-    S.classes.forEach(function (c, k) {
-      st += Number(c.total) || 0; sm += Number(c.male) || 0; sf += Number(c.female) || 0;
-      h += '<tr>' +
-        '<td data-label="반"><input class="w6" type="text" data-scope="class" data-k="' + k + '" data-field="name" value="' + esc(c.name) + '"></td>' +
-        '<td data-label="통합학급"><input type="checkbox" data-scope="class" data-k="' + k + '" data-field="special"' + (c.special ? ' checked' : '') + ' title="특수학생이 배정되는 반"></td>' +
-        '<td data-label="목표 인원"><input class="w4" type="number" min="0" data-scope="class" data-k="' + k + '" data-field="total" value="' + (c.total == null ? '' : c.total) + '"></td>' +
-        '<td data-label="남"><input class="w4" type="number" min="0" data-scope="class" data-k="' + k + '" data-field="male" value="' + (c.male == null ? '' : c.male) + '"></td>' +
-        '<td data-label="여"><input class="w4" type="number" min="0" data-scope="class" data-k="' + k + '" data-field="female" value="' + (c.female == null ? '' : c.female) + '"></td>' +
-      '</tr>';
+    var sum = 0, h = '<thead><tr><th>반</th><th>통합학급</th><th>목표 인원</th></tr></thead><tbody>';
+    S.classes.forEach(function (c,k) {
+      sum += Number(c.total)||0;
+      h += '<tr><td data-label="반"><input class="w6" type="text" data-scope="class" data-k="'+k+'" data-field="name" value="'+esc(c.name)+'"></td>' +
+        '<td data-label="통합학급"><input type="checkbox" data-scope="class" data-k="'+k+'" data-field="special"'+(c.special?' checked':'')+' title="특수학생이 배정되는 반"></td>' +
+        '<td data-label="목표 인원"><input class="w4" type="number" min="0" step="1" data-scope="class" data-k="'+k+'" data-field="total" value="'+(c.total==null?'':c.total)+'"></td></tr>';
     });
-    h += '</tbody><tfoot><tr><td class="small muted">합계</td><td></td><td class="small">' + st + '</td><td class="small">' + sm + '</td><td class="small">' + sf + '</td></tr></tfoot>';
-    $('#classTable').innerHTML = h;
-    $('#classCount').value = S.classes.length;
-    $('#deduct').value = S.deduct;
-    $('#restrictSpecial').checked = !!S.restrictSpecial;
-    $('#useY3').checked = S.useY3 !== false;
+    $('#classTable').innerHTML = h+'</tbody><tfoot><tr><td class="small muted">합계</td><td></td><td class="small">'+sum+'</td></tr></tfoot>';
+    $('#classCount').value=S.classes.length;$('#deduct').value=S.deduct;$('#restrictSpecial').checked=!!S.restrictSpecial;$('#useY3').checked=S.useY3!==false;
     updateTargetHint();
   }
   function updateTargetHint() {
-    var N = S.students.length, sums = [0,0,0];
-    S.classes.forEach(function (c) { sums[0] += Number(c.total)||0; sums[1] += Number(c.male)||0; sums[2] += Number(c.female)||0; });
-    var cells = $$('#classTable tfoot td'); sums.forEach(function (v,i) { if (cells[i+2]) cells[i+2].textContent = v; });
-    var boys = S.students.filter(function (s) { return s.gender === '남'; }).length, girls = S.students.filter(function (s) { return s.gender === '여'; }).length;
-    var matches = sums[0] === N && sums[1] === boys && sums[2] === girls;
-    var el = $('#targetHint'); el.className = 'status ' + (!N ? 'muted' : matches ? 'ok' : 'bad');
-    el.textContent = !N ? '명단을 먼저 넣으면 학생 수에 맞춰 목표를 채울 수 있습니다.' :
-      '목표 / 명단: 총원 ' + sums[0] + '/' + N + '명 · 남 ' + sums[1] + '/' + boys + '명 · 여 ' + sums[2] + '/' + girls + '명' +
-      (matches ? ' (모두 일치)' : ' — 자동 맞추기를 누르거나 숫자를 고치세요');
+    var N=S.students.length,sum=S.classes.reduce(function (v,c) { return v+(Number(c.total)||0); },0),cell=$('#classTable tfoot td:last-child');
+    if(cell) cell.textContent=sum;
+    var el=$('#targetHint');el.className='status '+(!N?'muted':sum===N?'ok':'bad');
+    el.textContent=!N?'명단을 먼저 넣으면 학생 수에 맞춰 목표를 채울 수 있습니다.':'목표 / 명단: 총원 '+sum+'/'+N+'명'+(sum===N?' (일치)':' — 자동 맞추기를 누르거나 숫자를 고치세요');
     updateAbInfo();
   }
   function updateAbInfo() {
@@ -2768,7 +2786,7 @@ var CORE = (function () {
   /* ---------- 배정 ---------- */
   function currentOptions() {
     var opts = {
-      tagRules: {}, pinned: {},
+      autoGender: true, tagRules: {}, pinned: {},
       threeYear: S.useY3 !== false,
       restarts: 24, iters: 5000,
       seed: (Date.now() & 0x7fffffff)
@@ -2829,25 +2847,20 @@ var CORE = (function () {
     var boys = S.students.filter(function (s) { return s.gender === '남'; }).length;
     var girls = S.students.filter(function (s) { return s.gender === '여'; }).length;
     if (boys+girls !== N) return '학생의 성별을 남 또는 여로 입력해 주세요.';
-    if (S.classes.some(function (c) { return !Number.isInteger(c.total) || !Number.isInteger(c.male) || !Number.isInteger(c.female) || c.male < 0 || c.female < 0 || c.total !== c.male+c.female; })) return '각 반의 목표 인원과 남녀 합계가 일치해야 합니다. 목표 인원을 수정하거나 자동 맞추기를 눌러 주세요.';
-    var targetBoys = S.classes.reduce(function (sum,c) { return sum+c.male; },0);
-    var targetGirls = S.classes.reduce(function (sum,c) { return sum+c.female; },0);
-    if (targetBoys !== boys || targetGirls !== girls) return '남녀 목표 합계가 명단과 다릅니다: 남 ' + targetBoys + '명 / 실제 ' + boys + '명, 여 ' + targetGirls + '명 / 실제 ' + girls + '명. 자동 맞추기를 누르거나 숫자를 고쳐 주세요.';
-    var fixedCount = {}, fixedBoys = {}, fixedGirls = {};
+    if (S.classes.some(function (c) { return !Number.isInteger(c.total) || c.total < 0; })) return '목표 인원을 0 이상의 정수로 입력해 주세요.';
+    var fixedCount = {};
     S.students.forEach(function (s) {
       if (s.fixed == null || s.fixed === '' || s.fixed === -1) return;
       var k = Number(s.fixed);
       if (k < 0 || k >= S.classes.length) { s.fixed = null; return; }
       fixedCount[k] = (fixedCount[k] || 0) + 1;
-      var counts = s.gender === '남' ? fixedBoys : fixedGirls; counts[k] = (counts[k] || 0)+1;
     });
     var over = [];
     Object.keys(fixedCount).forEach(function (k) {
       var c = S.classes[Number(k)];
-      if ((fixedBoys[k] || 0) > c.male || (fixedGirls[k] || 0) > c.female) over.push(c.name + '(고정 남 ' + (fixedBoys[k] || 0) + '명 / 목표 ' + c.male + '명, 고정 여 ' + (fixedGirls[k] || 0) + '명 / 목표 ' + c.female + '명)');
-      else if (fixedCount[k] > (Number(c.total) || 0)) over.push(c.name + '(고정 ' + fixedCount[k] + '명 / 목표 ' + (Number(c.total) || 0) + '명)');
+      if (fixedCount[k] > (Number(c.total)||0)) over.push(c.name+'(고정 '+fixedCount[k]+'명 / 목표 '+c.total+'명)');
     });
-    if (over.length) return '고정 학생이 총원 또는 남녀 목표보다 많은 반이 있습니다: ' + over.join(', ') + '. 목표를 늘리거나 고정을 풀어 주세요.';
+    if (over.length) return '고정 학생이 목표 총원보다 많은 반이 있습니다: ' + over.join(', ') + '. 목표를 늘리거나 고정을 풀어 주세요.';
     return null;
   }
   function requestRun() {
@@ -2898,15 +2911,41 @@ var CORE = (function () {
   }
 
   /* ---------- 결과 ---------- */
+  var referenceAnchor = null;
+  function hideReferencePopup() { referenceAnchor=null; $('#referencePopup').hidden=true; }
+  function positionReferencePopup(pill) {
+    var popup=$('#referencePopup'),anchor=pill.getBoundingClientRect(),r=popup.getBoundingClientRect();
+    popup.style.left=Math.max(10,Math.min(window.innerWidth-r.width-10,anchor.x+anchor.width/2-r.width/2))+'px';
+    popup.style.top=(anchor.top-r.height-8>=8?anchor.top-r.height-8:anchor.bottom+8)+'px';
+  }
+  function showReferencePopup(pill) {
+    var popup=$('#referencePopup'); popup.textContent='';referenceAnchor=pill;
+    String(pill.dataset.reference||'').split('\n').forEach(function (text) { var line=document.createElement('div');line.textContent=text;popup.appendChild(line); });
+    popup.hidden=false;positionReferencePopup(pill);
+  }
+  document.addEventListener('mouseover',function (e) { var pill=e.target.closest&&e.target.closest('.v[data-reference]'); if(pill)showReferencePopup(pill); });
+  document.addEventListener('mouseout',function (e) { var pill=e.target.closest&&e.target.closest('.v[data-reference]');if(pill&&(!e.relatedTarget||!pill.contains(e.relatedTarget)))hideReferencePopup(); });
+  document.addEventListener('focusin',function (e) { if(e.target.matches('.v[data-reference]'))showReferencePopup(e.target); });
+  document.addEventListener('focusout',hideReferencePopup);
+  document.addEventListener('scroll',function () {
+    var pill=referenceAnchor;if(!pill)return;
+    var r=pill.getBoundingClientRect();
+    if(pill.isConnected&&(pill.matches(':hover')||document.activeElement===pill)&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth)positionReferencePopup(pill);
+    else hideReferencePopup();
+  },true);
+  window.addEventListener('resize',hideReferencePopup);
+  document.addEventListener('keydown',function (e) { if(e.key==='Escape')hideReferencePopup(); });
+
   function verdictHtml(rep) {
     function pill(key,label,details,reference,normal) {
       var status = details.length ? (reference ? 'warn' : 'bad') : 'ok';
       var title = details.length ? details.join(' / ') : normal;
-      var mini = details.length ? '<div class="signal-details ' + status + '" data-details="' + key + '">' + details.map(function (text) {
+      var mini = details.length && !reference ? '<div class="signal-details ' + status + '" data-details="' + key + '">' + details.map(function (text) {
         var short = text.replace(' (특수학생 중복)',' · 중복').replace(' (통합학급 미지정)',' · 통합×').replace(/·/g,' · ').replace(/\s+/g,' ').trim();
         return '<div>' + esc(short) + '</div>';
       }).join('') + '</div>' : '';
-      return '<div class="signal" data-signal="' + key + '"><span class="v ' + status + '" data-check="' + key + '" tabindex="0" title="' + esc(title) + '" aria-label="' + esc(label + ': ' + title) + '">' + label + '</span>' + mini + '</div>';
+      var tip = reference && details.length ? ' data-reference="'+esc(details.join('\n'))+'" aria-describedby="referencePopup"' : ' title="'+esc(title)+'"';
+      return '<div class="signal" data-signal="' + key + '"><span class="v ' + status + '" data-check="' + key + '" tabindex="0"'+tip+' aria-label="' + esc(label + ': ' + title) + '">' + label + '</span>' + mini + '</div>';
     }
     function pairDetails(list) { return (list || []).map(function (v) { return v.cls + ' ' + v.a + '·' + v.b; }); }
     var similar = [];
@@ -2925,6 +2964,7 @@ var CORE = (function () {
       });
       return Object.keys(groups).map(function (name) { return name + ' ' + groups[name].join('·'); }).join(' / ');
     });
+    var advice=CORE.balanceAdvice(S.students,rep);
     var special = (rep.tagBad || []).map(function (v) { return v.cls + ' ' + v.name + (v.kind === 'overlap' ? ' (특수학생 중복)' : ' (통합학급 미지정)'); });
     return [
       pill('special','특수',special,false,'특수학생 배정 조건에 문제가 없습니다.'),
@@ -2933,7 +2973,9 @@ var CORE = (function () {
       pill('three-year','3년 같은 반',pairDetails(rep.y3Viol),false,'3년 연속 같은 반인 학생이 없습니다.'),
       pill('separate','필수 분리',pairDetails(rep.sepViol),false,'필수 분리 조합을 모두 지켰습니다.'),
       pill('required','필수 희망',(rep.requiredViol || []).map(function (g) { return g.text; }),false,'필수 희망 조합이 모두 같은 반입니다.'),
-      pill('recommended','추천 희망',missed,true,'추천 희망 조합에 문제가 없습니다.')
+      pill('recommended','추천 희망',missed,true,'추천 희망 조합에 문제가 없습니다.'),
+      pill('score','별점',advice.score.map(function (v) { return v.text; }),true,'반별 별점이 허용 범위 안입니다.'),
+      pill('gender','남녀수',advice.gender.map(function (v) { return v.text; }),true,'반별 총원 대비 남녀 수가 허용 범위 안입니다.')
     ].join('');
   }
 
@@ -2951,7 +2993,25 @@ var CORE = (function () {
     var hue = ((Math.max(0,i) * 137.508) + 205) % 360;
     return 'background:hsl(' + hue + ',65%,92%);border-color:hsl(' + hue + ',45%,77%);color:hsl(' + hue + ',40%,28%)';
   }
-  function chipHtml(idx, k, sepMap, y3Map, fixMap, specialMap) {
+  function requiredHearts() {
+    var parent=Object.create(null),live=Object.create(null),out=Object.create(null);
+    S.students.forEach(function (st) { live[st.id]=st; });
+    function root(id) { while(parent[id]!==id) { parent[id]=parent[parent[id]]; id=parent[id]; } return id; }
+    (S.requiredGroups||[]).forEach(function (g) {
+      var ids=g.filter(function (id,i,a) { return id!=null&&live[id]&&a.indexOf(id)===i; }); if(ids.length<2)return;
+      ids.forEach(function (id) { if(parent[id]==null)parent[id]=id; });
+      ids.forEach(function (id) { var a=root(ids[0]),b=root(id);parent[Math.max(a,b)]=Math.min(a,b); });
+    });
+    var groups=Object.create(null);
+    Object.keys(parent).forEach(function (id) { var key=root(id);(groups[key]||(groups[key]=[])).push(Number(id)); });
+    Object.keys(groups).sort(function (a,b) { return Number(a)-Number(b); }).forEach(function (key,i) {
+      var title='필수 희망 조합 '+(i+1)+': '+groups[key].map(function (id) { return live[id].name; }).join(' · ');
+      var hue=(335+i*137.508)%360;
+      groups[key].forEach(function (id) { out[id]='<span class="required-heart" style="color:hsl('+hue+',65%,43%)" title="'+esc(title)+'" aria-label="필수 희망 조합 '+(i+1)+'">♥</span>'; });
+    });
+    return out;
+  }
+  function chipHtml(idx, k, sepMap, y3Map, fixMap, specialMap, heartMap) {
     var s = S.students[idx];
     var wm = tagWeightMap();
     var tags = (s.transfer ? [] : (s.tags || [])).map(function (t) {
@@ -2967,14 +3027,14 @@ var CORE = (function () {
       ((sepMap[idx] || y3Map[idx] || specialMap[idx]) ? ' viol' : '') + (fixMap[idx] ? ' fixbad' : '');
     var isFixedHere = (s.fixed != null && s.fixed !== '' && Number(s.fixed) === k);
     return '<div class="' + cls + '" draggable="true" data-id="' + s.id + '" data-score="' + total + '" title="4학년 ' + esc(s.g4 || '?') + ' · 5학년 ' + esc(s.g5 || '?') + (warns.length ? ' · ' + esc(warns.join(' / ')) : '') + '">' +
-      '<div class="l1"><button type="button" class="nm" data-act="edit-student" data-id="' + s.id + '" data-k="' + k + '" title="학생 정보 수정">' + esc(s.name) + '</button>' +
+      '<div class="l1"><button type="button" class="nm" data-act="edit-student" data-id="' + s.id + '" data-k="' + k + '" title="학생 정보 수정">' + esc(s.name) + '</button>' + (heartMap[s.id]||'') +
         (isFixedHere ? '<span class="kb fix">고정</span>' : '') +
         (s.transfer ? '<span class="transfer-badge">전출예정</span>' : '') + tags + '<span class="g5b" title="5학년 반">' + esc(g5Badge(s)) + '</span></div>' +
     '</div>';
   }
 
-  function studentLayoutHtml(members, boys, girls, k, sepMap, y3Map, fixMap, specialMap) {
-    function chips(list) { return list.map(function (idx) { return chipHtml(idx,k,sepMap,y3Map,fixMap,specialMap); }).join(''); }
+  function studentLayoutHtml(members, boys, girls, k, sepMap, y3Map, fixMap, specialMap, heartMap) {
+    function chips(list) { return list.map(function (idx) { return chipHtml(idx,k,sepMap,y3Map,fixMap,specialMap,heartMap); }).join(''); }
     if (!members.length) return '<div class="muted small">학생 없음</div>';
     if (resultLayout === 'sex') {
       return '<div class="gender-section boys" aria-label="남학생"><span class="gender-title">남</span>' + chips(boys) + '</div>' +
@@ -2990,7 +3050,7 @@ var CORE = (function () {
   }
   /* 반 카드 한 벌: 모든 반이 한 줄에 나란히 놓인다(넓은 화면). 남자 목록과 여자 목록 사이에 구분선 1줄. */
   function cardsHtml(rep) {
-    var sepMap = {}, y3Map = {}, fixMap = {}, specialMap = {};
+    var sepMap = {}, y3Map = {}, fixMap = {}, specialMap = {}, heartMap = requiredHearts();
     rep.sepViol.concat(rep.duplicateViol || []).forEach(function (v) {
       (sepMap[v.ai] = sepMap[v.ai] || []).push(v.b);
       (sepMap[v.bi] = sepMap[v.bi] || []).push(v.a);
@@ -3016,8 +3076,6 @@ var CORE = (function () {
     rep.per.forEach(function (p) {
       var quotaNotes = [];
       if (p.count !== p.target) quotaNotes.push('목표' + p.target + '/현재' + p.count);
-      if (p.male !== p.targetMale) quotaNotes.push('남 목표' + p.targetMale + '/현재' + p.male);
-      if (p.female !== p.targetFemale) quotaNotes.push('여 목표' + p.targetFemale + '/현재' + p.female);
       var fixedNotes = rep.fixedBad.filter(function (f) { return p.members.indexOf(f.idx) >= 0; }).map(function (f) { return f.name + ' → ' + f.want; });
       var members = p.members.slice().sort(byGenderAndNo);
       var boys = members.filter(function (i) { return S.students[i].gender !== '여'; });
@@ -3039,7 +3097,7 @@ var CORE = (function () {
           (quotaNotes.length || fixedNotes.length ? '<div class="class-notes">' + quotaNotes.concat(fixedNotes).map(function (text) { return '<span>' + esc(text) + '</span>'; }).join('') + '</div>' : '') +
         '</div>' +
         '<div class="chiplist layout-' + resultLayout + '">' +
-          studentLayoutHtml(members,boys,girls,p.k,sepMap,y3Map,fixMap,specialMap) +
+          studentLayoutHtml(members,boys,girls,p.k,sepMap,y3Map,fixMap,specialMap,heartMap) +
         '</div>' +
         '<button class="addstu" type="button" data-act="add-class-student" data-k="' + p.k + '">+ 학생 추가</button>' +
       '</div>';
@@ -3070,6 +3128,7 @@ var CORE = (function () {
     return h;
   }
   function renderResult() {
+    hideReferencePopup();
     var wrap = $('#classCards');
     if (!S.result) {
       wrap.setAttribute('style', '--cls-count:1');
@@ -3636,14 +3695,9 @@ var CORE = (function () {
     if (!c) return;
     if (f === 'special') { c.special = el.checked; if (S.students.length) refreshTargets(); }
     else if (f === 'name') c.name = el.value.trim() || classDefaultName(k);
-    else {
-      if (f === 'total' && el._genderRatio == null) el._genderRatio = c.male+c.female ? c.male/(c.male+c.female) : 0.5;
-      CORE.syncClass(c,f,el.value, f === 'total' ? el._genderRatio : null);
-      if (commit) delete el._genderRatio;
-      ['total','male','female'].forEach(function (field) {
-        var input = $('#classTable input[data-k="' + k + '"][data-field="' + field + '"]');
-        if (input && (commit || input !== el || el.value !== '')) input.value = c[field];
-      });
+    else if (f === 'total') {
+      c.total = Math.max(0,Math.floor(Number(el.value)||0));
+      if (commit || el.value !== '') el.value=c.total;
     }
     invalidate();
     if (commit && (f === 'special' || f === 'name')) { renderClasses(); renderStudents(); renderTags(); }

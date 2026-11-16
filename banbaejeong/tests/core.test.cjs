@@ -218,3 +218,41 @@ test('demo roster contains exactly five disjoint different-surname given-name pa
  assert.equal(repeated.reduce((n,g)=>n+g.length*(g.length-1)/2,0),5);
  repeated.forEach(g=>{assert.equal(g.length,2);assert.notEqual(g[0].name[0],g[1].name[0]);assert.notEqual(g[0].g5,g[1].g5)});
 });
+
+test('total-only classes allocate exact totals and automatically balance roster gender proportions',()=>{
+ for(const boys of [54,77]){
+  const st=roster(108);st.forEach((s,i)=>s.gender=i<boys?'남':'여');
+  const cls=classes(6).map((c,i)=>({name:c.name,special:i<2,total:[17,17,19,19,18,18][i]}));
+  const opts={threeYear:false,seed:2026,restarts:5,iters:4000};
+  const res=C.assign(st,cls,[],opts),rep=C.evaluate(st,cls,[],res.assign,opts);
+  rep.per.forEach(p=>{assert.equal(p.count,p.target);assert.ok(Math.abs(p.male-p.count*boys/108)<=1)});
+  assert.equal(rep.per.reduce((sum,p)=>sum+p.male,0),boys);
+  assert.equal(rep.per.reduce((sum,p)=>sum+p.female,0),108-boys);
+ }
+});
+test('automatic gender balance does not block same-gender required groups or fixed students',()=>{
+ const st=roster(8),cls=[{name:'가반',total:4,male:0,female:4},{name:'나반',total:4,male:4,female:0}];
+ const opts={autoGender:true,threeYear:false,requiredGroups:[[0,2,4]],seed:9,restarts:3,iters:2000};
+ st[0].fixed=0;
+ const res=C.assign(st,cls,[],opts),rep=C.evaluate(st,cls,[],res.assign,opts);
+ assert.equal(res.assign[0],0);assert.equal(res.assign[0],res.assign[2]);assert.equal(res.assign[2],res.assign[4]);
+ rep.per.forEach(p=>assert.equal(p.count,4));assert.equal(rep.requiredViol.length,0);
+});
+test('gender reference normalizes by class size, including reduced special classes and skewed rosters',()=>{
+ const st=roster(40),rep={per:[{k:0,name:'가반',count:17,male:8,female:9,score:0},{k:1,name:'나반',count:23,male:12,female:11,score:0}]};
+ assert.equal(C.balanceAdvice(st,rep).gender.length,0);
+ st.forEach(s=>s.gender='남');rep.per.forEach(p=>{p.male=p.count;p.female=0});
+ assert.equal(C.balanceAdvice(st,rep).gender.length,0);
+ const balanced=roster(20),bad={per:[{k:0,name:'가반',count:10,male:7,female:3,score:0},{k:1,name:'나반',count:10,male:3,female:7,score:0}]};
+ const notices=plain(C.balanceAdvice(balanced,bad).gender).map(v=>v.text);
+ assert.deepEqual(notices,['가반 남자수 많음','가반 여자수 적음','나반 남자수 적음','나반 여자수 많음']);
+});
+test('star references flag excessive highs/lows without adding problems and exclude transfers',()=>{
+ const st=roster(12);st.forEach(s=>{s.tags=['학습'];s.w={학습:5}});
+ const rep={per:[{k:0,name:'가반',count:4,male:2,female:2,score:20},{k:1,name:'나반',count:4,male:2,female:2,score:10},{k:2,name:'다반',count:4,male:2,female:2,score:0}]};
+ assert.deepEqual(plain(C.balanceAdvice(st,rep).score).map(v=>v.text),['가반 별점 높음','다반 별점 낮음']);
+ const single={per:rep.per.map((p,i)=>({...p,score:i===0?5:0}))};
+ assert.equal(C.balanceAdvice(st,single).score.length,0); // one student's stars cannot be split
+ st.forEach(s=>s.transfer=true);const zeros={per:rep.per.map(p=>({...p,score:0}))};
+ assert.equal(C.balanceAdvice(st,zeros).score.length,0);
+});
