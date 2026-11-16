@@ -238,14 +238,30 @@ test('automatic gender balance does not block same-gender required groups or fix
  assert.equal(res.assign[0],0);assert.equal(res.assign[0],res.assign[2]);assert.equal(res.assign[2],res.assign[4]);
  rep.per.forEach(p=>assert.equal(p.count,4));assert.equal(rep.requiredViol.length,0);
 });
-test('gender reference normalizes by class size, including reduced special classes and skewed rosters',()=>{
- const st=roster(40),rep={per:[{k:0,name:'가반',count:17,male:8,female:9,score:0},{k:1,name:'나반',count:23,male:12,female:11,score:0}]};
- assert.equal(C.balanceAdvice(st,rep).gender.length,0);
- st.forEach(s=>s.gender='남');rep.per.forEach(p=>{p.male=p.count;p.female=0});
- assert.equal(C.balanceAdvice(st,rep).gender.length,0);
- const balanced=roster(20),bad={per:[{k:0,name:'가반',count:10,male:7,female:3,score:0},{k:1,name:'나반',count:10,male:3,female:7,score:0}]};
- const notices=plain(C.balanceAdvice(balanced,bad).gender).map(v=>v.text);
- assert.deepEqual(notices,['가반 남자수 많음','가반 여자수 적음','나반 남자수 적음','나반 여자수 많음']);
+test('gender advice flags either inter-class spread or two-person internal ratio bias',()=>{
+ function advice(rows,boys) {
+  const st=roster(rows.reduce((sum,row)=>sum+row[0]+row[1],0));st.forEach((s,i)=>s.gender=i<boys?'남':'여');
+  return plain(C.balanceAdvice(st,{per:rows.map((row,k)=>({k,name:['가반','나반','다반'][k],count:row[0]+row[1],male:row[0],female:row[1],score:0}))}).gender).map(v=>v.text);
+ }
+ assert.deepEqual(advice([[9,9],[8,8]],17),[]);
+ assert.deepEqual(advice([[9,9],[7,9]],16),['가반 남자수 많음','나반 남자수 적음']);
+ assert.deepEqual(advice([[9,9],[9,7]],18),['가반 여자수 많음','나반 여자수 적음']);
+ assert.deepEqual(advice([[6,4],[5,5],[4,6]],15),['가반 남자수 많음','가반 여자수 적음','다반 남자수 적음','다반 여자수 많음']);
+ // Internal ratio bias must warn even when every inter-class spread is only one.
+ assert.deepEqual(advice([[6,4],[5,5],[5,5]],15),['가반 남자수 많음','가반 여자수 적음']);
+ assert.deepEqual(advice([[6,4],[6,4]],12),[]); // natural year-wide 60:40 ratio
+ assert.deepEqual(advice([[7,3],[5,5]],12),['가반 남자수 많음','가반 여자수 적음','나반 남자수 적음','나반 여자수 많음']);
+ assert.deepEqual(advice([[9,0],[8,0]],17),[]);
+});
+test('reduced total targets lose one boy and one girl despite competing star preferences',()=>{
+ const st=roster(104);st.forEach((s,i)=>{s.gender=i<52?'남':'여';s.tags=i<52?['학습']:[];s.w=i<52?{학습:5}:{};});
+ const cls=Array.from({length:6},(_,k)=>({name:k+'반',total:k<2?16:18,special:k<2}));
+ for(const seed of [1,19,42]){
+  const opts={autoGender:true,threeYear:false,seed,restarts:2,iters:2000};
+  const result=C.assign(st,cls,[],opts),rep=C.evaluate(st,cls,[],result.assign,opts);
+  assert.deepEqual(plain(rep.per.map(p=>[p.male,p.female])),[[8,8],[8,8],[9,9],[9,9],[9,9],[9,9]]);
+  assert.equal(C.balanceAdvice(st,rep).gender.length,0);
+ }
 });
 test('star references flag excessive highs/lows without adding problems and exclude transfers',()=>{
  const st=roster(12);st.forEach(s=>{s.tags=['학습'];s.w={학습:5}});

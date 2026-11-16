@@ -294,7 +294,7 @@
   .class-notes{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;font-size:10.5px;color:#b91c1c}.class-notes span{border-radius:4px;background:#fff1f2;padding:1px 4px}
   @media print{.result-heading,.result-views,.result-signals{display:none!important}}
   .required-heart{font-size:12px;line-height:1;flex:0 0 auto;margin-left:1px}
-  .reference-popup{position:fixed;z-index:80;max-width:min(320px,calc(100vw - 20px));max-height:50vh;overflow:auto;padding:8px 10px;border:1px solid #edcf9f;border-radius:8px;background:#fff8e7;color:#854d0e;box-shadow:0 4px 16px #0002;font-size:12px;line-height:1.6;pointer-events:none;overflow-wrap:anywhere}
+  .reference-popup{position:fixed;z-index:80;max-width:min(320px,calc(100vw - 20px));max-height:50vh;overflow:auto;padding:8px 10px;border:1px solid #edcf9f;border-radius:8px;background:#fff8e7;color:#854d0e;box-shadow:0 4px 16px #0002;font-size:12px;line-height:1.6;pointer-events:auto;overflow-wrap:anywhere}
   .reference-popup[hidden]{display:none!important}.v[data-reference]{cursor:help}
 
   #btnCloudReload{margin-right:auto}
@@ -1252,6 +1252,30 @@ var CORE = (function () {
         }
       }
 
+      if (autoGender && exactQuotas) {
+        // Preserve totals, mandatory groups, fixed classes, separation and special capacity.
+        // A reduced class should lose both genders evenly whenever these constraints allow it.
+        for (var pass=0;pass<N;pass++) {
+          var swapA=-1,swapB=-1,bestDelta=-1e-9;
+          for (var ai=0;ai<movable.length;ai++) for(var bi=ai+1;bi<movable.length;bi++) {
+            var sa=movable[ai],sb=movable[bi],ca=st.place[sa],cb=st.place[sb];
+            if(ca===cb || male[sa]===male[sb])continue;
+            var change=male[sb]-male[sa];
+            var genderDelta=2*change*((st.mc[ca]-M[ca])-(st.mc[cb]-M[cb]))+2;
+            if(genderDelta>=bestDelta)continue;
+            if(pinBad(st,sa,cb)||pinBad(st,sb,ca)||sepBadAt(st,sa,cb,sb)||sepBadAt(st,sb,ca,sa))continue;
+            var sp=tagMap['특수'],asp=(students[sa].tags||[]).indexOf('특수')>=0?1:0,bsp=(students[sb].tags||[]).indexOf('특수')>=0?1:0;
+            if(sp!=null && (st.tc[sp][ca]-asp+bsp>1 || st.tc[sp][cb]-bsp+asp>1))continue;
+            swapA=sa;swapB=sb;bestDelta=genderDelta;
+          }
+          if(swapA<0)break;
+          var fromA=st.place[swapA],fromB=st.place[swapB];
+          addTo(st,fromA,swapA,-1);addTo(st,fromB,swapB,-1);
+          addTo(st,fromB,swapA,1);addTo(st,fromA,swapB,1);
+          st.place[swapA]=fromB;st.place[swapB]=fromA;
+        }
+      }
+
       var c = totalCost(st);
       if (c < bestCost) {
         bestCost = c;
@@ -1479,13 +1503,23 @@ var CORE = (function () {
     var largest = students.reduce(function (max,s) { return Math.max(max,studentScore(s)); },0);
     // Allow one indivisible student's stars, or 25% of the class average, whichever is greater.
     var tolerance = Math.max(2,largest,mean*0.25);
+    var ranges = ['male','female'].map(function (key) {
+      var counts=rep.per.map(function(p){return p[key];});
+      return {min:Math.min.apply(null,counts),max:Math.max.apply(null,counts)};
+    });
     rep.per.forEach(function (p) {
       var delta = p.score-mean;
       if (Math.abs(delta) > tolerance+1e-9) score.push({k:p.k,text:p.name+' 별점 '+(delta>0?'높음':'낮음')});
       if (!N) return;
-      [['남자수',p.male,p.count*boys/N],['여자수',p.female,p.count*girls/N]].forEach(function (entry) {
-        var diff = entry[1]-entry[2];
-        if (Math.abs(diff) >= 2-1e-9) gender.push({k:p.k,text:p.name+' '+entry[0]+' '+(diff>0?'많음':'적음')});
+      [['남자수',p.male,p.count*boys/N],['여자수',p.female,p.count*girls/N]].forEach(function (entry,i) {
+        var diff = entry[1]-entry[2], range=ranges[i];
+        // A one-student deviation changes the male-minus-female balance by two.
+        var internal = Math.abs(2*diff) >= 2-1e-9;
+        var extreme = range.max-range.min >= 2 && (entry[1]===range.min || entry[1]===range.max);
+        if (internal || extreme) {
+          var high = internal ? diff>0 : entry[1]===range.max;
+          gender.push({k:p.k,text:p.name+' '+entry[0]+' '+(high?'많음':'적음')});
+        }
       });
     });
     return {score:score,gender:gender};
@@ -2939,26 +2973,32 @@ var CORE = (function () {
   }
 
   /* ---------- 결과 ---------- */
-  var referenceAnchor = null;
-  function hideReferencePopup() { referenceAnchor=null; $('#referencePopup').hidden=true; }
+  var referenceAnchor = null, referencePinned = false;
+  function hideReferencePopup() { referenceAnchor=null;referencePinned=false; $('#referencePopup').hidden=true; }
   function positionReferencePopup(pill) {
     var popup=$('#referencePopup'),anchor=pill.getBoundingClientRect(),r=popup.getBoundingClientRect();
     popup.style.left=Math.max(10,Math.min(window.innerWidth-r.width-10,anchor.x+anchor.width/2-r.width/2))+'px';
-    popup.style.top=(anchor.top-r.height-8>=8?anchor.top-r.height-8:anchor.bottom+8)+'px';
+    var top=anchor.top-r.height-8>=8?anchor.top-r.height-8:anchor.bottom+8;
+    popup.style.top=Math.max(8,Math.min(window.innerHeight-r.height-8,top))+'px';
   }
   function showReferencePopup(pill) {
     var popup=$('#referencePopup'); popup.textContent='';referenceAnchor=pill;
     String(pill.dataset.reference||'').split('\n').forEach(function (text) { var line=document.createElement('div');line.textContent=text;popup.appendChild(line); });
     popup.hidden=false;positionReferencePopup(pill);
   }
-  document.addEventListener('mouseover',function (e) { var pill=e.target.closest&&e.target.closest('.v[data-reference]'); if(pill)showReferencePopup(pill); });
-  document.addEventListener('mouseout',function (e) { var pill=e.target.closest&&e.target.closest('.v[data-reference]');if(pill&&(!e.relatedTarget||!pill.contains(e.relatedTarget)))hideReferencePopup(); });
-  document.addEventListener('focusin',function (e) { if(e.target.matches('.v[data-reference]'))showReferencePopup(e.target); });
-  document.addEventListener('focusout',hideReferencePopup);
+  document.addEventListener('mouseover',function (e) { var pill=e.target.closest&&e.target.closest('.v[data-reference]'); if(pill && !referencePinned)showReferencePopup(pill); });
+  document.addEventListener('mouseout',function (e) { var pill=e.target.closest&&e.target.closest('.v[data-reference]');if(pill&&!referencePinned&&(!e.relatedTarget||!pill.contains(e.relatedTarget)))hideReferencePopup(); });
+  document.addEventListener('focusin',function (e) { if(e.target.matches('.v[data-reference]') && !referencePinned)showReferencePopup(e.target); });
+  document.addEventListener('focusout',function(){if(!referencePinned)hideReferencePopup();});
+  document.addEventListener('click',function(e){
+    var pill=e.target.closest&&e.target.closest('.v[data-reference]');
+    if(pill){if(referencePinned&&referenceAnchor===pill)hideReferencePopup();else {showReferencePopup(pill);referencePinned=true;}}
+    else if(!e.target.closest('#referencePopup'))hideReferencePopup();
+  });
   document.addEventListener('scroll',function () {
     var pill=referenceAnchor;if(!pill)return;
     var r=pill.getBoundingClientRect();
-    if(pill.isConnected&&(pill.matches(':hover')||document.activeElement===pill)&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth)positionReferencePopup(pill);
+    if(pill.isConnected&&(referencePinned||pill.matches(':hover')||document.activeElement===pill)&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth)positionReferencePopup(pill);
     else hideReferencePopup();
   },true);
   window.addEventListener('resize',hideReferencePopup);

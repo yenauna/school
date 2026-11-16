@@ -465,7 +465,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.match(await page.locator('#verdict [data-check="duplicate"]').getAttribute('class'),/bad/);
  // With all constraints satisfied and reference names separated, all seven lights are green.
  await page.evaluate(()=>{
-  const st=__bbj.state();['김철수','박철수','최유나','정하린'].forEach((name,i)=>Object.assign(st.students[i],{name,tags:[],g4:''}));
+  const st=__bbj.state();['김철수','박철수','최유나','정하린'].forEach((name,i)=>Object.assign(st.students[i],{name,tags:[],g4:'',gender:i===0||i===3?'남':'여'}));
   st.classes[0].special=true;st.pairs=[];st.requiredGroups=[];st.useY3=false;
   st.result.assign=[0,1,0,1];__bbj.renderAll();
  });
@@ -526,6 +526,36 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.setViewportSize({width:412,height:900});
  await page.locator('[data-check="gender"]').hover();
  const smallTip=await page.locator('#referencePopup').boundingBox();assert.ok(smallTip.x>=0&&smallTip.x+smallTip.width<=412);
+ await page.mouse.move(0,0);await page.locator('[data-check="gender"]').blur();await page.keyboard.press('Escape');
+ await page.locator('[data-check="gender"]').click();
+ assert.equal(await page.locator('#referencePopup').isVisible(),true);
+ await page.mouse.move(0,0);assert.equal(await page.locator('#referencePopup').isVisible(),true);
+ const clickedTip=await page.locator('#referencePopup').boundingBox();assert.ok(clickedTip.x>=0&&clickedTip.x+clickedTip.width<=412&&clickedTip.y>=0&&clickedTip.y+clickedTip.height<=900);
+ await page.screenshot({path:path.join(artifacts,'gender-mobile-click.png')});
+ await page.locator('[data-check="gender"]').click();assert.equal(await page.locator('#referencePopup').isVisible(),false);
+ await page.locator('[data-check="gender"]').click();assert.equal(await page.locator('#referencePopup').isVisible(),true);
+ await page.mouse.click(5,180);assert.equal(await page.locator('#referencePopup').isVisible(),false);
+ // A real touch-enabled Chromium context must open the portal by tapping, not synthetic hover.
+ const touchState=await page.evaluate(()=>JSON.parse(JSON.stringify(__bbj.state())));
+ const touchPage=await browser.newPage({viewport:{width:412,height:900},hasTouch:true,isMobile:true});
+ await touchPage.addInitScript(state=>{
+  sessionStorage.setItem('banbaejeong.cloud','2026');
+  window.__bbjTransport=(path,body,cb)=>setTimeout(()=>cb(null,{state,revision:1}),5);
+ },touchState);
+ await touchPage.goto(process.env.BBJ_URL||'http://127.0.0.1:4173/banbaejeong/');
+ await touchPage.waitForFunction(()=>window.__bbj&&__bbj.state().students.length===30);
+ await touchPage.locator('[data-tab="result"]').tap();
+ const touchPill=touchPage.locator('[data-check="gender"]');
+ await touchPill.tap();assert.equal(await touchPage.locator('#referencePopup').isVisible(),true);
+ assert.match(await touchPage.locator('#referencePopup').innerText(),/가반 남자수 많음/);
+ assert.equal(await touchPage.locator('#referencePopup').evaluate(e=>{
+  const r=e.getBoundingClientRect();return r.x>=0&&r.right<=innerWidth&&r.y>=0&&r.bottom<=innerHeight&&!!document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('#referencePopup');
+ }),true);
+ await touchPage.screenshot({path:path.join(artifacts,'gender-touch-popup.png')});
+ await touchPill.tap();assert.equal(await touchPage.locator('#referencePopup').isVisible(),false);
+ await touchPage.close();
+
+
  await page.mouse.move(0,0);await page.setViewportSize({width:1600,height:1000});
  // Grouped notices live only at the bottom of conditions; roster edits update them and the special count.
  await page.setViewportSize({width:1600,height:1000});
