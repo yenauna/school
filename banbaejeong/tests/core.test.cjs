@@ -266,9 +266,12 @@ test('reduced total targets lose one boy and one girl despite competing star pre
 test('star references flag excessive highs/lows without adding problems and exclude transfers',()=>{
  const st=roster(12);st.forEach(s=>{s.tags=['학습'];s.w={학습:5}});
  const rep={per:[{k:0,name:'가반',count:4,male:2,female:2,score:20},{k:1,name:'나반',count:4,male:2,female:2,score:10},{k:2,name:'다반',count:4,male:2,female:2,score:0}]};
- assert.deepEqual(plain(C.balanceAdvice(st,rep).score).map(v=>v.text),['가반 별점 높음','다반 별점 낮음']);
+ assert.deepEqual(plain(C.balanceAdvice(st,rep,{scoreThreshold:2}).score).map(v=>v.text),['가반 20점','다반 0점']);
  const single={per:rep.per.map((p,i)=>({...p,score:i===0?5:0}))};
- assert.equal(C.balanceAdvice(st,single).score.length,0); // one student's stars cannot be split
+ assert.equal(C.balanceAdvice(st,single).score.length,0);
+ assert.equal(C.balanceAdvice(st,single,{scoreThreshold:2}).score.length,3); // max-minus-min uses the configured threshold
+ assert.equal(C.balanceAdvice(st,single,{scoreThreshold:6}).score.length,0);
+ assert.equal(C.balanceAdvice(st,single,{scoreThreshold:5}).score.length,3);
  st.forEach(s=>s.transfer=true);const zeros={per:rep.per.map(p=>({...p,score:0}))};
  assert.equal(C.balanceAdvice(st,zeros).score.length,0);
 });
@@ -282,3 +285,46 @@ test('star references flag excessive highs/lows without adding problems and excl
  const result=C.assign(students,classes,[{members:[0,1,2],mode:'one'}],opts);
  assert.notEqual(result.assign[0],result.assign[1]);assert.notEqual(result.assign[0],result.assign[2]);
  });
+
+test('population notes combine target shortages and gender references with readable wording',()=>{
+ const st=roster(34),rep={per:[{k:0,name:'가반',count:16,target:18,male:8,female:8,score:0},{k:1,name:'나반',count:18,target:18,male:9,female:9,score:0}]};
+ assert.deepEqual(plain(C.populationAdvice(st,rep)).filter(v=>v.hard).map(v=>v.text),['가반 2명 부족 (남1 여1)']);
+ const excess={per:[{k:0,name:'가반',count:19,target:18,male:9,female:10,score:0},{k:1,name:'나반',count:15,target:16,male:8,female:7,score:0}]};
+ assert.equal(C.populationAdvice(st,excess)[0].note,'1명 초과 (여1)');
+ const bias={per:[{k:0,name:'가반',count:18,target:18,male:10,female:8,score:0},{k:1,name:'나반',count:16,target:16,male:7,female:9,score:0}]};
+ assert.ok(C.populationAdvice(st,bias).some(v=>v.text==='나반 남자 부족'&&!v.hard));
+});
+test('local repair swaps only warning students and counterparts, preserves class totals and the original assignment',()=>{
+ const st=roster(12),cls=Array.from({length:3},(_,k)=>({name:k+'반',total:4,special:k<2}));
+ const place=[0,0,0,0,1,1,1,1,2,2,2,2],opts={autoGender:true,threeYear:false,scoreThreshold:2};
+ const result=C.repair(st,cls,[[0,1]],place,opts);
+ assert.equal(result.before,1);assert.equal(result.after,0);assert.equal(result.changed.length,2);
+ assert.deepEqual(place,[0,0,0,0,1,1,1,1,2,2,2,2]);
+ const rep=C.evaluate(st,cls,[[0,1]],result.assign,opts);assert.equal(rep.capBad.length,0);assert.equal(rep.sepViol.length,0);
+ assert.deepEqual(plain(C.repair(st,cls,[],place,opts).changed),[]);
+});
+test('local repair resolves fixed mismatches, unchecked specials and duplicate specials without moving correct pins',()=>{
+ for(const kind of ['fixed','unchecked','overlap','year']){
+  const st=roster(8),cls=[{name:'가반',total:4,special:true},{name:'나반',total:4,special:false}],place=[0,0,0,0,1,1,1,1];
+  st[3].fixed=0;
+  if(kind==='fixed')st[0].fixed=1;
+  if(kind==='unchecked'){st[4].tags=['특수'];st[4].w={특수:1};}
+  if(kind==='overlap'){cls[1].special=true;st[0].tags=st[1].tags=['특수'];}
+  if(kind==='year'){st[0].g4=st[1].g4='1반';st[0].g5=st[1].g5='1반';}
+  const opts={autoGender:true,threeYear:kind==='year'},result=C.repair(st,cls,[],place,opts);
+  assert.equal(result.after,0,kind);assert.equal(result.assign[3],0);assert.equal(result.changed.length,2,kind);
+ }
+});
+test('local repair respects mandatory components and reports impossible constraints without reshuffling',()=>{
+ const st=roster(8),cls=[{name:'가반',total:4,special:false},{name:'나반',total:4,special:false}],place=[0,0,0,0,1,1,1,1];
+ const opts={autoGender:true,threeYear:false,requiredGroups:[[0,1]]};
+ const result=C.repair(st,cls,[[0,2]],place,opts);
+ assert.equal(result.after,0);assert.equal(result.assign[0],result.assign[1]);
+ st[0].fixed=st[1].fixed=0;
+ const impossible=C.repair(st,cls,[[0,1]],place,opts);assert.equal(impossible.after,1);assert.equal(impossible.changed.length,0);
+});
+test('local repair reunites a previously split mandatory group with a small balanced exchange',()=>{
+ const st=roster(8),cls=[{name:'가반',total:4},{name:'나반',total:4}],place=[0,0,0,0,1,1,1,1];
+ const result=C.repair(st,cls,[],place,{autoGender:true,threeYear:false,requiredGroups:[[0,4]]});
+ assert.equal(result.after,0);assert.equal(result.assign[0],result.assign[4]);assert.equal(result.changed.length,2);
+});

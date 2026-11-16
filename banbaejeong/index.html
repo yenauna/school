@@ -30,7 +30,7 @@
   .tabs{display:flex;gap:4px;padding:14px 18px 0;max-width:min(1760px,96vw);margin:0 auto;position:sticky;top:0;background:var(--bg);z-index:20;border-bottom:1px solid var(--line)}
   .tab{border:1px solid transparent;border-bottom:none;background:transparent;color:var(--muted);font:inherit;font-weight:600;font-size:13.5px;padding:9px 15px;border-radius:9px 9px 0 0;cursor:pointer}
   .tab.active{background:var(--card);color:var(--text);border-color:var(--line)}
-  main{padding:16px 18px 68px;max-width:min(1760px,96vw);margin:0 auto}
+  main{padding:16px 18px 112px;max-width:min(1760px,96vw);margin:0 auto}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 17px;margin:0 0 14px;box-shadow:0 1px 2px rgba(16,24,40,.03)}
   .card,.grouphdr{scroll-margin-top:64px}
   h2{font-size:15.5px;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -96,10 +96,8 @@
   .banner.show{display:block}
   .banner.err{background:var(--bad-soft);border:1px solid #f2cdc9;color:#8f2b20}
   .banner.info{background:var(--accent-soft);border:1px solid #c9dafb;color:#1b469f}
-  .actionbar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:4px 14px;display:flex;gap:6px;align-items:center;justify-content:flex-end;z-index:30;box-shadow:0 -1px 3px rgba(16,24,40,.05)}
-  .actionbar .btn{padding:4px 10px;font-size:12.5px;line-height:1.3}
-  .actionbar .btn.big{padding:6px 16px;font-size:13.5px;border-radius:9px}
-  .actionbar .abinfo{font-size:11.5px;color:var(--muted);margin-right:auto;min-width:0}
+  .actionbar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:10px 18px;display:flex;gap:10px;align-items:center;justify-content:flex-end;z-index:30;box-shadow:0 -1px 3px rgba(16,24,40,.05)}
+  .actionbar .abinfo{font-size:12.5px;color:var(--muted);margin-right:auto;min-width:0}
   .verdicts{display:flex;gap:5px;flex-wrap:nowrap;overflow-x:auto;max-width:100%;margin:0 0 10px;padding-bottom:2px}
   .v{flex:0 0 auto;white-space:nowrap;font-size:12px;padding:3px 8px;border-radius:999px;border:1px solid;font-weight:600}
   .v.ok{background:var(--good-soft);border-color:#b6e0c6;color:#15693d}
@@ -151,18 +149,12 @@
   /* 반별 학생 기준 태그 요약 */
   .tagsum{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
   .chiplist{padding:6px;display:flex;flex-direction:column;gap:4px}
-  /* 손가락으로 끌 때는 세로 스크롤만 브라우저에 맡기고, 가로로 끄는 손짓은 카드 이동으로 받는다 */
-  .stu{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12.5px;cursor:grab;touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  .stu{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12.5px;cursor:grab}
   /* 남학생은 연한 하늘색, 여학생은 연한 분홍 */
   .stu.m{background:#eff6ff;border-color:#dbeafe}
   .stu.f{background:#fff1f2;border-color:#ffe4e6}
   .stu:hover{box-shadow:0 0 0 1px rgba(59,111,224,.18)}
   .stu.dragging{opacity:.4}
-  /* 끌고 있는 카드: 손가락/마우스 아래에 떠다니는 고스트 칩 */
-  .stu.drag-ghost{position:fixed;z-index:9999;pointer-events:none;opacity:.97;cursor:grabbing;transform:scale(1.03) rotate(-1.5deg);box-shadow:0 12px 26px rgba(16,24,40,.28);border-color:var(--accent);margin:0}
-  .col.drop-on,.classcard.drop-on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:#fbfdff}
-  body.stu-drag-active{cursor:grabbing;-webkit-user-select:none;user-select:none}
-  body.stu-drag-active .stu{cursor:grabbing}
   .stu.viol{border-color:#e05a4c;box-shadow:inset 0 0 0 1px #f0b7b1}
   .stu.fixbad{border-color:#e0a24c;box-shadow:inset 0 0 0 1px #eed9ae}
   .stu .l1{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
@@ -223,9 +215,7 @@
     .card{padding:13px 12px}
     body{font-size:13.5px}
     h1{font-size:18px}
-    .actionbar{padding:3px 10px;gap:5px}
-    .actionbar .btn{padding:4px 8px;font-size:12px}
-    .actionbar .btn.big{padding:5px 13px;font-size:13px}
+    .actionbar{padding:9px 12px}
     .btn.big{padding:10px 18px;font-size:14.5px}
     #classCards{gap:7px}
     .scorebar{font-size:12px;line-height:1.7}
@@ -257,12 +247,6 @@
     .sheettabs .sheet{padding:4px 9px;font-size:12px}
     .cloudbar .btn{padding:5px 9px;font-size:12.5px}
     th,td{padding:5px 6px}
-  }
-  /* 가로로 눕힌 휴대폰처럼 높이가 짧은 화면: 고정 막대를 최대한 얇게 */
-  @media (max-height:520px){
-    .actionbar{padding:2px 10px;gap:5px}main{padding-bottom:46px}
-    .actionbar .btn{padding:3px 8px;font-size:11.5px}.actionbar .btn.big{padding:4px 12px;font-size:12.5px}
-    .actionbar .abinfo{display:none}
   }
   @media print{
     .tabs,.actionbar,.toolbar,details.help,.btn,.sheettabs,#classCards,.verdicts,.toast,#resultCard .toolbar,.cloudbar,#lockScreen{display:none!important}
@@ -307,21 +291,15 @@
   .signal-details.bad{background:var(--bad-soft);border-color:#efb1ab;color:#992e23}.signal-details.warn{background:var(--warn-soft);border-color:#edcf9f;color:#8a5308}
   #resultCard .result-views{margin-bottom:3px}#resultCard .result-views .btn{padding:2px 6px;font-size:10.5px;line-height:14px;min-height:0;border-radius:5px}
   .col.quota-bad{border-color:#dc2626;box-shadow:inset 0 0 0 1px #dc2626}.stu.viol{border-color:#dc2626;box-shadow:inset 0 0 0 1px #dc2626}
-  .class-notes{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;font-size:10.5px;color:#b91c1c}.class-notes span{border-radius:4px;background:#fff1f2;padding:1px 4px}.class-notes span.soft{background:#fdf4e4;color:#8a5308}
-  .stu.locked{cursor:not-allowed}
-  /* 별점 경고 기준 줄: 보기 방법 바로 아래 */
-  .score-gap{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:11.5px;line-height:1.5;color:var(--muted);margin:-3px 0 9px}
-  .score-gap input{width:46px;padding:1px 4px;font-size:11.5px;line-height:1.5;text-align:right;border-radius:5px}
-  .score-gap b{font-weight:600;color:#3f4650}
-  .score-gap[hidden]{display:none!important}
-  @media print{.result-heading,.result-views,.result-signals,.score-gap{display:none!important}}
+  .class-notes{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;font-size:10.5px;color:#b91c1c}.class-notes span{border-radius:4px;background:#fff1f2;padding:1px 4px}
+  @media print{.result-heading,.result-views,.result-signals{display:none!important}}
   .required-heart{font-size:12px;line-height:1;flex:0 0 auto;margin-left:1px}
   .reference-popup{position:fixed;z-index:80;max-width:min(320px,calc(100vw - 20px));max-height:50vh;overflow:auto;padding:8px 10px;border:1px solid #edcf9f;border-radius:8px;background:#fff8e7;color:#854d0e;box-shadow:0 4px 16px #0002;font-size:12px;line-height:1.6;pointer-events:auto;overflow-wrap:anywhere}
   .reference-popup[hidden]{display:none!important}.v[data-reference]{cursor:help}
 
   #btnCloudReload{margin-right:auto}
   .mobile-edit{display:none}.pair-modes{display:flex;gap:4px;margin:5px 0}.pair-divider{border:0;border-top:1px solid var(--line);margin:5px 0}
-  .stu .kb.fix{font-size:9px;line-height:1;padding:0 1px;flex:0 0 auto;white-space:nowrap}.stu .l1{flex-wrap:nowrap}.stu .nm{flex-shrink:0}
+  .stu .kb.fix{font-size:9px;line-height:1;padding:0 1px;flex:0 0 auto;white-space:nowrap}.stu .l1{flex-wrap:nowrap}.stu .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}.layout-two .stu .l1,.layout-sex .stu .l1{flex-wrap:nowrap}.stu .g5b{flex:0 0 auto}
   @media(max-width:640px){
     #studentTable tr{display:flex;align-items:center;flex-wrap:wrap;gap:3px;padding:3px 5px;margin:0 0 3px;border-radius:5px}
     #studentTable td{display:none!important;min-height:0;padding:0}
@@ -337,8 +315,30 @@
     #classTable td input[type=text],#classTable td input[type=number]{min-width:0;width:100%;padding:4px;font-size:12px;height:29px}
     #classTable .mobile-class-label{display:inline;white-space:nowrap;font-size:12px}
     #classTable .integration-choice{display:flex;align-items:center;gap:3px;white-space:nowrap}
-    #classCards{gap:5px}.classcard{padding:4px}.actionbar{gap:4px;flex-wrap:nowrap;padding:3px 6px}.actionbar .abinfo{display:none}.actionbar .btn{font-size:11.5px;padding:4px 7px}.actionbar .btn.big{padding:5px 12px;font-size:12.5px}
+    #classCards{gap:5px}.classcard{padding:4px}.actionbar{gap:5px;flex-wrap:wrap;padding:6px}.actionbar .abinfo{display:none}.actionbar .btn{font-size:12px;padding:6px 8px}
   }
+  .score-setting{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin:5px 0}.score-setting input{width:48px;padding:2px 4px;height:24px;font-size:12px}
+  .actionbar{padding:4px 10px;gap:6px}.actionbar .btn,.actionbar .btn.big{padding:4px 9px;font-size:12px;line-height:1.3;min-height:27px}.actionbar .abinfo{font-size:11px}
+  @media(max-width:640px),(max-height:480px){.actionbar{padding:3px 6px;gap:4px}.actionbar .btn,.actionbar .btn.big{padding:3px 7px;min-height:25px;font-size:11px}.actionbar .abinfo{display:none}}
+  @media print{.score-setting{display:none!important}}
+
+  /* 손가락으로 끌 때는 세로 스크롤만 브라우저에 맡기고, 가로로 끄는 손짓은 카드 이동으로 받는다 */
+  .stu{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12.5px;cursor:grab;touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  /* 남학생은 연한 하늘색, 여학생은 연한 분홍 */
+  .stu.m{background:#eff6ff;border-color:#dbeafe}
+  .stu.f{background:#fff1f2;border-color:#ffe4e6}
+  .stu:hover{box-shadow:0 0 0 1px rgba(59,111,224,.18)}
+  .stu.dragging{opacity:.4}
+  /* 끌고 있는 카드: 손가락/마우스 아래에 떠다니는 고스트 칩 */
+  .stu.drag-ghost{position:fixed;z-index:9999;pointer-events:none;opacity:.97;cursor:grabbing;transform:scale(1.03) rotate(-1.5deg);box-shadow:0 12px 26px rgba(16,24,40,.28);border-color:var(--accent);margin:0}
+  .col.drop-on,.classcard.drop-on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:#fbfdff}
+  body.stu-drag-active{cursor:grabbing;-webkit-user-select:none;user-select:none}
+  body.stu-drag-active .stu{cursor:grabbing}
+
+.stu.locked{cursor:not-allowed}
+.class-notes span.soft{background:var(--warn-soft);color:#8a5308}
+.score-setting[hidden]{display:none!important}
+  .cloudbar{flex:0 1 330px;width:330px;max-width:100%;min-width:0;min-height:35px;flex-wrap:nowrap;justify-content:flex-end}.cloudbar .cloud{min-width:0;overflow:hidden;text-overflow:ellipsis}.cloudbar .btn{flex:0 0 auto}
 </style>
 </head>
 <body class="locked">
@@ -471,17 +471,13 @@
   <section id="tab-result" hidden>
     <div class="card result-page" id="resultCard">
       <div class="result-heading"><h2>배정 점검 결과</h2><div class="result-actions" id="resultActions">
-        <button class="btn" type="button" id="btnRerun">다시 배정</button><button class="btn" type="button" id="btnCopyTSV">표로 복사</button><button class="btn" type="button" id="btnPrint">인쇄</button><button class="btn primary" type="button" id="btnBarCSV">엑셀 내려받기</button>
+        <button class="btn" type="button" id="btnRerun">다시 배정</button><button class="btn" type="button" id="btnRepair">경고만 최소 조정</button><button class="btn" type="button" id="btnCopyTSV">표로 복사</button><button class="btn" type="button" id="btnPrint">인쇄</button><button class="btn primary" type="button" id="btnBarCSV">엑셀 내려받기</button>
       </div></div>
       <div class="result-views">
         <div class="row" id="resultSort" role="group" aria-label="결과 정렬"><button class="btn" type="button" data-act="result-sort" data-sort="gender">남녀·가나다순</button><button class="btn" type="button" data-act="result-sort" data-sort="origin">5학년 반·번호순</button></div>
         <div class="row" id="resultLayout" role="group" aria-label="학생 배치 보기"><button class="btn" type="button" data-act="result-layout" data-layout="one">전체 1줄</button><button class="btn" type="button" data-act="result-layout" data-layout="two">전체 2줄</button><button class="btn" type="button" data-act="result-layout" data-layout="sex">남자 1줄·여자 1줄</button></div>
       </div>
-      <div class="score-gap" id="scoreGapRow">
-        <span>별점 높은 반과 낮은 반이</span>
-        <input type="number" id="scoreGap" min="1" max="30" step="1" value="2" aria-label="별점 경고 기준 점수">
-        <span>점 이상 차이날 때부터 경고 표시</span>
-      </div>
+      <label class="score-setting" id="scoreGapRow"><span>별점 높은 반과 낮은 반이</span> <input id="scoreGap" type="number" min="0.1" step="0.1" value="2" aria-label="별점 경고 차이"><span>점 이상 차이날 때부터 경고 표시</span></label>
       <div class="result-signals"><div class="verdicts" id="verdict" aria-live="polite"></div><button class="btn" type="button" id="btnUndo" disabled>↩ 실행 취소</button></div>
       <span id="resultMeta" hidden></span>
       <div id="boardCard"><div id="classCards"></div></div>
@@ -498,17 +494,6 @@
 </div>
 
 <div id="referencePopup" class="reference-popup" role="tooltip" hidden></div>
-
-<div class="overlay" id="comboMoveModal" role="dialog" aria-modal="true" aria-labelledby="comboMoveTitle">
-  <div class="modal" style="max-width:470px">
-    <h2 id="comboMoveTitle">필수 조합 함께 옮기기</h2>
-    <p class="hint" id="comboMoveText"></p>
-    <div class="actions">
-      <button class="btn" type="button" id="comboMoveNo">아니오 · 실행 취소</button>
-      <button class="btn primary" type="button" id="comboMoveYes">예</button>
-    </div>
-  </div>
-</div>
 
 <div class="overlay" id="pasteModal">
   <div class="modal">
@@ -534,7 +519,7 @@
     </div>
     <div class="row" style="margin-bottom:6px">
       <label class="fld"><input type="radio" name="upMode" value="replace"> 명단 바꾸기</label>
-      <label class="fld"><input type="radio" name="upMode" value="append"> 이어서 추가 (중복 이름은 건너뛰기)</label>
+      <label class="fld"><input type="radio" name="upMode" value="append"> 이어서 추가 (같은 반·번호·이름은 건너뛰기)</label>
     </div>
     <p class="hint" style="margin:0 0 6px">담임별로 나누어 올릴 때는 <b>이어서 추가</b>를 고르세요. .xlsx가 열리지 않으면 엑셀에서 <b>CSV UTF-8</b>로 저장해 올리면 됩니다.</p>
     <div class="msg" id="uploadMsg"></div>
@@ -588,6 +573,7 @@
   </div>
 </div>
 
+<div class="overlay" id="comboMoveModal" role="dialog" aria-modal="true" aria-labelledby="comboMoveText"><div class="modal" style="max-width:420px"><h2 id="comboMoveText"></h2><div class="actions"><button class="btn" id="comboMoveNo" type="button">아니오 · 실행 취소</button><button class="btn primary" id="comboMoveYes" type="button">예</button></div></div></div>
 <input type="file" id="workFileInput" accept=".json,application/json" hidden>
 
 <div class="overlay" id="studentPicker" role="dialog" aria-modal="true" aria-labelledby="pickerTitle"><div class="modal"><div class="row"><h2 id="pickerTitle">학생 선택</h2><button type="button" class="btn" data-act="picker-close">닫기</button></div><input id="pickerSearch" type="search" placeholder="이름이나 반 검색 (예: 김민준, 5-1)" aria-label="학생 검색"><div class="picker-split"><nav id="pickerClasses" aria-label="5학년 반"></nav><div id="pickerStudents"></div></div></div></div>
@@ -1544,21 +1530,22 @@ var CORE = (function () {
     };
   }
 
-  function balanceAdvice(students, rep) {
+  function balanceAdvice(students, rep, opts) {
     var score = [], gender = [], N = students.length;
     var boys = students.filter(function (s) { return s.gender === '남'; }).length;
     var girls = students.filter(function (s) { return s.gender === '여'; }).length;
-    var mean = rep.per.length ? rep.per.reduce(function (sum,p) { return sum+p.score; },0)/rep.per.length : 0;
-    var largest = students.reduce(function (max,s) { return Math.max(max,studentScore(s)); },0);
-    // Allow one indivisible student's stars, or 25% of the class average, whichever is greater.
-    var tolerance = Math.max(2,largest,mean*0.25);
+    var values=rep.per.map(function(p){return p.score;}), low=Math.min.apply(null,values), high=Math.max.apply(null,values);
+    var explicitThreshold=opts && opts.scoreThreshold!=null;
+    var mean=rep.per.length?rep.per.reduce(function(sum,p){return sum+p.score;},0)/rep.per.length:0;
+    var tolerance=Math.max(2,students.reduce(function(max,st){return Math.max(max,studentScore(st));},0),mean*0.25);
+    var threshold=Number(opts && opts.scoreThreshold);if(!isFinite(threshold)||threshold<=0)threshold=2;
     var ranges = ['male','female'].map(function (key) {
       var counts=rep.per.map(function(p){return p[key];});
       return {min:Math.min.apply(null,counts),max:Math.max.apply(null,counts)};
     });
     rep.per.forEach(function (p) {
-      var delta = p.score-mean;
-      if (Math.abs(delta) > tolerance+1e-9) score.push({k:p.k,text:p.name+' 별점 '+(delta>0?'높음':'낮음')});
+      if(explicitThreshold){if(high-low>=threshold-1e-9 && (p.score===low||p.score===high))score.push({k:p.k,text:p.name+' '+fmtNum(p.score)+'점'});}
+      else if(Math.abs(p.score-mean)>tolerance+1e-9)score.push({k:p.k,text:p.name+' 별점 '+(p.score>mean?'높음':'낮음')});
       if (!N) return;
       [['남자수',p.male,p.count*boys/N],['여자수',p.female,p.count*girls/N]].forEach(function (entry,i) {
         var diff = entry[1]-entry[2], range=ranges[i];
@@ -1574,8 +1561,97 @@ var CORE = (function () {
     return {score:score,gender:gender};
   }
 
-  /* 별점 경고: 반별 ★ 총합의 최대−최소가 기준값(gap) 이상일 때 켠다.
-     화면에는 가장 낮은 반과 가장 높은 반의 점수를 함께 보여 준다. */
+  function populationAdvice(students,rep) {
+    var N=students.length,boys=students.filter(function(s){return s.gender==='남';}).length;
+    var advice=[];
+    rep.per.forEach(function(p){
+      var delta=p.count-p.target;if(!delta)return;
+      var expectedMale=Math.round(p.target*(N?boys/N:0.5));
+      var dm=p.male-expectedMale,df=p.female-(p.target-expectedMale);
+      var sameDirection=(delta<0?dm<=0&&df<=0:dm>=0&&df>=0);
+      var parts=[];
+      if(dm)parts.push('남'+Math.abs(dm)+(sameDirection?'':dm<0?' 부족':' 초과'));
+      if(df)parts.push('여'+Math.abs(df)+(sameDirection?'':df<0?' 부족':' 초과'));
+      if(!sameDirection)parts=[delta<0?(dm<0?'남자 부족':'여자 부족'):(dm>0?'남자 많음':'여자 많음')];
+      var note=Math.abs(delta)+'명 '+(delta<0?'부족':'초과')+(parts.length?' ('+parts.join(' ')+')':'');
+      advice.push({k:p.k,text:p.name+' '+note,note:note,hard:true});
+    });
+    balanceAdvice(students,rep).gender.forEach(function(g){
+      if(advice.some(function(a){return a.k===g.k;}))return;
+      var text=g.text.replace('남자수 적음','남자 부족').replace('남자수 많음','남자 많음').replace('여자수 적음','여자 부족').replace('여자수 많음','여자 많음');
+      advice.push({k:g.k,text:text,note:text.slice(rep.per[g.k].name.length+1),hard:false});
+    });
+    return advice;
+  }
+
+  /* Bounded local repair: candidates always include a current warning unit. */
+  function repair(students,classes,pairs,place,opts) {
+    opts=opts||{};var original=place.slice(),current=place.slice(),N=students.length,K=classes.length,examined=0,limit=opts.repairBudget||3000;
+    if(current.length!==N || current.some(function(k){return !Number.isInteger(k)||k<0||k>=K;}))return {assign:original,changed:[],examined:0};
+    var parent=students.map(function(_,i){return i;});
+    function root(i){while(parent[i]!==i)i=parent[i];return i;}
+    (opts.requiredGroups||[]).forEach(function(g){var ids=g.filter(function(i){return students[i];});ids.slice(1).forEach(function(i){parent[root(i)]=root(ids[0]);});});
+    var byRoot={},units=[];
+    students.forEach(function(_,i){var r=root(i);if(!byRoot[r]){byRoot[r]=[];units.push(byRoot[r]);}byRoot[r].push(i);});
+    function inspect(a){
+      var rep=evaluate(students,classes,pairs,a,opts),scores=rep.per.map(function(p){return p.score;}),spread=Math.max.apply(null,scores)-Math.min.apply(null,scores);
+      var threshold=Number(opts.scoreThreshold)||2;
+      return {rep:rep,hard:rep.problems.length,quota:rep.per.reduce(function(sum,p){return sum+Math.abs(p.count-p.target);},0),soft:spread>=threshold-1e-9?spread:0,moved:a.reduce(function(n,k,i){return n+(k!==original[i]?1:0);},0)};
+    }
+    var start=inspect(current),state=start;
+    function active(info){
+      var ids={};
+      [info.rep.sepViol,info.rep.y3Viol,info.rep.duplicateViol].forEach(function(list){list.forEach(function(v){ids[v.ai]=ids[v.bi]=true;});});
+      info.rep.fixedBad.forEach(function(v){ids[v.idx]=true;});
+      info.rep.requiredViol.forEach(function(v){v.members.forEach(function(i){ids[i]=true;});});
+      info.rep.tagBad.forEach(function(v){if(v.idx!=null)ids[v.idx]=true;else info.rep.per.filter(function(p){return p.name===v.cls;}).forEach(function(p){p.members.forEach(function(i){if((students[i].tags||[]).indexOf('특수')>=0)ids[i]=true;});});});
+      info.rep.capBad.forEach(function(p){if(p.count>p.target)p.members.forEach(function(i){ids[i]=true;});});
+      if(!info.hard&&info.soft)info.rep.per.forEach(function(p){p.members.forEach(function(i){if(studentScore(students[i])>0)ids[i]=true;});});
+      return ids;
+    }
+    for(var pass=0;pass<Math.min(N,16)&&examined<limit;pass++){
+      var warning=active(state),winner=null,winnerInfo=null;
+      function consider(trial){
+        if(examined>=limit)return;examined++;
+        // Never displace a correctly fixed student or split a currently satisfied mandatory unit.
+        if(students.some(function(st,i){return st.fixed!=null&&st.fixed!==''&&Number(st.fixed)>=0&&trial[i]!==current[i]&&trial[i]!==Number(st.fixed);}))return;
+        if(units.some(function(u){return new Set(u.map(function(i){return current[i];})).size===1&&new Set(u.map(function(i){return trial[i];})).size>1;}))return;
+        var info=inspect(trial);
+        if(info.quota>state.quota || info.rep.fixedBad.length>state.rep.fixedBad.length || info.rep.requiredViol.length>state.rep.requiredViol.length)return;
+        if(!(info.hard<state.hard || (!state.hard&&!info.hard&&info.soft<state.soft-1e-9)))return;
+        if(!winnerInfo || info.hard<winnerInfo.hard || (info.hard===winnerInfo.hard&&(info.moved<winnerInfo.moved || (info.moved===winnerInfo.moved&&info.soft<winnerInfo.soft)))){winner=trial;winnerInfo=info;}
+      }
+      units.forEach(function(u){
+        if(!u.some(function(i){return warning[i];}) || examined>=limit)return;
+        for(var to=0;to<K;to++){
+          if(u.every(function(i){return current[i]===to;}))continue;
+          var trial=current.slice();u.forEach(function(i){trial[i]=to;});consider(trial);
+          units.forEach(function(v){
+            if(v===u || v.length!==u.length || new Set(u.map(function(i){return current[i];})).size!==1 || !v.every(function(i){return current[i]===to;}))return;
+            var swap=current.slice(),from=current[u[0]];u.forEach(function(i){swap[i]=to;});v.forEach(function(i){swap[i]=from;});consider(swap);
+          });
+          // A split mandatory group can be reunited by exchanging its displaced members with singletons.
+          if(u.length>1){
+            var combined=current.slice(),used={};
+            u.filter(function(i){return current[i]!==to;}).forEach(function(i){
+              var partner=-1,best=Infinity;
+              units.forEach(function(v){if(v.length!==1||u.indexOf(v[0])>=0||used[v[0]]||current[v[0]]!==to||examined>=limit)return;
+                var j=v[0],st=students[j];if(st.fixed!=null&&st.fixed!==''&&Number(st.fixed)!==current[i])return;
+                var candidate=combined.slice();candidate[i]=to;candidate[j]=current[i];examined++;
+                var cost=inspect(candidate).hard;if(cost<best){partner=j;best=cost;}
+              });
+              if(partner>=0){combined[i]=to;combined[partner]=current[i];used[partner]=true;}
+            });
+            if(u.every(function(i){return combined[i]===to;}))consider(combined);
+          }
+        }
+      });
+      if(!winner)break;current=winner;state=winnerInfo;
+      if(!state.hard&&!state.soft)break;
+    }
+    return {assign:current,changed:current.map(function(k,i){return k!==original[i]?i:-1;}).filter(function(i){return i>=0;}),before:start.hard,after:state.hard,examined:examined,limited:examined>=limit};
+  }
+
   function scoreSpread(rep, gap) {
     gap = Number(gap);
     if (!isFinite(gap) || gap < 0) gap = 2;
@@ -1631,6 +1707,7 @@ var CORE = (function () {
     return { bad: bad, gender: gender };
   }
 
+
   function fmtNum(v) {
     var n = Number(v) || 0;
     if (Math.abs(n - Math.round(n)) < 0.05) return String(Math.round(n));
@@ -1681,9 +1758,7 @@ var CORE = (function () {
     virtualRoster: virtualRoster,
     autoTargets: autoTargets,
     syncClass: syncClass,
-    balanceAdvice: balanceAdvice,
-    scoreSpread: scoreSpread,
-    countNotes: countNotes,
+    balanceAdvice: balanceAdvice, populationAdvice:populationAdvice, repair:repair, scoreSpread:scoreSpread, countNotes:countNotes,
     tagPlans: tagPlans,
     buildLinks: buildLinks,
     assign: assign,
@@ -1750,14 +1825,16 @@ var CORE = (function () {
       classCount: 6, deduct: 2, restrictSpecial: true, useY3: true,
       classes: defaultClasses(6),
       tags: CORE.DEFAULT_TAGS.map(function (t) { return { name: t, weight: CORE.defaultWeight(t), max: null }; }),
-      tagDefaultsVersion: 1, starVersion: 2, students: [], pairs: [], wishGroups: [], requiredGroups: [], nextId: 1, result: null,
-      scoreGap: 2, resultLayout: 'sex'
+      scoreThreshold:2, scoreGap:2, resultLayout:'sex', tagDefaultsVersion: 1, starVersion: 2, students: [], pairs: [], wishGroups: [], requiredGroups: [], nextId: 1, result: null
     };
   }
   /* 저장된 데이터·작업 파일이 구버전이어도 깨지지 않게 기본값을 채운다 */
   function normalizeState(d) {
     if (!d || typeof d !== 'object') return null;
     var out = d;
+    if(out.scoreGap!=null)out.scoreThreshold=out.scoreGap;
+    out.resultLayout=['one','two','sex'].indexOf(out.resultLayout)>=0?out.resultLayout:'sex';
+    out.scoreThreshold=isFinite(Number(out.scoreThreshold)) && Number(out.scoreThreshold)>0 ? Number(out.scoreThreshold) : 2; out.scoreGap=out.scoreThreshold;
     if (!out.classes || !out.classes.length) out.classes = defaultClasses(Number(out.classCount) || 6);
     out.classes.forEach(function (c, k) {
       /* 예전 자료에 이름이 비어 있으면 이 자리의 기본 이름(가반·나반…)을 쓴다 */
@@ -1772,9 +1849,6 @@ var CORE = (function () {
     if (out.deduct == null) out.deduct = 2;
     if (out.useY3 == null) out.useY3 = true;
     out.restrictSpecial = true;
-    var gapNum = Number(out.scoreGap);
-    out.scoreGap = (isFinite(gapNum) && gapNum >= 0) ? Math.min(30, Math.round(gapNum)) : 2;
-    out.resultLayout = ['one', 'two', 'sex'].indexOf(out.resultLayout) >= 0 ? out.resultLayout : 'sex';
 
     var legacyStars = out.starVersion !== 2;
     var oldWeights = {};
@@ -1890,7 +1964,7 @@ var CORE = (function () {
     el.innerHTML = msg;
     if (kind === 'info') { clearTimeout(el._t); el._t = setTimeout(hideBanner, 9000); }
   }
-  function hideBanner() { $('#banner').className = 'banner'; }
+  function hideBanner() { $('#banner').className = 'banner';document.body.getBoundingClientRect();programmaticScrollY=window.scrollY; }
   function toast(msg, kind) {
     var el = $('#toast');
     if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
@@ -2784,15 +2858,16 @@ var CORE = (function () {
     var added = 0, skipped = 0;
     if (mode === 'append') {
       var seen = {};
-      S.students.forEach(function (s) { seen[String(s.name).trim()] = 1; });
+      function rosterKey(st){return JSON.stringify([normClassVal(st.g5),String(st.no||''),String(st.name).trim()]);}
+      S.students.forEach(function (s) { seen[rosterKey(s)] = 1; });
       var keep = [];
       built.students.forEach(function (s) {
-        var key = String(s.name).trim();
+        var key = rosterKey(s);
         if (seen[key]) { skipped++; return; }
         seen[key] = 1;
         keep.push(s);
       });
-      if (!keep.length) { toast('새로 넣을 학생이 없습니다. 모두 이미 명단에 있는 이름입니다.', 'err'); return; }
+      if (!keep.length) { toast('새로 넣을 학생이 없습니다. 모두 같은 반·번호·이름으로 등록되어 있습니다.', 'err'); return; }
       keep.forEach(function (s) { s.id = S.nextId++; });
       S.students = S.students.concat(keep);
       S.sample = false;
@@ -2841,7 +2916,7 @@ var CORE = (function () {
       var norm = normalizeState(st);
       if (!norm || !norm.classes || !norm.classes.length) throw new Error('작업 파일 형식이 아닙니다.');
       undoHistory = [];
-      S = norm;
+      S = norm;resultLayout=S.resultLayout||'sex';
       S.sample = false;
       save();
       renderAll();
@@ -3070,9 +3145,8 @@ var CORE = (function () {
           ms: Math.max(1, Math.round(t1 - t0)),
           moves: 0
         };
-        save();
-        renderResult();
         switchTab('result');
+        save();
         if (rep.problems.length) {
           scrollToCard('#resultCard');
         }
@@ -3144,18 +3218,8 @@ var CORE = (function () {
       });
       return Object.keys(groups).map(function (name) { return name + ' ' + groups[name].join('·'); }).join(' / ');
     });
-    var score=CORE.scoreSpread(rep,S.scoreGap), counts=CORE.countNotes(rep);
-    function countPill() {
-      var hard = counts.bad.map(function (v) { return v.text; });
-      var soft = counts.gender.map(function (v) { return v.text; });
-      var isBad = hard.length > 0;
-      var status = isBad ? 'bad' : (soft.length ? 'warn' : 'ok');
-      var all = hard.concat(isBad ? soft : []);
-      var title = all.length ? all.join(' / ') : '반별 총원과 남자·여자 수가 목표에 맞습니다.';
-      var mini = isBad ? '<div class="signal-details bad" data-details="count">' + all.map(function (text) { return '<div>' + esc(text) + '</div>'; }).join('') + '</div>' : '';
-      var tip = (!isBad && soft.length) ? ' data-reference="' + esc(soft.join('\n')) + '" aria-describedby="referencePopup"' : ' title="' + esc(title) + '"';
-      return '<div class="signal" data-signal="count"><span class="v ' + status + '" data-check="count" tabindex="0"' + tip + ' aria-label="' + esc('인원: ' + title) + '">인원</span>' + mini + '</div>';
-    }
+    var scoreAdvice=CORE.scoreSpread(rep,S.scoreGap);
+    var population=CORE.populationAdvice(S.students,rep);
     var special = (rep.tagBad || []).map(function (v) { return v.cls + ' ' + v.name + (v.kind === 'overlap' ? ' (특수학생 중복)' : ' (통합학급 미지정)'); });
     return [
       pill('special','특수',special,false,'특수학생 배정 조건에 문제가 없습니다.'),
@@ -3165,8 +3229,8 @@ var CORE = (function () {
       pill('separate','필수 분리',pairDetails(rep.sepViol),false,'필수 분리 조합을 모두 지켰습니다.'),
       pill('required','필수 희망',(rep.requiredViol || []).map(function (g) { return g.text; }),false,'필수 희망 조합이 모두 같은 반입니다.'),
       pill('recommended','추천 희망',missed,true,'추천 희망 조합에 문제가 없습니다.'),
-      pill('score','별점',score.on ? [score.text] : [],false,'높은 반과 낮은 반의 별점 차이가 ' + score.gap + '점 미만입니다.'),
-      countPill()
+      pill('score','별점',scoreAdvice.on?[scoreAdvice.text]:[],false,'반별 별점이 허용 범위 안입니다.'),
+      pill('count','인원',population.map(function(v){return v.text;}),!population.some(function(v){return v.hard;}),'반별 인원이 적절합니다.')
     ].join('');
   }
 
@@ -3202,10 +3266,6 @@ var CORE = (function () {
     });
     return out;
   }
-  /* 포인터 이벤트를 쓰는 브라우저에서는 브라우저 기본 드래그를 꺼 둔다.
-     이름 버튼 위에서 기본 드래그가 걸리지 않아도 직접 끌 수 있고, 클릭과 끌기를 거리로 가른다.
-     포인터 이벤트가 없는 예전 브라우저만 예전처럼 HTML5 드래그를 쓴다. */
-  function dragAttr() { return (window.PointerEvent ? ' draggable="false"' : ' draggable="true"'); }
   function chipHtml(idx, k, sepMap, y3Map, fixMap, specialMap, heartMap) {
     var s = S.students[idx];
     var wm = tagWeightMap();
@@ -3218,13 +3278,11 @@ var CORE = (function () {
     if (y3Map[idx]) warns.push('3년 연속 같은 반(4·5학년 동일): ' + y3Map[idx].join(', '));
     if (specialMap[idx]) warns.push(specialMap[idx]);
     if (fixMap[idx]) warns.push('고정 반은 ' + fixMap[idx] + '입니다');
-    var cls = 'stu ' + (s.gender === '여' ? 'f' : 'm') +
-      ((sepMap[idx] || y3Map[idx] || specialMap[idx]) ? ' viol' : '') + (fixMap[idx] ? ' fixbad' : '') +
-      (s.fixed != null ? ' locked' : '');
+    var cls = 'stu ' + (s.gender === '여' ? 'f' : 'm') + (s.fixed!=null&&s.fixed!==''?' locked':'') +
+      ((sepMap[idx] || y3Map[idx] || specialMap[idx]) ? ' viol' : '') + (fixMap[idx] ? ' fixbad' : '');
     var isFixedHere = (s.fixed != null && s.fixed !== '' && Number(s.fixed) === k);
-    if (s.fixed != null) warns.push('고정 학생입니다. 옮기려면 이름을 눌러 고정 반을 바꾸세요');
-    return '<div class="' + cls + '"' + dragAttr() + ' data-id="' + s.id + '" data-k="' + k + '" data-fixed="' + (s.fixed != null ? '1' : '') + '" data-score="' + total + '" title="4학년 ' + esc(s.g4 || '?') + ' · 5학년 ' + esc(s.g5 || '?') + (warns.length ? ' · ' + esc(warns.join(' / ')) : '') + '">' +
-      '<div class="l1"><button type="button" class="nm" data-act="edit-student" data-id="' + s.id + '" data-k="' + k + '" title="학생 정보 수정">' + esc(s.name) + '</button>' + (heartMap[s.id]||'') +
+    return '<div class="' + cls + '" draggable="'+(window.PointerEvent || s.fixed!=null&&s.fixed!==''?'false':'true')+'" data-id="' + s.id + '" data-score="' + total + '" title="4학년 ' + esc(s.g4 || '?') + ' · 5학년 ' + esc(s.g5 || '?') + (warns.length ? ' · ' + esc(warns.join(' / ')) : '') + '">' +
+      '<div class="l1"><button type="button" class="nm" data-act="edit-student" data-id="' + s.id + '" data-k="' + k + '" title="' + esc(s.name) + ' — 학생 정보 수정">' + esc(s.name) + '</button>' + (heartMap[s.id]||'') +
         (isFixedHere ? '<span class="kb fix" title="반드시 이 반" aria-label="반드시 이 반">📌</span>' : '') +
         (s.transfer ? '<span class="transfer-badge">전출예정</span>' : '') + tags + '<span class="g5b" title="5학년 반">' + esc(g5Badge(s)) + '</span></div>' +
     '</div>';
@@ -3270,12 +3328,9 @@ var CORE = (function () {
     }
 
     var h = '';
-    var countMap = {}, countReport = CORE.countNotes(rep);
-    countReport.bad.forEach(function (v) { countMap[v.k] = { text: v.short, soft: false }; });
-    countReport.gender.forEach(function (v) { if (!countMap[v.k]) countMap[v.k] = { text: v.short, soft: true }; });
     rep.per.forEach(function (p) {
-      var cn = countMap[p.k];
-      var quotaNotes = cn ? [cn.text] : [];
+      var quotaNotes = [];
+      CORE.populationAdvice(S.students,rep).filter(function(v){return v.k===p.k;}).forEach(function(v){quotaNotes.push(v.note);});
       var fixedNotes = rep.fixedBad.filter(function (f) { return p.members.indexOf(f.idx) >= 0; }).map(function (f) { return f.name + ' → ' + f.want; });
       var members = p.members.slice().sort(byGenderAndNo);
       var boys = members.filter(function (i) { return S.students[i].gender !== '여'; });
@@ -3287,14 +3342,14 @@ var CORE = (function () {
         return '<span class="student-summary" title="' + esc(studentLabel(st)) + '">' + esc(st.tags.join('·')) + esc(fmtScore(scoreOf(st))) + '</span>';
       }).join('');
 
-      h += '<div class="col' + (cn && !cn.soft ? ' quota-bad' : '') + '" data-k="' + p.k + '" data-score="' + p.score + '">' +
+      h += '<div class="col' + (p.count!==p.target ? ' quota-bad' : '') + '" data-k="' + p.k + '" data-score="' + p.score + '">' +
         '<div class="colhead">' +
           '<div class="row1"><span class="cname">' + esc(p.name) + '</span> ' +
             '<span class="ccount">' + p.count + '명</span> ' +
             '<span class="cgen">(남' + p.male + ' 여' + p.female + ')</span> ' +
             '<span class="cscore" title="이 반의 힘든 점수(★) 합계">★' + esc(fmtScore(p.score)) + '</span></div>' +
           (tagCards ? '<div class="tagsum">' + tagCards + '</div>' : '') +
-          (quotaNotes.length || fixedNotes.length ? '<div class="class-notes">' + (cn ? '<span' + (cn.soft ? ' class="soft"' : '') + '>' + esc(cn.text) + '</span>' : '') + fixedNotes.map(function (text) { return '<span>' + esc(text) + '</span>'; }).join('') + '</div>' : '') +
+          (quotaNotes.length || fixedNotes.length ? '<div class="class-notes">' + quotaNotes.map(function(text){return '<span'+(p.count===p.target?' class="soft"':'')+'>'+esc(text)+'</span>';}).concat(fixedNotes.map(function(text){return '<span>'+esc(text)+'</span>';})).join('') + '</div>' : '') +
         '</div>' +
         '<div class="chiplist layout-' + resultLayout + '">' +
           studentLayoutHtml(members,boys,girls,p.k,sepMap,y3Map,fixMap,specialMap,heartMap) +
@@ -3329,8 +3384,8 @@ var CORE = (function () {
   }
   function renderResult() {
     hideReferencePopup();
-    var gapEl = $('#scoreGap');
-    if (gapEl && document.activeElement !== gapEl) gapEl.value = S.scoreGap;
+    $('#scoreGapRow').hidden=!S.result;
+    if(document.activeElement!==$('#scoreGap'))$('#scoreGap').value=S.scoreGap;
     var wrap = $('#classCards');
     if (!S.result) {
       wrap.setAttribute('style', '--cls-count:1');
@@ -3338,10 +3393,8 @@ var CORE = (function () {
       $('#verdict').innerHTML = ''; $('#btnUndo').disabled=true;
       $('#resultMeta').textContent = '';
       $('#printArea').innerHTML = '';
-      $('#scoreGapRow').hidden = true;
       return;
     }
-    $('#scoreGapRow').hidden = false;
     var rep = CORE.evaluate(S.students, S.classes, pairsAsIndex(), S.result.assign, currentOptions());
     S.result.report = rep;
     var floating = $('#toast');
@@ -3374,128 +3427,38 @@ var CORE = (function () {
     S = undoHistory.pop(); renderAll(); renderResult(); save();
   }
   $('#btnUndo').addEventListener('click',undoResult);
-  /* 별점 경고 기준을 바꾸면 바로 다시 판정해 저장한다 */
-  function onScoreGapChange() {
-    var el = $('#scoreGap');
-    if (!el) return;
-    var v = Number(el.value);
-    if (!isFinite(v)) v = 2;
-    v = Math.max(1, Math.min(30, Math.round(v)));
-    S.scoreGap = v;
-    if (S.result) renderResult();
-    save();
+  var FIXED_LOCK_MSG='고정 학생은 이름을 눌러 고정 반을 바꾼 뒤 옮기세요.';
+  function isFixedStudent(st){return st&&st.fixed!=null&&st.fixed!=='';}
+  var pendingMove=null;
+  function requiredCompanions(id) {
+    var ids=[Number(id)],changed=true;
+    while(changed){changed=false;(S.requiredGroups||[]).forEach(function(g){if(g.some(function(x){return ids.indexOf(Number(x))>=0;}))g.forEach(function(x){if(findStudent(x)&&ids.indexOf(Number(x))<0){ids.push(Number(x));changed=true;}});});}
+    return ids;
   }
+  function requestMove(id,to,accept,cancel) {
+    var ids=requiredCompanions(id);
+    var blocked=ids.filter(function(x){var st=findStudent(x);return x!==Number(id)&&st.fixed!=null&&st.fixed!==''&&Number(st.fixed)!==to;});
+    if(blocked.length){toast('함께 옮길 고정 학생의 고정 반을 먼저 풀어 주세요: '+blocked.map(function(x){return findStudent(x).name;}).join('·'),'err');if(cancel)cancel();return;}
+    var others=ids.filter(function(x){return x!==Number(id);});
+    if(!others.length){accept(ids);return;}
+    pendingMove={accept:function(){accept(ids);},cancel:cancel};
+    $('#comboMoveText').textContent='필수 조합 '+others.map(function(x){return findStudent(x).name;}).join(', ')+' 학생도 함께 옮기겠습니까?';
+    $('#comboMoveModal').classList.add('show');$('#comboMoveNo').focus();
+  }
+  function finishMove(yes){var pending=pendingMove;pendingMove=null;$('#comboMoveModal').classList.remove('show');if(pending){if(yes)pending.accept();else if(pending.cancel)pending.cancel();}}
+  $('#comboMoveYes').addEventListener('click',function(){finishMove(true);});
+  $('#comboMoveNo').addEventListener('click',function(){finishMove(false);});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&pendingMove)finishMove(false);});
   function moveStudent(id, to) {
-    if (!S.result) return;
-    var idx = studentIndex(id);
-    if (idx < 0) return;
-    if (S.result.assign[idx] === to) return;
-    var sy = window.scrollY;
-    pushUndo();
-    S.result.assign[idx] = to;
-    S.result.moves = (S.result.moves || 0) + 1;
-    renderResult();
-    window.scrollTo(0, sy);
-    save();
-  }
-
-  /* ---------- 고정 학생 잠금 · 필수 희망 조합 함께 옮기기 ---------- */
-  var FIXED_LOCK_MSG = '고정 학생은 이름을 눌러 고정 반을 바꾼 뒤 옮기세요.';
-  function isFixedStudent(s) { return !!s && s.fixed != null && s.fixed !== ''; }
-  /* 필수 희망 조합으로 이어진 학생 전체(겸진 묶음도 따라간다)를 찾는다 */
-  function comboMembers(id) {
-    var parent = {}, live = {};
-    S.students.forEach(function (s) { live[s.id] = 1; });
-    function root(x) { while (parent[x] !== undefined && parent[x] !== x) x = parent[x]; return x; }
-    (S.requiredGroups || []).forEach(function (g) {
-      var ids = (g || []).map(Number).filter(function (x, i, a) { return live[x] && a.indexOf(x) === i; });
-      if (ids.length < 2) return;
-      ids.forEach(function (x) { if (parent[x] === undefined) parent[x] = x; });
-      var first = root(ids[0]);
-      ids.forEach(function (x) { var r = root(x); if (r !== first) parent[r] = first; });
+    if (!S.result || !Number.isInteger(to) || !S.classes[to]) return;
+    var idx = studentIndex(id);if(idx<0 || S.result.assign[idx]===to)return;
+    var st=S.students[idx];
+    if(st.fixed!=null && st.fixed!==''){toast(FIXED_LOCK_MSG,'err');return;}
+    requestMove(id,to,function(ids){
+      var sy=window.scrollY;pushUndo();
+      ids.forEach(function(x){S.result.assign[studentIndex(x)]=to;});
+      S.result.moves=(S.result.moves||0)+1;renderResult();window.scrollTo(0,sy);save();
     });
-    var mine = root(Number(id)), out = [];
-    Object.keys(parent).forEach(function (k) {
-      var n = Number(k);
-      if (n !== Number(id) && root(n) === mine) out.push(n);
-    });
-    return out.sort(function (a, b) { return a - b; });
-  }
-  /* 옮기기 요청: 고정 학생은 막고, 필수 조합이 걸렸으면 함께 옮길지 묻는다 */
-  function requestMove(id, to, onCancel) {
-    if (!S.result) return false;
-    var idx = studentIndex(id);
-    if (idx < 0) return false;
-    var st = S.students[idx];
-    if (isFixedStudent(st) && Number(st.fixed) !== Number(to)) { toast(FIXED_LOCK_MSG, 'err'); return false; }
-    if (S.result.assign[idx] === to) return false;
-    var partners = comboMembers(id).filter(function (pid) {
-      var pi = studentIndex(pid);
-      if (pi < 0) return false;
-      if (isFixedStudent(S.students[pi])) return false;      /* 고정 학생은 함께 옮기지 않는다 */
-      return S.result.assign[pi] !== to;
-    });
-    if (!partners.length) { moveStudent(id, to); return true; }
-    openComboMove(id, to, partners, onCancel);
-    return true;
-  }
-  var pendingComboMove = null;
-  function closeComboMove() { pendingComboMove = null; var el = $('#comboMoveModal'); if (el) el.classList.remove('show'); }
-  function openComboMove(id, to, partners, onCancel) {
-    pendingComboMove = { id: id, to: Number(to), partners: partners || [], onCancel: onCancel || null };
-    var names = pendingComboMove.partners.map(function (pid) { var s = findStudent(pid); return s ? s.name : ''; }).filter(function (n) { return !!n; }).join(', ');
-    var target = (S.classes[pendingComboMove.to] || {}).name || '';
-    $('#comboMoveText').textContent = '필수 조합 ' + names + ' 학생도 함께 옮기겠습니까?' + (target ? ' (' + target + '으로 함께 이동)' : '');
-    $('#comboMoveModal').classList.add('show');
-    setTimeout(function () { var b = $('#comboMoveYes'); if (b && b.focus) b.focus(); }, 30);
-  }
-  function applyComboMove() {
-    var p = pendingComboMove;
-    if (!p) return;
-    closeComboMove();
-    var ids = [p.id].concat(p.partners), moved = 0;
-    pushUndo();
-    ids.forEach(function (id) {
-      var idx = studentIndex(id);
-      if (idx < 0 || S.result.assign[idx] === p.to) return;
-      S.result.assign[idx] = p.to; moved++;
-    });
-    if (!moved) { if (undoHistory.length) undoHistory.pop(); renderResult(); return; }
-    S.result.moves = (S.result.moves || 0) + moved;
-    renderResult(); save();
-  }
-  function cancelComboMove() {
-    var p = pendingComboMove;
-    closeComboMove();
-    if (p && typeof p.onCancel === 'function') p.onCancel();
-  }
-  /* 고정 반을 바꿨을 때 그 반으로 바로 옮긴다(조합이 걸렸으면 확인 뒤 이동, 취소하면 고정도 되돌린다) */
-  function moveToFixedClass(id, to, oldFixed) {
-    if (!S.result) return;
-    var idx = studentIndex(id);
-    if (idx < 0) return;
-    if (S.result.assign[idx] === to) return;
-    var revert = function () {
-      var st = findStudent(id);
-      if (!st) return;
-      st.fixed = (oldFixed == null || oldFixed === '') ? null : Number(oldFixed);
-      renderStudents(); renderResult(); save();
-    };
-    var partners = comboMembers(id).filter(function (pid) {
-      var pi = studentIndex(pid);
-      if (pi < 0) return false;
-      if (isFixedStudent(S.students[pi])) return false;
-      return S.result.assign[pi] !== to;
-    });
-    if (!partners.length) {
-      var sy = window.scrollY;
-      pushUndo();
-      S.result.assign[idx] = to;
-      S.result.moves = (S.result.moves || 0) + 1;
-      renderResult(); window.scrollTo(0, sy); save();
-      return;
-    }
-    openComboMove(id, to, partners, revert);
   }
 
   /* ---------- 배정 결과에서 학생 바로 추가 ---------- */
@@ -3508,7 +3471,7 @@ var CORE = (function () {
     $('#addStuScore').disabled = !addStudentDraft.tags.length;
   }
   function openAddStudent(k, id) {
-    if (!S.result) { toast('먼저 배정을 실행하세요.', 'err'); return; }
+    if (!S.result && id==null) { toast('먼저 배정을 실행하세요.', 'err'); return; }
     addTargetClass = Number(k);
     if (!(addTargetClass >= 0 && addTargetClass < S.classes.length)) addTargetClass = 0;
     var c = S.classes[addTargetClass] || {};
@@ -3562,24 +3525,28 @@ var CORE = (function () {
     var k = Number(addTargetClass);
     if (!(k >= 0 && k < S.classes.length)) k = 0;
     var gender = ($('#addStuGender').value === '여') ? '여' : '남';
-    pushUndo();
     if (editStudentId != null) {
-      var existing = findStudent(editStudentId), oldGender = existing.gender, oldFixed = existing.fixed;
-      var curBefore = (S.result && S.result.assign) ? S.result.assign[studentIndex(editStudentId)] : null;
-      var nowSel = $('#addStuNowClass');
-      var nowK = (nowSel && !nowSel.disabled && nowSel.value !== '') ? Number(nowSel.value) : null;
+      var existing = findStudent(editStudentId), oldGender = existing.gender;
+      var fixed=$('#addStuFixed').value===''?null:Number($('#addStuFixed').value);
+      var current=S.result?S.result.assign[studentIndex(existing.id)]:null;
+      var quick=$('#addStuNowClass'),now=quick&&!quick.disabled?Number(quick.value):current;
+      if(S.result && fixed!=null && now!==current && now!==fixed){toast(FIXED_LOCK_MSG,'err');return;}
+      var target=fixed!=null?fixed:now;
+      function commitEdit(ids) {
+      pushUndo();
       Object.assign(existing, {name:name,no:String($('#addStuNo').value || '').trim(),g5:normClassVal($('#addStuG5').value),g4:normClassVal($('#addStuG4').value),gender:gender,tags:addStudentDraft.tags.slice(),w:Object.assign({},addStudentDraft.w),score:addStudentDraft.score,fixed:$('#addStuFixed').value === '' ? null : Number($('#addStuFixed').value)});
       CORE.normalizeStars(existing);
       var cls = S.classes[k];
       if (oldGender !== gender && cls) { if (cls.male != null) cls.male += gender === '남' ? 1 : -1; if (cls.female != null) cls.female += gender === '여' ? 1 : -1; }
-      if (S.result) S.result.moves = (S.result.moves || 0) + 1;
+      if (S.result) { ids.forEach(function(id){S.result.assign[studentIndex(id)]=target;}); S.result.moves = (S.result.moves || 0) + 1; }
       renderClasses(); renderTags(); renderStudents(); renderPairs(); renderWishGroups(); renderExtraConditions(); renderRosterSummary(); renderResult(); save(); closeAddStudent();
-      /* 고정 반을 다른 반으로 바꿈 → 배정 결과에서도 그 반으로 바로 이동 */
-      if (existing.fixed != null && String(oldFixed) !== String(existing.fixed)) moveToFixedClass(existing.id, Number(existing.fixed), oldFixed);
-      /* "현재 배정 반"에서 다른 반을 골랐으면 그 반으로 옮긴다(고정 학생 잠금·필수 조합 확인은 requestMove가 한다) */
-      else if (nowK != null && curBefore != null && Number(curBefore) !== nowK) requestMove(existing.id, nowK);
+      }
+      if(S.result && target!=null && S.result.assign[studentIndex(existing.id)]!==target){
+        requestMove(existing.id,target,commitEdit,closeAddStudent);
+      }else commitEdit([]);
       return;
     }
+    pushUndo();
     var s = {
       id: S.nextId++, no: String($('#addStuNo').value || '').trim(),
       g4: normClassVal($('#addStuG4').value), g5: normClassVal($('#addStuG5').value), name: name, gender: gender,
@@ -3655,7 +3622,7 @@ var CORE = (function () {
 
   /* ---------- 탭·초기화 ---------- */
   function switchTab(name) {
-    clearTimeout(CLOUD.timer);
+    clearTimeout(CLOUD.timer);if(typeof DRAG!=='undefined'&&DRAG)dragEnd();
     tab = name;
     if(name==='result')lastActivity=Date.now();
     $$('.tab').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === name); });
@@ -3730,7 +3697,7 @@ var CORE = (function () {
     var el = $('#cloudStatus');
     if (!el) return;
     el.className = 'cloud ' + (kind || '');
-    el.textContent = text;
+    el.textContent = text;el.title=text;
   }
   function agoText(ts) {
     if (!ts) return '';
@@ -3746,6 +3713,8 @@ var CORE = (function () {
     cloudStatus('☁️ 저장됨 (' + agoText(CLOUD.lastSavedAt) + ')', 'ok');
   }
   function cloudPayload() {
+    var baseIds={};((CLOUD.baseline||{}).students||[]).forEach(function(st){baseIds[st.id]=true;});
+    S.students.forEach(function(st){if(!baseIds[st.id]&&!st.clientId)st.clientId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);});
     var copy;
     try { copy = JSON.parse(JSON.stringify(S)); } catch (e) { copy = S; }
     if (copy && copy.result && copy.result.report) delete copy.result.report;   /* 결과 보고서는 다시 계산된다 */
@@ -3845,12 +3814,14 @@ var CORE = (function () {
       cloudStatus('⚠️ 서버 내용을 읽지 못했습니다', 'warn');
       return;
     }
+    var scrollY=window.scrollY,anchor=null,anchorTop=0;
+    if(opts.silent&&tab==='result'){anchor=$$('.stu').filter(function(el){var r=el.getBoundingClientRect();return r.top>=0&&r.top<innerHeight;})[0];if(anchor){anchorTop=anchor.getBoundingClientRect().top;anchor=anchor.dataset.id;}}
     undoHistory = [];
     S = norm;
     if (S.students.length) syncTagsFromStudents();
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); } catch (e) { /* 저장 불가 환경 */ }
     renderAll();
-    if (tab === 'result') renderResult();
+    if(opts.silent&&tab==='result'){var next=anchor&&document.querySelector('.stu[data-id="'+anchor+'"]');if(next)window.scrollBy(0,next.getBoundingClientRect().top-anchorTop);else window.scrollTo(0,scrollY);programmaticScrollY=window.scrollY;}
     cloudSaved();
     if (opts.toast) toast('서버 내용을 불러왔습니다.', 'ok');
   }
@@ -3884,14 +3855,26 @@ var CORE = (function () {
       }
       return l;
     }
-    base=base||initialState(); local=JSON.parse(JSON.stringify(local)); remote=JSON.parse(JSON.stringify(remote));
-    var baseIds={}, remap={}, next=1;
-    (base.students||[]).forEach(function(st){baseIds[st.id]=true;});
+    base=JSON.parse(JSON.stringify(base||initialState()));local=JSON.parse(JSON.stringify(local));remote=JSON.parse(JSON.stringify(remote));
+    var baseIds={},remoteIds={},remoteClients={},remoteRoster={},next=Math.max(Number(base.nextId)||1,Number(local.nextId)||1,Number(remote.nextId)||1);
+    function rosterKey(st){return st.g5 && st.no ? JSON.stringify([normClassVal(st.g5),String(st.no),String(st.name||'').trim()]) : null;}
+    (base.students||[]).forEach(function(st){baseIds[st.id]=st;});
+    (remote.students||[]).forEach(function(st){remoteIds[st.id]=st;if(st.clientId)remoteClients[st.clientId]=st;var key=rosterKey(st);if(key)remoteRoster[key]=st;});
     (remote.students||[]).concat(local.students||[]).forEach(function(st){next=Math.max(next,Number(st.id)+1);});
-    (local.students||[]).forEach(function(st){
-      if(!baseIds[st.id] && (remote.students||[]).some(function(r){return r.id===st.id && !equal(r,st);})) { remap[st.id]=next; st.id=next++; }
-    });
-    ['pairs','requiredGroups','wishGroups'].forEach(function(key){ (local[key]||[]).forEach(function(g){g.forEach(function(id,i){if(remap[id])g[i]=remap[id];});}); });
+    function align(state,isLocal){
+      var remap={};
+      (state.students||[]).forEach(function(st){
+        var old=st.id,was=baseIds[old],added=!was || (st.clientId&&was.clientId&&st.clientId!==was.clientId);
+        var match=st.clientId&&remoteClients[st.clientId];
+        if(!match&&isLocal&&added){var key=rosterKey(st);if(key)match=remoteRoster[key];}
+        if(match){st.id=match.id;if(match.clientId)st.clientId=match.clientId;}
+        else if(isLocal&&added&&remoteIds[old])st.id=next++;
+        if(st.id!==old)remap[old]=st.id;
+      });
+      ['pairs','requiredGroups','wishGroups'].forEach(function(key){(state[key]||[]).forEach(function(g){g.forEach(function(id,i){if(remap[id]!=null)g[i]=remap[id];});});});
+      if(state.result&&state.result.ids)state.result.ids=state.result.ids.map(function(id){return remap[id]!=null?remap[id]:id;});
+    }
+    align(local,true);align(base,false);
     var out=merge(base,local,remote);
     function keyed(key,keyOf) {
       var bm={},lm={},rm={}; (base[key]||[]).forEach(function(v){bm[keyOf(v)]=v;}); (local[key]||[]).forEach(function(v){lm[keyOf(v)]=v;}); (remote[key]||[]).forEach(function(v){rm[keyOf(v)]=v;});
@@ -3907,7 +3890,16 @@ var CORE = (function () {
     base=originalBase;local=originalLocal;remote=originalRemote;
     out.pairs=sep.map(function(g){return g.members;});out.pairModes=sep.map(function(g){return g.mode;});
     out.classes=Array.from({length:Math.max((remote.classes||[]).length,(local.classes||[]).length)},function(_,i){return merge((base.classes||[])[i],(local.classes||[])[i],(remote.classes||[])[i]);}).filter(Boolean);out.classCount=out.classes.length;
-    if (!equal(out.students,remote.students) || !equal(out.classes,remote.classes) || !equal(out.pairs,remote.pairs) || !equal(out.pairModes,remote.pairModes) || !equal(out.wishGroups,remote.wishGroups) || !equal(out.requiredGroups,remote.requiredGroups)) out.result=null;
+    // Keep a shared assignment when only student metadata/conditions changed.
+    // Reorder by student IDs; a genuinely new unassigned student invalidates the result.
+    if(out.result){
+      var source=equal(out.result,remote.result)?remote:local;
+      var placementById={},ids=out.result.ids&&out.result.ids.length?out.result.ids:(source.students||[]).map(function(st){return st.id;});
+      ids.forEach(function(id,i){placementById[id]=out.result.assign[i];});
+      if(ids.length && out.students.every(function(st){return placementById[st.id]!=null;})){
+        out.result.assign=out.students.map(function(st){return placementById[st.id];});out.result.ids=out.students.map(function(st){return st.id;});
+      }else out.result=null;
+    }
     out.nextId=next;
     return normalizeState(out);
   }
@@ -3928,7 +3920,7 @@ var CORE = (function () {
         CLOUD.inFlight=false;
         if(err){CLOUD.dirty=true;cloudStatus('저장 오류 — 수정 내용 유지','bad');return;}
         var saved=Array.isArray(data)?data[0]:data;
-        if(saved && saved.conflict){if((attempt||0)<3)cloudMerge(true,(attempt||0)+1);else {CLOUD.dirty=true;cloudStatus('다른 반 저장 중 — 다시 저장해 주세요','warn');}return;}
+        if(saved && saved.conflict){if((attempt||0)<12)cloudMerge(true,(attempt||0)+1);else {CLOUD.dirty=true;cloudStatus('다른 반 저장 중 — 다시 저장해 주세요','warn');}return;}
         var current=cloudPayload();
         applyServerState({state:merged,revision:saved.revision,updated_at:saved.updated_at});
         if(sentLocal!==JSON.stringify(current)){S=mergeState(JSON.parse(sentLocal),current,merged);CLOUD.dirty=true;try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));}catch(e){}renderAll();cloudStatus('저장됨 · 추가 수정은 저장 대기','warn');}
@@ -3938,11 +3930,11 @@ var CORE = (function () {
   }
   function cloudReloadManual() { cloudMerge(false); }
 
-  var POLL_MS=1000,POLL_TIMER=null,lastActivity=Date.now(),polling=false;
+  var POLL_MS=1000,POLL_TIMER=null,lastActivity=Date.now(),polling=false,programmaticScrollY=null;
   function pollBlocked() {
     if(tab!=='result' || document.hidden || !CLOUD.entered) return true;
     if(Date.now()-lastActivity>=60000){cloudStatus('⏸ 잠시 멈춤 (화면 누르면 재개)','paused');return true;}
-    if(CLOUD.inFlight || CLOUD.dirty || savePending || (DRAG && DRAG.active) || document.querySelector('.overlay.show'))return true;
+    if(CLOUD.inFlight || CLOUD.dirty || savePending || dragId!=null || (DRAG&&DRAG.armed) || document.querySelector('.overlay.show'))return true;
     var a=document.activeElement;return !!(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName));
   }
   function pollOnce(){
@@ -3951,11 +3943,11 @@ var CORE = (function () {
     cloudCall('banbaejeong_load',{p_workspace_id:CLOUD_WORKSPACE,p_passcode:CLOUD.passcode},function(err,data){
       polling=false;if(err || pollBlocked())return;
       var row=Array.isArray(data)?data[0]:data;
-      if(Number(row.revision)>CLOUD.revision)applyServerState(row,{silent:true});
+      if(Number(row.revision)>CLOUD.revision){if(sameState(row.state,S)){CLOUD.revision=Number(row.revision);CLOUD.baseline=JSON.parse(JSON.stringify(row.state));}else applyServerState(row,{silent:true});}
     });return true;
   }
   function startPolling(){if(POLL_TIMER===null)POLL_TIMER=setInterval(pollOnce,POLL_MS);}
-  ['pointerdown','touchstart','mousemove','scroll','keydown'].forEach(function(type){document.addEventListener(type,function(){var paused=Date.now()-lastActivity>=60000;lastActivity=Date.now();if(paused && tab==='result'){cloudStatus('실시간 업데이트 재개','ok');pollOnce();}},{passive:true,capture:true});});
+  ['pointerdown','touchstart','mousemove','scroll','keydown'].forEach(function(type){document.addEventListener(type,function(){if(type==='scroll'&&programmaticScrollY!=null){if(Math.abs(window.scrollY-programmaticScrollY)<1)return;programmaticScrollY=null;}var paused=Date.now()-lastActivity>=60000;lastActivity=Date.now();if(paused && tab==='result'){cloudStatus('실시간 업데이트 재개','ok');pollOnce();}},{passive:true,capture:true});});
 
   /* ---------- 잠금 화면 ---------- */
   function lockMsg(msg, kind) {
@@ -4169,7 +4161,7 @@ var CORE = (function () {
       if (act === 'group-add') g.push(null); else if (g.length > 2) g.splice(Number(t.dataset.j),1); else g[Number(t.dataset.j)] = null;
       invalidate(); renderPairs(); renderWishGroups(); renderExtraConditions(); return;
     }
-    if (act === 'result-layout') { resultLayout = t.dataset.layout; S.resultLayout = resultLayout; renderResult(); save(); return; }
+    if (act === 'result-layout') { resultLayout = t.dataset.layout; S.resultLayout=resultLayout; renderResult(); save(); return; }
     if (act === 'result-sort') { resultSort = t.dataset.sort; renderResult(); return; }
 
     if (act === 'toggle-tag') {
@@ -4297,6 +4289,7 @@ var CORE = (function () {
   }
   function dragStartOn(e) {
     DRAG.justDragged = false;                               /* 새로 누른 손짓은 언제나 정상 클릭으로 처리 */
+    if(DRAG.armed && e.pointerType==='touch' && e.pointerId!==DRAG.pointerId){dragEnd();return;}
     if (DRAG.armed) return;
     if (e.button != null && e.button !== 0) return;         /* 오른쪽·가운데 버튼은 무시 */
     if (e.target && e.target.closest && e.target.closest('input,select,textarea')) return;
@@ -4347,7 +4340,7 @@ var CORE = (function () {
     dragEnd();
     DRAG.justDragged = true;                                  /* 끌고 난 뒤 따라오는 클릭은 무시 */
     if (to == null || isNaN(to)) return;
-    requestMove(id, to);                                      /* 고정 학생 잠금·필수 조합 확인은 그대로 */
+    moveStudent(id, to);                                      /* 고정 학생 잠금·필수 조합 확인은 그대로 */
   }
   document.addEventListener('pointerdown', function (e) { dragStartOn(e); }, true);
   document.addEventListener('pointermove', function (e) { dragMoveTo(e); }, true);
@@ -4373,47 +4366,46 @@ var CORE = (function () {
     if (DRAG.active && e.cancelable) e.preventDefault();
   }, { passive: false });
 
+  window.addEventListener('blur',dragEnd);
+  document.addEventListener('visibilitychange',function(){if(document.hidden)dragEnd();});
   /* 포인터 이벤트가 없는 예전 브라우저용 HTML5 드래그 */
   document.addEventListener('dragstart', function (e) {
+    if(window.PointerEvent){e.preventDefault();return;}
     var chip = e.target.closest ? e.target.closest('.stu') : null;
     if (!chip) return;
-    var id = Number(chip.dataset.id), st = findStudent(id);
-    if (isFixedStudent(st)) {
-      try { e.preventDefault(); } catch (err) { }
-      dragId = null;
-      toast(FIXED_LOCK_MSG, 'err');
-      return;
-    }
-    dragId = id;
+    var st=findStudent(chip.dataset.id);
+    if(st && st.fixed!=null && st.fixed!==''){e.preventDefault();dragId=null;toast(FIXED_LOCK_MSG,'err');return;}
+    dragId = Number(chip.dataset.id);
     chip.classList.add('dragging');
     try { e.dataTransfer.setData('text/plain', String(dragId)); e.dataTransfer.effectAllowed = 'move'; } catch (err) { }
   });
   document.addEventListener('dragend', function () {
     $$('.stu.dragging').forEach(function (el) { el.classList.remove('dragging'); });
-    $$('.col.over,.classcard.over').forEach(function (el) { el.classList.remove('over'); });
+    $$('.col.over').forEach(function (el) { el.classList.remove('over'); });
     dragId = null;
   });
   document.addEventListener('dragover', function (e) {
-    var col = dragColumnOf(e.target);
+    var col = e.target.closest ? e.target.closest('.col') : null;
     if (!col) return;
     e.preventDefault();
     try { e.dataTransfer.dropEffect = 'move'; } catch (err) { }
-    $$('.col.over,.classcard.over').forEach(function (el) { if (el !== col) el.classList.remove('over'); });
+    $$('.col.over').forEach(function (el) { if (el !== col) el.classList.remove('over'); });
     col.classList.add('over');
   });
   document.addEventListener('dragleave', function (e) {
-    var col = dragColumnOf(e.target);
+    var col = e.target.closest ? e.target.closest('.col') : null;
     if (col && !col.contains(e.relatedTarget)) col.classList.remove('over');
   });
   document.addEventListener('drop', function (e) {
-    var col = dragColumnOf(e.target);
+    var col = e.target.closest ? e.target.closest('.col') : null;
     if (!col) return;
     e.preventDefault();
     col.classList.remove('over');
     var id = dragId;
     if (id == null) { try { id = Number(e.dataTransfer.getData('text/plain')); } catch (err) { } }
-    if (id != null && !isNaN(id)) requestMove(id, Number(col.getAttribute('data-k')));
+    if (id != null && !isNaN(id)) moveStudent(id, Number(col.dataset.k));
   });
+  document.addEventListener('pointerdown', function(e){var chip=e.target.closest&&e.target.closest('.stu.locked');if(chip&&!e.target.closest('button'))toast(FIXED_LOCK_MSG,'err');},true);
 
   $$('.tab').forEach(function (b) { b.addEventListener('click', function () { switchTab(b.dataset.tab); }); });
   $('#btnAutoTargets').addEventListener('click', autoTargetsNow);
@@ -4467,13 +4459,8 @@ var CORE = (function () {
   $('#addStudentModal').addEventListener('click', function (e) { if (e.target === this) closeAddStudent(); });
   $('#addStuName').addEventListener('keydown', function (e) { if (e.key === 'Enter') applyAddStudent(); });
   $('#addStuNo').addEventListener('keydown', function (e) { if (e.key === 'Enter') applyAddStudent(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closePaste(); closeUpload(); closeAddStudent(); closePicker(); if (pendingComboMove) cancelComboMove(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closePaste(); closeUpload(); closeAddStudent(); closePicker(); } });
 
-  $('#scoreGap').addEventListener('input', onScoreGapChange);
-  $('#scoreGap').addEventListener('change', onScoreGapChange);
-  $('#comboMoveYes').addEventListener('click', applyComboMove);
-  $('#comboMoveNo').addEventListener('click', cancelComboMove);
-  $('#comboMoveModal').addEventListener('click', function (e) { if (e.target === this) cancelComboMove(); });
   $('#btnSaveWork').addEventListener('click', saveWorkFile);
   $('#btnLoadWork').addEventListener('click', function () { $('#workFileInput').click(); });
   $('#workFileInput').addEventListener('change', function () {
@@ -4504,9 +4491,21 @@ var CORE = (function () {
     if (!window.confirm('희망 조합 ' + S.wishGroups.length + '개를 모두 지웁니다. 계속할까요?')) return;
     S.wishGroups = []; invalidate(); renderWishGroups();
   });
+  $('#scoreGap').addEventListener('blur',function(){this.value=S.scoreGap;});
+  $('#scoreGap').addEventListener('input',function(){var v=Number(this.value);if(isFinite(v)&&v>0){S.scoreThreshold=v;S.scoreGap=v;renderResult();save();}});
   $('#btnRun').addEventListener('click', requestRun);
   $('#btnBarCSV').addEventListener('click', downloadCSV);
   $('#btnRerun').addEventListener('click', requestRun);
+  $('#btnRepair').addEventListener('click',function(){
+    if(!S.result)return;var button=this;button.disabled=true;button.textContent='경고 조정 중…';
+    setTimeout(function(){try{
+      if(!S.result)return;
+      var options=Object.assign({},currentOptions(),{scoreThreshold:S.scoreGap});
+      var repair=CORE.repair(S.students,S.classes,pairsAsIndex(),S.result.assign,options);
+      if(repair.changed.length){pushUndo();S.result.assign=repair.assign;S.result.moves=(S.result.moves||0)+1;renderResult();save();toast(repair.changed.length+'명 이동 · 제약 경고 '+repair.before+'→'+repair.after+'건','ok');}
+      else toast('현재 조건에서 경고를 줄일 수 있는 소수 이동을 찾지 못했습니다.','ok');
+    }finally{button.disabled=false;button.textContent='경고만 최소 조정';}},30);
+  });
 
   $('#btnCopyTSV').addEventListener('click', copyTSV);
   $('#btnPrint').addEventListener('click', function () { window.print(); });
@@ -4520,8 +4519,7 @@ var CORE = (function () {
 
   /* ---------- 시작 ---------- */
   S = loadSaved() || initialState();
-  S = normalizeState(S) || initialState();
-  resultLayout = S.resultLayout || 'sex';
+  S = normalizeState(S) || initialState();resultLayout=S.resultLayout||'sex';
   if (S.students.length) syncTagsFromStudents();
   renderAll();
   updateLinkStatus();
@@ -4553,9 +4551,7 @@ var CORE = (function () {
     lock: lockApp,
     reload: cloudReloadManual,
     move: moveStudent, undo: undoResult,
-    requestMove: requestMove, applyCombo: applyComboMove, cancelCombo: cancelComboMove,
-    comboMembers: comboMembers, scoreGap: function () { return S.scoreGap; },
-    threshold: onScoreGapChange,
+    requestMove:moveStudent,applyCombo:function(){finishMove(true);},cancelCombo:function(){finishMove(false);},comboMembers:function(id){return requiredCompanions(id).filter(function(x){return x!==Number(id);});},scoreGap:function(){return S.scoreGap;},threshold:function(){$('#scoreGap').dispatchEvent(new Event('input',{bubbles:true}));},
     renderAll: function () { renderAll(); }
   };
 })();

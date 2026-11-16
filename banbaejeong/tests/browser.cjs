@@ -93,7 +93,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.locator('[data-layout="sex"]').click();
  assert.equal(await page.evaluate(()=>__bbj.state().resultLayout),'sex');
  assert.equal(await page.locator('.actionbar').isVisible(),false);
- assert.equal(await page.locator('#resultCard .result-actions button').allTextContents().then(a=>a.join('|')),'다시 배정|표로 복사|인쇄|엑셀 내려받기');
+ assert.equal(await page.locator('#resultCard .result-actions button').allTextContents().then(a=>a.join('|')),'다시 배정|경고만 최소 조정|표로 복사|인쇄|엑셀 내려받기');
  const order=await page.locator('.result-heading,.result-views,.result-signals,#boardCard').evaluateAll(es=>es.map(e=>({top:e.getBoundingClientRect().top,bottom:e.getBoundingClientRect().bottom})));
  assert.equal(order.length,4);order.slice(1).forEach((r,i)=>assert.ok(r.top>=order[i].bottom-1));
  const toggleHeight=(await page.locator('#resultSort button').first().boundingBox()).height;

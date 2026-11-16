@@ -89,7 +89,7 @@ const fs=require('node:fs'),path=require('node:path'),os=require('node:os');
  assert.equal(await page.locator('#btnCloudReload').isVisible(),true);
  await page.screenshot({path:path.join(artifacts,'mobile-roster.png')});
  await page.locator('#studentTable [data-act=roster-edit]').first().click();
- await page.fill('#addStuG4','4반');await page.selectOption('#addStuFixed','1');await page.click('#addStuApply');
+ await page.fill('#addStuG4','4반');await page.selectOption('#addStuFixed','1');await page.click('#addStuApply');await page.click('#comboMoveYes');
  assert.equal(await page.evaluate(()=>__bbj.state().students[0].g4),'4반');
  assert.equal(await page.evaluate(()=>__bbj.state().students[0].fixed),1);
  // Compact class rows and all four condition grids at desktop and phone widths.
