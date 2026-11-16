@@ -3130,8 +3130,7 @@ var CORE = (function () {
     $('#tab-setup').hidden = name !== 'setup';
     $('#tab-result').hidden = name !== 'result';
     if (name === 'result') renderResult();
-    updateGuide();
-    updateActionBar();
+    updateAbInfo();
     window.scrollTo(0, 0);
   }
   function renderAll() {
