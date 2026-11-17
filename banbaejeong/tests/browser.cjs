@@ -330,6 +330,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
   await page.click('#btnAddTransfer');await page.fill('#pickerSearch',id===7?'김민준':'');
   await page.locator(`#pickerStudents [data-id="${id}"]`).click();
  }
+ await page.evaluate(()=>{[6,7,8].forEach((i,j)=>__bbj.state().students[i].g5=(j+4)+'반');__bbj.renderAll();}); // keep old transfer dispersion and the new origin/sex minima jointly feasible
  assert.equal(await page.locator('#transferList .group-card').count(),3);
  assert.equal(await page.locator('#transferList [data-act="group-add"]').count(),0);
  await page.locator('#cardConditions').scrollIntoViewIfNeeded();
@@ -512,11 +513,12 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
   assert.equal(await page.locator('.required-heart').evaluateAll(es=>es.every(e=>e.textContent==='♥'&&e.previousElementSibling.classList.contains('nm'))),true);
  }
  await page.screenshot({path:path.join(artifacts,'required-group-hearts.png')});
+ // Reference-only fixtures below keep origin/sex coverage feasible to isolate their original checks.
  // All reference details remain hidden until hover/focus, including stars and proportional gender counts.
  await page.mouse.move(0,0);
  await page.evaluate(()=>{
   const st=__bbj.state();
-  st.students=Array.from({length:30},(_,i)=>({id:i+1,name:'참고학생'+i,no:i+1,g4:'',g5:(i%6+1)+'반',gender:(i<10?i<8:i<20?i<15:i<22)?'남':'여',tags:(i<4||(i>=10&&i<12))?['학습']:[],w:{학습:5},fixed:null}));
+  st.students=Array.from({length:30},(_,i)=>({id:i+1,name:'참고학생'+i,no:i+1,g4:'',g5:'1반',gender:(i<10?i<8:i<20?i<15:i<22)?'남':'여',tags:(i<4||(i>=10&&i<12))?['학습']:[],w:{학습:5},fixed:null}));
   st.classes=['가반','나반','다반'].map(name=>({name,total:10,special:false}));st.requiredGroups=[];st.pairs=[];st.wishGroups=[];st.useY3=false;
   st.result={assign:st.students.map((_,i)=>Math.floor(i/10)),ids:st.students.map(s=>s.id),moves:0,ms:0};__bbj.renderAll();
  });
@@ -651,7 +653,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.match(countDetails,/나반 2명 초과 \(남1 여1\)/);
  await page.evaluate(()=>{
   const st=__bbj.state();
-  st.students=Array.from({length:8},(_,i)=>({id:i+1,name:'성비학생'+i,no:i+1,g4:'',g5:(i%2+1)+'반',gender:i<4?'남':'여',tags:[],w:{},fixed:null}));
+  st.students=Array.from({length:8},(_,i)=>({id:i+1,name:'성비학생'+i,no:i+1,g4:'',g5:(i%4+1)+'반',gender:i<4?'남':'여',tags:[],w:{},fixed:null}));
   st.classes=[{name:'가반',total:4,male:2,female:2,special:false},{name:'나반',total:4,male:2,female:2,special:false}];
   st.result={assign:[0,0,0,0,1,1,1,1],ids:[1,2,3,4,5,6,7,8],moves:0,ms:0};__bbj.renderAll();
  });
@@ -662,7 +664,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  // 한쪽 성만 모자라고 다른 성은 넘치는 반은 숫자 대신 말로 보여 준다.
  await page.evaluate(()=>{
   const st=__bbj.state();
-  st.students=Array.from({length:16},(_,i)=>({id:i+1,name:'섬임학생'+i,no:i+1,g4:'',g5:(i%2+1)+'반',gender:i<6?'남':'여',tags:[],w:{},fixed:null}));
+  st.students=Array.from({length:16},(_,i)=>({id:i+1,name:'섬임학생'+i,no:i+1,g4:'',g5:'1반',gender:i<6?'남':'여',tags:[],w:{},fixed:null}));
   st.classes=[{name:'가반',total:9,male:5,female:4,special:false},{name:'나반',total:7,male:4,female:3,special:false}];
   st.result={assign:st.students.map((s,i)=>[0,1,2,3,4,6,7,8].indexOf(i)>=0?0:1),ids:st.students.map(s=>s.id),moves:0,ms:0};__bbj.renderAll();
  });

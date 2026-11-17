@@ -934,6 +934,33 @@ var CORE = (function () {
     });
   }
 
+  /* Normalize only comparison keys; saved g5 values and IDs remain untouched. */
+  function g5Key(value) {
+    var raw=String(value==null?'':value).trim();
+    var match=raw.match(/^(?:5\s*-\s*|5\s*학년\s*)?(\d+)\s*반?$/);
+    return match?'5-'+Number(match[1]):raw;
+  }
+  function g5Profile(students,K) {
+    var names=[];students.forEach(function(st){var key=g5Key(st.g5);if(key&&names.indexOf(key)<0)names.push(key);});
+    names.sort(function(a,b){return a.localeCompare(b,'ko',{numeric:true});});
+    var groups=[],map=Object.create(null);
+    names.forEach(function(name){['남','여'].forEach(function(gender){map[name+'|'+gender]=groups.length;groups.push({g5:name,gender:gender,total:0});});});
+    var of=students.map(function(st){var key=g5Key(st.g5),i=key?map[key+'|'+st.gender]:null;if(i==null)return -1;groups[i].total++;return i;});
+    return {groups:groups,of:of,K:K};
+  }
+  function g5Penalty(count,total,K) { return total>=K ? (count===0?1:0) : Math.max(0,count-1); }
+  function g5Spread(students,rep) {
+    var per=rep&&rep.per||[],K=per.length;if(!K)return [];
+    var profile=g5Profile(students,K),counts=profile.groups.map(function(){return new Array(K).fill(0);}),bad=[];
+    per.forEach(function(p,k){(p.members||[]).forEach(function(i){var g=profile.of[i];if(g>=0)counts[g][k]++;});});
+    profile.groups.forEach(function(group,g){
+      var range=Math.max.apply(null,counts[g])-Math.min.apply(null,counts[g]);
+      per.forEach(function(p,k){var count=counts[g][k];
+        if(group.total>=K ? count===0 : range>1&&count>1)bad.push({k:p.k==null?k:p.k,cls:p.name,g5:group.g5,gender:group.gender,count:count});
+      });
+    });return bad;
+  }
+
   function hardPlacement(students, classes, links, opts, rnd) {
     var N = students.length, K = classes.length, parent = students.map(function (_,i) { return i; });
     function root(i) { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; }
@@ -948,6 +975,8 @@ var CORE = (function () {
       u[st.gender === '남' ? 'male' : 'female']++; u.score += studentScore(st); if (st.transfer) u.transfer++;
       if ((st.tags || []).indexOf('특수') !== -1) u.special++;
     });
+    var profile=g5Profile(students,K),cover=!!opts.g5Coverage;
+    units.forEach(function(u){u.g5=profile.groups.map(function(){return 0;});u.members.forEach(function(i){var g=profile.of[i];if(g>=0)u.g5[g]++;});});
     var conflict = false;
     links.forEach(function (l) { var a = unitOf[l.a], b = unitOf[l.b]; if (a === b) { if (l.manual || l.duplicate) conflict = true; } else { if (units[a].edges.indexOf(b) < 0) units[a].edges.push(b); if (units[b].edges.indexOf(a) < 0) units[b].edges.push(a); } });
     var specialClasses = (opts.pinned && opts.pinned['특수']) || classes.map(function (c,k) { return c.special ? k : -1; }).filter(function (k) { return k >= 0; });
@@ -959,11 +988,23 @@ var CORE = (function () {
       }
     });
     if (conflict || units.some(function (u) { return !u.allowed.length; })) return null;
+    if(cover && classes.some(function(c){return profile.groups.filter(function(g){return g.total>=K;}).length>c.total;}))return null;
+    if(cover && profile.groups.some(function(g,gi){return g.total>=K && classes.some(function(_,k){return !units.some(function(u){return u.g5[gi]&&u.allowed.indexOf(k)>=0;});});}))return null;
+    var transferN=students.filter(function(st){return st.transfer;}).length,transferMin=Math.floor(transferN/(K||1)),transferMax=Math.ceil(transferN/(K||1));
+    var gc=profile.groups.map(function(){return new Array(K).fill(0);}),leftCount=profile.groups.map(function(g){return g.total;});
+    function cohortAdd(u,k,sign){u.g5.forEach(function(n,g){gc[g][k]+=n*sign;leftCount[g]-=n*sign;});}
+    function coveragePossible(){
+      if(opts.transferCoverage){var needed=0;for(var tk=0;tk<K;tk++){var gap=Math.max(0,transferMin-tr[tk]);needed+=gap;if(gap>remaining[tk])return false;}if(needed>transferN-tr.reduce(function(sum,n){return sum+n;},0))return false;}
+      if(!cover)return true;
+      if(profile.groups.some(function(group,g){return group.total>=K && gc[g].filter(function(n){return n===0;}).length>leftCount[g];}))return false;
+      return !classes.some(function(_,k){var missing=0;profile.groups.forEach(function(group,g){if(group.total>=K&&!gc[g][k])missing++;});return missing>remaining[k];});
+    }
     var remaining = classes.map(function (c) { return c.total; });
     var m = classes.map(function (c) { return c.male; }), f = classes.map(function (c) { return c.female; });
     var sp = new Array(K).fill(0), tr = new Array(K).fill(0), score = new Array(K).fill(0), at = new Array(units.length).fill(-1), visits = 0;
-    function choices(u) { return u.allowed.filter(function (k) { return (opts.totalOnly ? remaining[k] >= u.members.length : m[k] >= u.male && f[k] >= u.female) && (opts.relaxSpecial || sp[k]+u.special <= 1) && !u.edges.some(function (v) { return at[v] === k; }); }); }
+    function choices(u) { return u.allowed.filter(function (k) { return (opts.totalOnly ? remaining[k] >= u.members.length : m[k] >= u.male && f[k] >= u.female) && (opts.relaxSpecial || sp[k]+u.special <= 1) && !u.edges.some(function (v) { return at[v] === k; }) && (!opts.transferCoverage || tr[k]+u.transfer<=transferMax) && (!cover || !u.g5.some(function(n,g){return profile.groups[g].total<K&&gc[g][k]+n>1;})); }); }
     function search(left) {
+      if(!coveragePossible())return false;
       if (!left) return true;
       if (++visits > 60000) return false;
       var chosen = -1, candidates = null;
@@ -971,17 +1012,17 @@ var CORE = (function () {
         var cs = choices(units[i]); if (!cs.length) return false;
         if (chosen < 0 || cs.length < candidates.length || (cs.length === candidates.length && units[i].members.length+units[i].edges.length > units[chosen].members.length+units[chosen].edges.length)) { chosen=i; candidates=cs; }
       }
-      var u = units[chosen], jitter = candidates.map(function (k) { return {k:k,value:tr[k]*u.transfer*12000+score[k]*u.score*80+(opts.totalOnly ? (u.male*u.male-2*m[k]*u.male+u.female*u.female-2*f[k]*u.female)*500 : 0)+rnd()}; });
+      var u = units[chosen], jitter = candidates.map(function (k) { return {k:k,value:(cover?u.g5.reduce(function(sum,n,g){return sum+(n&&!gc[g][k]&&profile.groups[g].total>=K?-100000:0);},0):0)+tr[k]*u.transfer*12000+score[k]*u.score*80+(opts.totalOnly ? (u.male*u.male-2*m[k]*u.male+u.female*u.female-2*f[k]*u.female)*500 : 0)+rnd()}; });
       jitter.sort(function (a,b) { return a.value-b.value; });
       for (var j = 0; j < jitter.length; j++) {
-        var k = jitter[j].k; at[chosen]=k; remaining[k]-=u.members.length; m[k]-=u.male; f[k]-=u.female; sp[k]+=u.special; tr[k]+=u.transfer; score[k]+=u.score;
+        var k = jitter[j].k; at[chosen]=k; remaining[k]-=u.members.length; m[k]-=u.male; f[k]-=u.female; sp[k]+=u.special; tr[k]+=u.transfer; score[k]+=u.score;cohortAdd(u,k,1);
         if (search(left-1)) return true;
-        at[chosen]=-1; remaining[k]+=u.members.length; m[k]+=u.male; f[k]+=u.female; sp[k]-=u.special; tr[k]-=u.transfer; score[k]-=u.score;
+        at[chosen]=-1; remaining[k]+=u.members.length; m[k]+=u.male; f[k]+=u.female; sp[k]-=u.special; tr[k]-=u.transfer; score[k]-=u.score;cohortAdd(u,k,-1);
       }
       return false;
     }
     if (!search(units.length)) return null;
-    return {place:students.map(function (_,i) { return at[unitOf[i]]; }), units:units, unitOf:unitOf};
+    return {place:students.map(function (_,i) { return at[unitOf[i]]; }), units:units, unitOf:unitOf,transferBalanced:!!opts.transferCoverage};
   }
 
   /* 배정 실행: 고정 학생 선배치 → 탐욕 배치 → 스왑/이동 개선을 여러 번 반복해 가장 좋은 결과 선택 */
@@ -1029,6 +1070,7 @@ var CORE = (function () {
     totalScore = Math.round(totalScore * 100) / 100;
     var meanScore = K ? totalScore / K : 0;
 
+    var g5=g5Profile(students,K);
     var male = students.map(function (s) { return s.gender === '남' ? 1 : 0; });
     var fixedOf = students.map(function (s) {
       var k = s.fixed === null || s.fixed === undefined || s.fixed === '' ? null : Number(s.fixed);
@@ -1072,6 +1114,7 @@ var CORE = (function () {
         mc: new Array(K).fill(0),
         sc: new Array(K).fill(0),
         transfer: new Array(K).fill(0),
+        g5:g5.groups.map(function(){return new Array(K).fill(0);}),
         tc: tagNames.map(function () { return new Array(K).fill(0); }),
         tsc: tagNames.map(function () { return new Array(K).fill(0); }),
         place: new Array(N).fill(-1)
@@ -1079,6 +1122,7 @@ var CORE = (function () {
     }
     function addTo(st, k, i, sign) {
       st.cnt[k] += sign;
+      if(g5.of[i]>=0)st.g5[g5.of[i]][k]+=sign;
       st.mc[k] += sign * male[i];
       st.sc[k] += sign * sScore[i];
       if (students[i].transfer) st.transfer[k] += sign;
@@ -1093,6 +1137,7 @@ var CORE = (function () {
       var c = WSIZE * d * d;
       var dm = st.mc[k] - M[k];
       c += WGENDER * dm * dm;
+      g5.groups.forEach(function(group,g){c+=20000*g5Penalty(st.g5[g][k],group.total,K);});
       var ds = st.sc[k] - meanScore;
       c += 12000 * Math.pow(st.transfer[k]-transferCount/(K || 1),2);
       c += WSCORE * ds * ds;                       /* 반별 힘든 점수 총합의 균등 */
@@ -1107,6 +1152,13 @@ var CORE = (function () {
         c += WTAGSCORE * dp * dp;                   /* 태그(유형)별 점수 분산 */
       }
       return c;
+    }
+    function g5ClassCost(st,k){return g5.groups.reduce(function(sum,group,g){return sum+g5Penalty(st.g5[g][k],group.total,K);},0);}
+    function g5SwapDelta(st,a,b){
+      var ga=g5.of[a],gb=g5.of[b],ka=st.place[a],kb=st.place[b],delta=0;if(ga===gb||ka===kb)return 0;
+      [ga,gb].forEach(function(g,j){if(g<0)return;var sign=j===0?-1:1,group=g5.groups[g];
+        delta+=g5Penalty(st.g5[g][ka]+sign,group.total,K)+g5Penalty(st.g5[g][kb]-sign,group.total,K)-g5Penalty(st.g5[g][ka],group.total,K)-g5Penalty(st.g5[g][kb],group.total,K);
+      });return delta;
     }
     function pinBad(st, i, k) {
       var bad = 0, ts = sTags[i];
@@ -1174,9 +1226,11 @@ var CORE = (function () {
 
     var restarts = Math.max(1, opts.restarts || 18);
     var iters = Math.max(200, opts.iters || 4000);
-    var best = null, bestCost = Infinity, r, i;
+    var best = null, bestCost = Infinity, bestHard=Infinity,bestSpread=Infinity,r, i;
 
-    var hardBase = exactQuotas ? hardPlacement(students,placementClasses,links,placementOptions,rnd) : null;
+    var hardBase = exactQuotas ? hardPlacement(students,placementClasses,links,Object.assign({},placementOptions,{g5Coverage:true,transferCoverage:true}),rnd) : null;
+    if(!hardBase&&exactQuotas)hardBase=hardPlacement(students,placementClasses,links,Object.assign({},placementOptions,{g5Coverage:true}),rnd);
+    if(!hardBase&&exactQuotas)hardBase=hardPlacement(students,placementClasses,links,placementOptions,rnd);
     // If constraints conflict, retain mandatory together-groups whenever quotas permit; report other violations explicitly.
     if (!hardBase && exactQuotas && (opts.requiredGroups || []).length) hardBase = hardPlacement(students,placementClasses,[],Object.assign({},placementOptions,{relaxSpecial:true}),rnd);
     for (r = 0; r < restarts; r++) {
@@ -1250,6 +1304,7 @@ var CORE = (function () {
               if (spIndex != null && (st.tc[spIndex][ka]-specialA+specialB > 1 || st.tc[spIndex][kb]-specialB+specialA > 1)) continue;
             }
             var isPair = sepOf[a].indexOf(b) !== -1;
+            var spreadDelta=g5SwapDelta(st,a,b);
             var bCls2 = costClass(st, ka) + costClass(st, kb);
             var bSep2 = sepCur(st, a, b) + sepCur(st, b, a) + (isPair && ka === kb ? 1 : 0);
             var bPin2 = pinBad(st, a, ka) + pinBad(st, b, kb);
@@ -1262,7 +1317,7 @@ var CORE = (function () {
             var aPin2 = pinBad(st, a, kb) + pinBad(st, b, ka);
             var aWish2 = wishPenCur(st, a, b) + wishPenCur(st, b, a);
             var d2 = (aCls2 - bCls2) + (aSep2 - bSep2) * WSEP + (aPin2 - bPin2) * WPIN + (aWish2 - bWish2) * WWISH;
-            if (d2 < 0 || (d2 === 0 && rnd() < 0.12)) continue;
+            if(aSep2<=bSep2&&aPin2<=bPin2 && (spreadDelta<0 || (spreadDelta===0&&(d2<0 || (d2===0&&rnd()<0.12)))))continue;
             addTo(st, kb, a, -1); addTo(st, ka, b, -1);
             addTo(st, ka, a, 1); addTo(st, kb, b, 1);
             st.place[a] = ka; st.place[b] = kb;
@@ -1280,7 +1335,9 @@ var CORE = (function () {
             if(ca===cb || male[sa]===male[sb])continue;
             var change=male[sb]-male[sa];
             var genderDelta=2*change*((st.mc[ca]-M[ca])-(st.mc[cb]-M[cb]))+2;
-            if(genderDelta>=bestDelta)continue;
+            if(genderDelta>=bestDelta || g5SwapDelta(st,sa,sb)>0)continue;
+            var transferChange=(students[sb].transfer?1:0)-(students[sa].transfer?1:0);
+            if(transferChange && 2*transferChange*(st.transfer[ca]-st.transfer[cb])+2>0)continue;
             if(pinBad(st,sa,cb)||pinBad(st,sb,ca)||sepBadAt(st,sa,cb,sb)||sepBadAt(st,sb,ca,sa))continue;
             var sp=tagMap['특수'],asp=(students[sa].tags||[]).indexOf('특수')>=0?1:0,bsp=(students[sb].tags||[]).indexOf('특수')>=0?1:0;
             if(sp!=null && (st.tc[sp][ca]-asp+bsp>1 || st.tc[sp][cb]-bsp+asp>1))continue;
@@ -1295,8 +1352,9 @@ var CORE = (function () {
       }
 
       var c = totalCost(st);
-      if (c < bestCost) {
-        bestCost = c;
+      var hardCost=evaluate(students,classes,pairs,st.place,opts).problems.length,spreadCost=classes.reduce(function(sum,_,k){return sum+g5ClassCost(st,k);},0);
+      if (hardCost<bestHard || (hardCost===bestHard&&(spreadCost<bestSpread || (spreadCost===bestSpread&&c<bestCost)))) {
+        bestHard=hardCost;bestSpread=spreadCost;bestCost = c;
         best = { place: st.place.slice() };
       }
     }
@@ -1579,7 +1637,15 @@ var CORE = (function () {
     function inspect(a){
       var rep=evaluate(students,classes,pairs,a,opts),scores=rep.per.map(function(p){return p.score;}),spread=Math.max.apply(null,scores)-Math.min.apply(null,scores);
       var threshold=Number(opts.scoreThreshold)||2;
-      return {rep:rep,hard:rep.problems.length,quota:rep.per.reduce(function(sum,p){return sum+Math.abs(p.count-p.target);},0),soft:spread>=threshold-1e-9?spread:0,moved:a.reduce(function(n,k,i){return n+(k!==original[i]?1:0);},0)};
+      var g5bad=g5Spread(students,rep),g5cost=g5bad.reduce(function(sum,v){return sum+(v.count===0?1:v.count-1);},0);
+      return {rep:rep,g5:g5bad,g5cost:g5cost,hard:rep.problems.length,quota:rep.per.reduce(function(sum,p){return sum+Math.abs(p.count-p.target);},0),soft:spread>=threshold-1e-9?spread:0,moved:a.reduce(function(n,k,i){return n+(k!==original[i]?1:0);},0)};
+    }
+    function addsViolation(before,after){
+      function added(a,b,key){var have=Object.create(null);a.forEach(function(v){have[key(v)]=true;});return b.some(function(v){return !have[key(v)];});}
+      var pairKey=function(v){return v.ai+':'+v.bi;};
+      return ['sepViol','y3Viol','duplicateViol'].some(function(key){return added(before[key],after[key],pairKey);}) ||
+        added(before.tagBad,after.tagBad,function(v){return v.kind+':'+(v.idx==null?v.cls:v.idx);}) ||
+        added(before.capBad,after.capBad,function(v){return v.k;});
     }
     var start=inspect(current),state=start;
     function active(info){
@@ -1589,7 +1655,8 @@ var CORE = (function () {
       info.rep.requiredViol.forEach(function(v){v.members.forEach(function(i){ids[i]=true;});});
       info.rep.tagBad.forEach(function(v){if(v.idx!=null)ids[v.idx]=true;else info.rep.per.filter(function(p){return p.name===v.cls;}).forEach(function(p){p.members.forEach(function(i){if((students[i].tags||[]).indexOf('특수')>=0)ids[i]=true;});});});
       info.rep.capBad.forEach(function(p){if(p.count>p.target)p.members.forEach(function(i){ids[i]=true;});});
-      if(!info.hard&&info.soft)info.rep.per.forEach(function(p){p.members.forEach(function(i){if(studentScore(students[i])>0)ids[i]=true;});});
+      info.g5.forEach(function(v){students.forEach(function(st,i){if(g5Key(st.g5)===v.g5&&st.gender===v.gender&&(v.count===0?current[i]!==v.k:current[i]===v.k))ids[i]=true;});});
+      if(!info.hard&&!info.g5cost&&info.soft)info.rep.per.forEach(function(p){p.members.forEach(function(i){if(studentScore(students[i])>0)ids[i]=true;});});
       return ids;
     }
     for(var pass=0;pass<Math.min(N,16)&&examined<limit;pass++){
@@ -1600,9 +1667,10 @@ var CORE = (function () {
         if(students.some(function(st,i){return st.fixed!=null&&st.fixed!==''&&Number(st.fixed)>=0&&trial[i]!==current[i]&&trial[i]!==Number(st.fixed);}))return;
         if(units.some(function(u){return new Set(u.map(function(i){return current[i];})).size===1&&new Set(u.map(function(i){return trial[i];})).size>1;}))return;
         var info=inspect(trial);
+        if(addsViolation(state.rep,info.rep))return;
         if(info.quota>state.quota || info.rep.fixedBad.length>state.rep.fixedBad.length || info.rep.requiredViol.length>state.rep.requiredViol.length)return;
-        if(!(info.hard<state.hard || (!state.hard&&!info.hard&&info.soft<state.soft-1e-9)))return;
-        if(!winnerInfo || info.hard<winnerInfo.hard || (info.hard===winnerInfo.hard&&(info.moved<winnerInfo.moved || (info.moved===winnerInfo.moved&&info.soft<winnerInfo.soft)))){winner=trial;winnerInfo=info;}
+        if(!(info.hard<state.hard || (info.hard===state.hard&&info.g5cost<state.g5cost) || (!state.hard&&!info.hard&&!state.g5cost&&!info.g5cost&&info.soft<state.soft-1e-9)))return;
+        if(!winnerInfo || info.hard<winnerInfo.hard || (info.hard===winnerInfo.hard&&(info.g5cost<winnerInfo.g5cost || (info.g5cost===winnerInfo.g5cost&&(info.moved<winnerInfo.moved || (info.moved===winnerInfo.moved&&info.soft<winnerInfo.soft)))))){winner=trial;winnerInfo=info;}
       }
       units.forEach(function(u){
         if(!u.some(function(i){return warning[i];}) || examined>=limit)return;
@@ -1630,9 +1698,9 @@ var CORE = (function () {
         }
       });
       if(!winner)break;current=winner;state=winnerInfo;
-      if(!state.hard&&!state.soft)break;
+      if(!state.hard&&!state.g5cost&&!state.soft)break;
     }
-    return {assign:current,changed:current.map(function(k,i){return k!==original[i]?i:-1;}).filter(function(i){return i>=0;}),before:start.hard,after:state.hard,examined:examined,limited:examined>=limit};
+    return {assign:current,changed:current.map(function(k,i){return k!==original[i]?i:-1;}).filter(function(i){return i>=0;}),before:start.hard,after:state.hard,g5Before:start.g5.length,g5After:state.g5.length,examined:examined,limited:examined>=limit};
   }
 
   function scoreSpread(rep, gap) {
@@ -1792,7 +1860,7 @@ var CORE = (function () {
     virtualRoster: virtualRoster,
     autoTargets: autoTargets,
     syncClass: syncClass,
-    balanceAdvice: balanceAdvice, populationAdvice:populationAdvice, repair:repair, scoreSpread:scoreSpread, countNotes:countNotes,
+    balanceAdvice: balanceAdvice, populationAdvice:populationAdvice, repair:repair, repairMinimal:repair, g5Spread:g5Spread, scoreSpread:scoreSpread, countNotes:countNotes,
     tagPlans: tagPlans,
     buildLinks: buildLinks,
     assign: assign,
@@ -3361,8 +3429,9 @@ var CORE = (function () {
       return s1.name.localeCompare(s2.name, 'ko') || Number(s1.no) - Number(s2.no);
     }
 
-    var h = '';
+    var h = '',g5Warnings=CORE.g5Spread(S.students,rep);
     rep.per.forEach(function (p) {
+      var spreadNotes=g5Warnings.filter(function(v){return v.k===p.k;}).map(function(v){return v.g5+' '+v.gender+' '+v.count;});
       var quotaNotes = [];
       CORE.populationAdvice(S.students,rep).filter(function(v){return v.k===p.k;}).forEach(function(v){quotaNotes.push(v.note);});
       var fixedNotes = rep.fixedBad.filter(function (f) { return p.members.indexOf(f.idx) >= 0; }).map(function (f) { return f.name + ' → ' + f.want; });
@@ -3376,14 +3445,14 @@ var CORE = (function () {
         return '<span class="student-summary" title="' + esc(studentLabel(st)) + '">' + esc(st.tags.join('·')) + esc(fmtScore(scoreOf(st))) + '</span>';
       }).join('');
 
-      h += '<div class="col' + (p.count!==p.target ? ' quota-bad' : '') + '" data-k="' + p.k + '" data-score="' + p.score + '">' +
+      h += '<div class="col' + (p.count!==p.target || spreadNotes.length ? ' quota-bad' : '') + '" data-k="' + p.k + '" data-score="' + p.score + '">' +
         '<div class="colhead">' +
           '<div class="row1"><span class="cname">' + esc(p.name) + '</span> ' +
             '<span class="ccount">' + p.count + '명</span> ' +
             '<span class="cgen">(남' + p.male + ' 여' + p.female + ')</span> ' +
             '<span class="cscore" title="이 반의 힘든 점수(★) 합계">★' + esc(fmtScore(p.score)) + '</span></div>' +
           (tagCards ? '<div class="tagsum">' + tagCards + '</div>' : '') +
-          (quotaNotes.length || fixedNotes.length ? '<div class="class-notes">' + quotaNotes.map(function(text){return '<span'+(p.count===p.target?' class="soft"':'')+'>'+esc(text)+'</span>';}).concat(fixedNotes.map(function(text){return '<span>'+esc(text)+'</span>';})).join('') + '</div>' : '') +
+          (quotaNotes.length || spreadNotes.length || fixedNotes.length ? '<div class="class-notes">' + quotaNotes.map(function(text){return '<span'+(p.count===p.target?' class="soft"':'')+'>'+esc(text)+'</span>';}).concat(spreadNotes.map(function(text){return '<span class="g5-warning">'+esc(text)+'</span>';})).concat(fixedNotes.map(function(text){return '<span>'+esc(text)+'</span>';})).join('') + '</div>' : '') +
         '</div>' +
         '<div class="chiplist layout-' + resultLayout + '">' +
           studentLayoutHtml(members,boys,girls,p.k,sepMap,y3Map,fixMap,specialMap,heartMap) +
@@ -4535,8 +4604,8 @@ var CORE = (function () {
     setTimeout(function(){try{
       if(!S.result)return;
       var options=Object.assign({},currentOptions(),{scoreThreshold:S.scoreGap});
-      var repair=CORE.repair(S.students,S.classes,pairsAsIndex(),S.result.assign,options);
-      if(repair.changed.length){pushUndo();S.result.assign=repair.assign;S.result.moves=(S.result.moves||0)+1;renderResult();save();toast(repair.changed.length+'명 이동 · 제약 경고 '+repair.before+'→'+repair.after+'건','ok');}
+      var repair=CORE.repairMinimal(S.students,S.classes,pairsAsIndex(),S.result.assign,options);
+      if(repair.changed.length){pushUndo();S.result.assign=repair.assign;S.result.moves=(S.result.moves||0)+1;renderResult();save();toast(repair.changed.length+'명 이동 · 제약 경고 '+(repair.before+(repair.g5Before||0))+'→'+(repair.after+(repair.g5After||0))+'건','ok');}
       else toast('현재 조건에서 경고를 줄일 수 있는 소수 이동을 찾지 못했습니다.','ok');
     }finally{button.disabled=false;button.textContent='경고만 최소 조정';}},30);
   });

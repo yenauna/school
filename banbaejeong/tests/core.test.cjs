@@ -140,6 +140,7 @@ test('required wishes merge transitively, duplicate names split, and special cap
  st[4].name=st[6].name='김민준';st[4].fixed=0;
  for(const i of [4,6]){st[i].tags=['특수'];st[i].w={특수:5}}
  for(const i of [6,7,8]){st[i].transfer=true;st[i].tags=i===6?['특수']:['학습'];st[i].w={[st[i].tags[0]]:5}}
+ [6,7,8].forEach((i,j)=>st[i].g5=(j+4)+'반'); // keep the transfer spread feasible alongside mandatory origin/sex coverage
  const opts={seed:42,threeYear:false,requiredGroups:[[0,1],[1,2]],pinned:{특수:[0,1]},restarts:4,iters:3000};
  const result=C.assign(st,cls,[],opts),rep=C.evaluate(st,cls,[],result.assign,opts);
  assert.equal(result.assign[0],result.assign[1]);assert.equal(result.assign[1],result.assign[2]);
