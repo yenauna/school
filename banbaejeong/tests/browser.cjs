@@ -49,15 +49,15 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  // New stars always start at one even if a deleted tag was previously set higher.
  const toggle=page.locator('[data-act="toggle-tag"][data-id="4"][data-tag="학습"]');
  await toggle.click(); assert.equal(await page.evaluate(()=>__bbj.state().students[3].w.학습),1);
- await page.locator('[data-act="tag-mul"][data-id="4"][data-tag="학습"]').selectOption('5');
+ await page.locator('[data-act="tag-mul"][data-id="4"][data-tag="학습"]').selectOption('3');
  await toggle.click();await toggle.click();assert.equal(await page.evaluate(()=>__bbj.state().students[3].w.학습),1);
  await toggle.click();
- // Roster options and typed totals enforce the five-star limit.
+ // Roster options and typed totals enforce the unrestricted total and three-star tags.
  await toggle.click();
- assert.deepEqual(await page.locator('[data-act="tag-mul"][data-id="4"][data-tag="학습"] option').evaluateAll(es=>es.map(e=>e.value)),['1','2','3','4','5']);
+ assert.deepEqual(await page.locator('[data-act="tag-mul"][data-id="4"][data-tag="학습"] option').evaluateAll(es=>es.map(e=>e.value)),['1','2','3']);
  const score=page.locator('[data-scope="student"][data-id="4"][data-field="score"]');
  await score.fill('99');await score.blur();
- assert.equal(await page.evaluate(()=>__bbj.state().students[3].score),5);
+ assert.equal(await page.evaluate(()=>__bbj.state().students[3].score),99);
  await toggle.click();assert.equal(await page.evaluate(()=>__bbj.state().students[3].tags.length),0);
  await page.click('#btnAddPair');
  for(let j=0;j<6;j++){
@@ -107,13 +107,13 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.click('#btnPrint');assert.equal(await page.evaluate(()=>window.testPrinted),true);
  await page.click('#btnCopyTSV');assert.match(await page.evaluate(()=>window.testCopied),/^5학년 반\t번호\t이름/);
  const exportReady=page.waitForEvent('download');await page.click('#btnBarCSV');const exported=await exportReady;
- assert.match(exported.suggestedFilename(),/^반배정결과_.*\.csv$/);
+ assert.match(exported.suggestedFilename(),/^반배정결과_.*\.xlsx$/);
  const ys=await page.locator('.chiplist').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().y));
  assert.ok(Math.max(...ys)-Math.min(...ys)<1);
- assert.match(await page.locator('.tagsum').allTextContents().then(t=>t.join(' ')),/특수5/);
+ assert.match(await page.locator('.tagsum').allTextContents().then(t=>t.join(' ')),/특수3/);
  assert.match(await page.locator('.tagsum').allTextContents().then(t=>t.join(' ')),/학습·생활3/);
  assert.equal(await page.locator('.stu .l2,.stu .st').count(),0);
- assert.equal(await page.locator('.stu[data-id="1"] .tag-on').innerText(),'특수5');
+ assert.equal(await page.locator('.stu[data-id="1"] .tag-on').innerText(),'특수3');
  const colors=await page.locator('.tag-on').evaluateAll(es=>[...new Set(es.map(e=>getComputedStyle(e).backgroundColor))]);assert.equal(colors.length,4);
  const checkOrder=async(mode)=>assert.equal(await page.evaluate(mode=>[...document.querySelectorAll('.col')].every(col=>{
   const st=__bbj.state(),members=[...col.querySelectorAll('.stu')].map(e=>st.students.find(s=>s.id===Number(e.dataset.id)));
@@ -200,31 +200,31 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
   fakeServer.state.students[0].tags=['통합학급'];fakeServer.state.students[0].w={'통합학급':2};fakeServer.state.students[0].score=null;
   fakeServer.state.pairs=[[1,2]];fakeServer.revision++;__bbj.cloud.load();
  });
- await page.waitForFunction(()=>__bbj.state().students[0].w.특수===5 && __bbj.state().pairs.length===1 && __bbj.state().pairs[0].length===2);
+ await page.waitForFunction(()=>__bbj.state().students[0].w.특수===3 && __bbj.state().pairs.length===1 && __bbj.state().pairs[0].length===2);
  assert.deepEqual(await page.evaluate(()=>__bbj.state().pairs),[[1,2]]);
  assert.ok(await page.evaluate(()=>__bbj.state().tags.some(t=>t.name==='학부모')));
  await page.evaluate(()=>{fakeServer.state=JSON.parse(JSON.stringify(__bbj.state()));fakeServer.revision++;__bbj.cloud.load()});
  await page.waitForTimeout(30);
- assert.equal(await page.evaluate(()=>__bbj.state().students[0].w.특수),5);
- // Both modal modes use 1..5 options, cap typed totals and clear to zero when untagged.
+ assert.equal(await page.evaluate(()=>__bbj.state().students[0].w.특수),3);
+ // Both modal modes use 1..3 options, keep typed totals and clear to zero when untagged.
  await page.locator('.col[data-k="0"] [data-act="add-class-student"]').click();
  await page.fill('#addStuName','모달추가확인');
  const modalTag=page.locator('#addStuTags [data-tag="학습"][data-act="toggle-tag"]');
  await modalTag.click();
- assert.deepEqual(await page.locator('#addStuTags select option').evaluateAll(es=>es.map(e=>e.value)),['1','2','3','4','5']);
- await page.fill('#addStuScore','100');assert.equal(await page.inputValue('#addStuScore'),'5');
+ assert.deepEqual(await page.locator('#addStuTags select option').evaluateAll(es=>es.map(e=>e.value)),['1','2','3']);
+ await page.fill('#addStuScore','100');assert.equal(await page.inputValue('#addStuScore'),'100');
  await modalTag.click();assert.equal(await page.inputValue('#addStuScore'),'0');
- await modalTag.click();await page.locator('#addStuTags select').selectOption('5');
+ await modalTag.click();await page.locator('#addStuTags select').selectOption('3');
  await page.click('#addStuApply');
- assert.equal(await page.evaluate(()=>__bbj.state().students.find(s=>s.name==='모달추가확인').w.학습),5);
+ assert.equal(await page.evaluate(()=>__bbj.state().students.find(s=>s.name==='모달추가확인').w.학습),3);
  const beforeEdit=await page.evaluate(()=>JSON.stringify(__bbj.state().students.find(s=>s.name==='모달추가확인')));
  await page.locator('.stu button.nm').filter({hasText:'모달추가확인'}).click();
  await page.locator('#addStuTags select').selectOption('2');await page.click('#addStuCancel');
  assert.equal(await page.evaluate(()=>JSON.stringify(__bbj.state().students.find(s=>s.name==='모달추가확인'))),beforeEdit);
  await page.locator('.stu button.nm').filter({hasText:'모달추가확인'}).click();
  assert.equal(await page.locator('#addStuTitle').innerText(),'학생 수정');
- await page.fill('#addStuScore','9');assert.equal(await page.inputValue('#addStuScore'),'5');
- await page.screenshot({path:path.join(artifacts,'edit-five-star-limit.png')});
+ await page.fill('#addStuScore','9');assert.equal(await page.inputValue('#addStuScore'),'9');
+ await page.screenshot({path:path.join(artifacts,'edit-unrestricted-total.png')});
  await page.click('#addStuApply');
  // Totals only: no male/female targets, automatic gender balance, exact capacity.
  await page.locator('.tab[data-tab="setup"]').click();
@@ -341,11 +341,11 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.equal((await page.locator('.required-heart').evaluateAll(es=>[...new Set(es.map(e=>getComputedStyle(e).color))])).length,1);
  assert.notEqual(original.assign[4],original.assign[6]);
  assert.equal(new Set([6,7,8].map(i=>original.assign[i])).size,3);
- assert.equal(await page.evaluate(()=>__bbj.state().result.report.verdict.scoreTotal),5);
+ assert.equal(await page.evaluate(()=>__bbj.state().result.report.verdict.scoreTotal),3);
  assert.deepEqual(await page.evaluate(()=>__bbj.state().result.report.problems),[]);
  assert.equal(await page.locator('.stu .transfer-badge').count(),3);
  for(const id of [7,8,9])assert.equal(await page.locator(`.stu[data-id="${id}"] .tag-on`).count(),0);
- assert.equal((await page.locator('.tagsum .student-summary').allTextContents()).join(' '),'특수5');
+ assert.equal((await page.locator('.tagsum .student-summary').allTextContents()).join(' '),'특수3');
  assert.equal(await page.locator('#summaryCard,#summaryBody,#scoreBarWrap,#scoreBar').count(),0);
  for(const id of ['btnBarCSV','btnCopyTSV','btnPrint'])assert.equal(await page.locator(`#resultActions #${id}`).count(),1);
  assert.equal(await page.locator('.result-signals #btnUndo').count(),1);
@@ -410,9 +410,9 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  await page.evaluate(()=>{fakeServer.revision++;__bbj.cloud.load()});
  await page.waitForFunction(()=>__bbj.cloud.revision()===fakeServer.revision);
  assert.deepEqual(await page.evaluate(()=>__bbj.state().requiredGroups),[[1,2,3]]);
- assert.equal(await page.evaluate(()=>__bbj.state().students[6].w.특수),5);
+ assert.equal(await page.evaluate(()=>__bbj.state().students[6].w.특수),3);
  assert.equal(await page.locator('.required-heart').count(),3);
- assert.equal(await page.evaluate(()=>__bbj.state().result.report.verdict.scoreTotal),5);
+ assert.equal(await page.evaluate(()=>__bbj.state().result.report.verdict.scoreTotal),3);
  await page.locator('.tab[data-tab="setup"]').click();
  assert.equal(await page.locator('.stepsbar,#stepGuide,[data-step]').count(),0);
  await page.locator('#cardRoster').scrollIntoViewIfNeeded();
@@ -523,7 +523,7 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.equal(await page.locator('.signal-details.warn').count(),0);
  assert.equal(await page.locator('#referencePopup').isVisible(),false);
  assert.match(await page.locator('[data-check="score"]').getAttribute('class'),/bad/);
- assert.equal(await page.locator('[data-signal="score"] .signal-details').innerText(),'다반 0점, 가반 20점');
+ assert.equal(await page.locator('[data-signal="score"] .signal-details').innerText(),'다반 0점, 가반 12점');
  assert.match(await page.locator('[data-check="count"]').getAttribute('class'),/warn/);
  assert.deepEqual(await page.evaluate(()=>__bbj.state().result.report.problems),[]);
  assert.equal(await page.locator('.col.quota-bad').count(),0);
@@ -709,6 +709,6 @@ const artifacts = require('node:fs').mkdtempSync(path.join(require('node:os').tm
  assert.equal(await page.locator('#specialCount').innerText(),"현재 '특수' 학생 0명");
  assert.equal(await page.locator('#stateBadge').innerText(),'아직 명단이 없습니다');
  assert.deepEqual(errors,[]);
- console.log('PASS Chromium: fixed-student drag lock and fixed-class auto move, required-group companion dialog, adjustable star-gap threshold and 인원 pill with class notes, four-row compact result, hidden bottom bar, slim default male/female view, inline signal cards and special/quota outlines, bounded demo names and nine traffic-light tooltips/colors, wide monitors and all sort/layout combinations, required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, compact header badge, grouped names/special counts, zero-warning panel/toast hiding, new layout, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, five-star roster/add/edit limits, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, thin bottom bar on PC/phone/landscape, responsive viewports, save/load and polling');
+ console.log('PASS Chromium: fixed-student drag lock and fixed-class auto move, required-group companion dialog, adjustable star-gap threshold and 인원 pill with class notes, four-row compact result, hidden bottom bar, slim default male/female view, inline signal cards and special/quota outlines, bounded demo names and nine traffic-light tooltips/colors, wide monitors and all sort/layout combinations, required/recommended groups, duplicate and similar names, transfer exclusion/distribution, drag warnings, multi-step undo, compact header badge, grouped names/special counts, zero-warning panel/toast hiding, new layout, exact automatic/manual class and gender quotas, deduction/check toggles, infeasible-target validation, unrestricted personal totals and 1..3 tag stars, expanded important warnings, authentication, tags/stars, six-member separation, duplicate-name picker/search/classes, card grid, aligned compact results, both sorts, student summaries, inline badges/palette, thin bottom bar on PC/phone/landscape, responsive viewports, save/load and polling');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

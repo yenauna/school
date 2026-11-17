@@ -452,7 +452,7 @@
     <details class="panel" id="backupPanel">
       <summary>백업·관리 <span class="note">— 작업 파일 저장, 다른 컴퓨터로 옮기기, 처음부터 다시</span></summary>
       <div class="inner">
-      <p class="hint" style="margin-top:0"><b>명단·조건은 아래 저장 버튼으로 병합 저장합니다</b>: 같은 암호로 다른 컴퓨터·다른 선생님 화면에서 열면 서버의 최신 내용이 그대로 나옵니다. 아래 <b>작업 파일(JSON)</b>은 서버와 상관없이 남겨 두는 <b>백업</b>입니다(USB에 옮기듯 이 파일 하나로도 복원됩니다). CSV는 배정 결과만 담기므로 작업 이어받기는 JSON으로 합니다. <b>크롬 계정 동기화로는 넘어가지 않습니다</b>.</p>
+      <p class="hint" style="margin-top:0"><b>명단·조건은 아래 저장 버튼으로 병합 저장합니다</b>: 같은 암호로 다른 컴퓨터·다른 선생님 화면에서 열면 서버의 최신 내용이 그대로 나옵니다. 아래 <b>작업 파일(JSON)</b>은 서버와 상관없이 남겨 두는 <b>백업</b>입니다(USB에 옮기듯 이 파일 하나로도 복원됩니다). 엑셀 결과 파일은 배정 결과만 담기므로 작업 이어받기는 JSON으로 합니다. <b>크롬 계정 동기화로는 넘어가지 않습니다</b>.</p>
       <div class="row" style="margin-bottom:0">
         <button class="btn primary" type="button" id="btnSaveWork">작업 파일 저장 (.json)</button>
         <button class="btn" type="button" id="btnLoadWork">작업 파일 불러오기</button>
@@ -565,7 +565,7 @@
       <p class="hint small" style="margin:5px 0 0">손가락으로 끌어 옮기기 어려울 때 여기서 반을 바꿔도 됩니다. <b>반드시 이 반</b>이 있는 학생은 고정을 먼저 풀거나 그 반으로 옮겨 주세요.</p>
     </div>
     <div class="row"><span>태그 · 별(★)</span><div id="addStuTags"></div></div>
-    <label class="fld">별 총합 (최대 5점) <input type="number" id="addStuScore" min="0" max="5" step="1" value="0"></label>
+    <label class="fld">별 총합 (직접 입력 시 우선) <input type="number" id="addStuScore" min="0" step="1" value="0"></label>
     <div class="msg" id="addStuMsg"></div>
     <div class="actions">
       <button class="btn" type="button" id="addStuCancel">취소</button>
@@ -638,46 +638,28 @@ var CORE = (function () {
     if (w == null) w = numOrNull(DEFAULT_TAG_WEIGHTS[name]);
     return w == null ? DEFAULT_TAG_WEIGHT : w;
   }
-  /* 학생 개인의 태그별 별 수. 지정하지 않았으면 1. */
+  /* Each selected tag keeps its own 1..3 stars; manual totals are independent overrides. */
   function intensityOf(s, name) {
     var v = Number(s && s.w && s.w[name]);
-    return isFinite(v) && v > 0 ? Math.min(5, Math.max(1, Math.floor(v))) : 1;
+    return isFinite(v) && v > 0 ? Math.min(3, Math.max(1, Math.floor(v))) : 1;
   }
   function starsOf(s, name) {
-    if (s && s.transfer) return 0;
-    var tags = (s && s.tags) || [], values = tags.map(function (t) { return intensityOf(s,t); });
-    var sum = values.reduce(function (a,b) { return a+b; },0);
-    var manual = numOrNull(s && s.score);
-    var target = Math.min(5, manual == null ? sum : Math.max(Math.min(tags.length,5), Math.floor(manual)));
-    // Keep selected tags at one or more; cap the student's total at five.
-    while (sum > target) {
-      var i = values.indexOf(Math.max.apply(null,values));
-      if (values[i] <= 1) i = values.lastIndexOf(1);
-      values[i]--; sum--;
-    }
-    while (sum < target && values.length) { values[0]++; sum++; }
-    var index = tags.indexOf(name);
-    return index < 0 ? 0 : values[index];
+    return !s || s.transfer || (s.tags||[]).indexOf(name)<0 ? 0 : intensityOf(s,name);
   }
   function normalizeStars(s) {
-    s.tags = (s.tags || []).filter(function (t,i,a) { return a.indexOf(t) === i; });
-    var scoring = s.transfer ? Object.assign({},s,{transfer:false}) : s;
-    var w = {}; s.tags.forEach(function (t) { w[t] = starsOf(scoring,t); });
-    s.w = w;
-    if (!s.tags.length) s.score = null;
-    else if (s.score != null) s.score = Math.min(5, Math.max(Math.min(5,s.tags.length), Math.floor(Number(s.score) || 1)));
+    s.tags = (s.tags || []).filter(function (t,i,a) { return t && a.indexOf(t) === i; });
+    var w={};s.tags.forEach(function(t){w[t]=intensityOf(s,t);});s.w=w;
+    var manual=numOrNull(s.score);
+    s.score=!s.tags.length || manual==null || manual<=0 ? null : Math.max(1,Math.floor(manual));
     return s;
   }
-  /* 개인별 별 합계는 최대 5점. 태그가 없으면 0점이다. */
+  /* No tags means zero. Empty manual total means the unweighted sum of personal tag stars. */
   function studentScore(s, opts) {
-    if (s && s.transfer) return 0;
-    var out = 0, seen = {};
-    ((s && s.tags) || []).forEach(function (t) {
-      if (!t || seen[t]) return;
-      seen[t] = 1;
-      out += tagWeight(t, opts) * starsOf(s,t);
-    });
-    return Math.min(5, Math.round(out * 100) / 100);
+    if(!s || s.transfer || !(s.tags||[]).length)return 0;
+    var manual=numOrNull(s.score);if(manual!=null && manual>0)return Math.floor(manual);
+    var out=0,seen={};
+    (s.tags||[]).forEach(function(t){if(t&&!seen[t]){seen[t]=true;out+=intensityOf(s,t);}});
+    return out;
   }
 
   function shuffle(arr, rnd) {
@@ -1750,6 +1732,57 @@ var CORE = (function () {
     return rows.map(function (r) { return r.map(csvField).join(','); }).join('\r\n');
   }
 
+  /* A dependency-free, uncompressed ZIP/OpenXML workbook. Strings are never formulas. */
+  function xlsx(students,classes,place) {
+    function xml(value){return String(value==null?'':value).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
+    function utf8(text){
+      var out=[];
+      for(var i=0;i<text.length;i++){
+        var c=text.charCodeAt(i);
+        if(c>=0xd800&&c<=0xdbff&&i+1<text.length&&text.charCodeAt(i+1)>=0xdc00&&text.charCodeAt(i+1)<=0xdfff)c=0x10000+((c-0xd800)<<10)+(text.charCodeAt(++i)-0xdc00);
+        else if(c>=0xd800&&c<=0xdfff)c=0xfffd;
+        if(c<128)out.push(c);else if(c<2048)out.push(192|(c>>6),128|(c&63));else if(c<65536)out.push(224|(c>>12),128|((c>>6)&63),128|(c&63));else out.push(240|(c>>18),128|((c>>12)&63),128|((c>>6)&63),128|(c&63));
+      }return new Uint8Array(out);
+    }
+    function grade(st){var raw=String(st.g5||st.old||'').trim(),m=raw.match(/^(?:5\s*-\s*|5\s*학년\s*)?(\d+)\s*반?$/);return {raw:raw,n:m?Number(m[1]):Infinity};}
+    function number(st){var no=Number(st.no);return String(st.no||'').trim()&&isFinite(no)&&no>0?no:Infinity;}
+    function compare(a,b){return a===b?0:a<b?-1:1;}
+    function name(a,b){return String(students[a].name||'').localeCompare(String(students[b].name||''),'ko');}
+    function origin(a,b){var ga=grade(students[a]),gb=grade(students[b]);return compare(ga.n,gb.n)||(!isFinite(ga.n)?ga.raw.localeCompare(gb.raw,'ko'):0)||compare(number(students[a]),number(students[b]))||name(a,b)||a-b;}
+    function assigned(i){var k=Number(place[i]);return place[i]!=null&&Number.isInteger(k)&&classes[k]?k:Infinity;}
+    function assignedName(i){return classes[assigned(i)]?classes[assigned(i)].name:'';}
+    function gender(i){return students[i].gender==='남'?0:students[i].gender==='여'?1:2;}
+    var indexes=students.map(function(_,i){return i;});
+    var oldOrder=indexes.slice().sort(origin),newOrder=indexes.slice().sort(function(a,b){return compare(assigned(a),assigned(b))||gender(a)-gender(b)||name(a,b)||origin(a,b);});
+    var oldRows=[['5학년 반','번호','이름','성별','배정 반','4학년 반','태그','별점','고정']],newRows=[['배정 반','5학년 반','번호','이름','성별','4학년 반','태그','별점','고정']];
+    function row(i,byNew){var st=students[i],fixed=st.fixed!=null&&st.fixed!==''&&classes[Number(st.fixed)]?classes[Number(st.fixed)].name:'';
+      var tail=[st.gender||'',st.g4||'',(st.tags||[]).join(', '),studentScore(st),fixed];
+      return byNew?[assignedName(i),grade(st).raw,st.no==null?'':String(st.no),st.name||''].concat(tail):[grade(st).raw,st.no==null?'':String(st.no),st.name||'',st.gender||'',assignedName(i)].concat(tail.slice(1));
+    }
+    oldOrder.forEach(function(i){oldRows.push(row(i,false));});newOrder.forEach(function(i){newRows.push(row(i,true));});
+    var declaration='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',ns='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+    function sheet(rows){return declaration+'<worksheet xmlns="'+ns+'"><dimension ref="A1:I'+rows.length+'"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="6" width="15" customWidth="1"/><col min="7" max="7" width="32" customWidth="1"/><col min="8" max="9" width="12" customWidth="1"/></cols><sheetData>'+rows.map(function(values,r){return '<row r="'+(r+1)+'">'+values.map(function(v,c){var ref=String.fromCharCode(65+c)+(r+1),style=r===0?' s="1"':'';return typeof v==='number'&&isFinite(v)?'<c r="'+ref+'"'+style+'><v>'+v+'</v></c>':'<c r="'+ref+'" t="inlineStr"'+style+'><is><t xml:space="preserve">'+xml(v)+'</t></is></c>';}).join('')+'</row>';}).join('')+'</sheetData><autoFilter ref="A1:I'+rows.length+'"/></worksheet>';}
+    var files=[
+      ['[Content_Types].xml',declaration+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'],
+      ['_rels/.rels',declaration+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+      ['xl/workbook.xml',declaration+'<workbook xmlns="'+ns+'" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="5학년 반 기준" sheetId="1" r:id="rId1"/><sheet name="6학년 반 기준" sheetId="2" r:id="rId2"/></sheets></workbook>'],
+      ['xl/_rels/workbook.xml.rels',declaration+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
+      ['xl/styles.xml',declaration+'<styleSheet xmlns="'+ns+'"><fonts count="2"><font><sz val="11"/><name val="맑은 고딕"/></font><font><b/><sz val="11"/><name val="맑은 고딕"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'],
+      ['xl/worksheets/sheet1.xml',sheet(oldRows)],['xl/worksheets/sheet2.xml',sheet(newRows)]
+    ];
+    var table=[];for(var ci=0;ci<256;ci++){var cv=ci;for(var bit=0;bit<8;bit++)cv=cv&1?(cv>>>1)^0xedb88320:cv>>>1;table.push(cv>>>0);}
+    function crc(bytes){var value=0xffffffff;for(var i=0;i<bytes.length;i++)value=table[(value^bytes[i])&255]^(value>>>8);return (value^0xffffffff)>>>0;}
+    function join(parts){var length=parts.reduce(function(n,p){return n+p.length;},0),out=new Uint8Array(length),pos=0;parts.forEach(function(p){out.set(p,pos);pos+=p.length;});return out;}
+    var locals=[],directory=[],offset=0;
+    files.forEach(function(file){var filename=utf8(file[0]),data=utf8(file[1]),checksum=crc(data),header=new Uint8Array(30),h=new DataView(header.buffer);
+      h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x800,true);h.setUint16(12,0x21,true);h.setUint32(14,checksum,true);h.setUint32(18,data.length,true);h.setUint32(22,data.length,true);h.setUint16(26,filename.length,true);
+      locals.push(header,filename,data);
+      var central=new Uint8Array(46),c=new DataView(central.buffer);c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x800,true);c.setUint16(14,0x21,true);c.setUint32(16,checksum,true);c.setUint32(20,data.length,true);c.setUint32(24,data.length,true);c.setUint16(28,filename.length,true);c.setUint32(42,offset,true);directory.push(central,filename);offset+=header.length+filename.length+data.length;
+    });
+    var dir=join(directory),end=new Uint8Array(22),e=new DataView(end.buffer);e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,dir.length,true);e.setUint32(16,offset,true);
+    return join(locals.concat([dir,end]));
+  }
+
   return {
     DEFAULT_TAGS: DEFAULT_TAGS,
     DEFAULT_TAG_WEIGHTS: DEFAULT_TAG_WEIGHTS,
@@ -1764,7 +1797,7 @@ var CORE = (function () {
     buildLinks: buildLinks,
     assign: assign,
     evaluate: evaluate,
-    csv: csv,
+    csv: csv, xlsx:xlsx,
     mulberry32: mulberry32,
     defaultWeight: defaultWeight,
     tagWeight: tagWeight,
@@ -2215,12 +2248,12 @@ var CORE = (function () {
     if (!names.length) return '<span class="muted small">태그 없음</span>';
     return names.map(function (t) {
       var on = (s.tags || []).indexOf(t) !== -1;
-      var base = wm[t]; if (base == null) base = CORE.defaultWeight(t);
+      var base = CORE.starsOf(scoring,t) || 1;
       var h = '<button type="button" class="chip' + (on ? ' on' : '') + '" style="' + (on ? tagStyle(t) : '') + '" data-act="toggle-tag" data-id="' + s.id + '" data-tag="' + esc(t) + '" title="' + esc(t) + ' ★' + esc(fmtScore(base)) + '">' + esc(t) + '</button>';
       if (on) {
         var mult = CORE.starsOf(scoring,t);
         h += '<select class="mul" data-act="tag-mul" data-id="' + s.id + '" data-tag="' + esc(t) + '" title="이 학생의 태그별 별 수">' +
-          [1,2,3,4,5].map(function (m) { return '<option value="' + m + '"' + (m === mult ? ' selected' : '') + '>★' + m + '</option>'; }).join('') +
+          [1,2,3].map(function (m) { return '<option value="' + m + '"' + (m === mult ? ' selected' : '') + '>★' + m + '</option>'; }).join('') +
         '</select>';
       }
       return h;
@@ -2256,7 +2289,7 @@ var CORE = (function () {
           '<option value="여"' + (s.gender === '여' ? ' selected' : '') + '>여</option>' +
         '</select></td>' +
         '<td class="tags" data-label="태그">' + (s.transfer ? '<span class="transfer-badge">전출예정</span>' : '') + tagChips(s) + '</td>' +
-        '<td class="pts' + (sc > 0 ? '' : ' zero') + '" data-label="힘든 점수" data-score="' + sc + '"><input class="w3" type="number" min="0" max="5" step="1" data-scope="student" data-id="' + s.id + '" data-field="score" value="' + (s.score == null ? '' : Math.min(5,s.score)) + '" placeholder="' + (sc > 0 ? '★' + esc(fmtScore(sc)) : '0') + '" title="이 학생의 별 총합입니다. 비워 두면 태그별 별 수를 합산합니다."></td>' +
+        '<td class="pts' + (sc > 0 ? '' : ' zero') + '" data-label="힘든 점수" data-score="' + sc + '"><input class="w3" type="number" min="0" step="1" data-scope="student" data-id="' + s.id + '" data-field="score" value="' + (s.score == null ? '' : s.score) + '" placeholder="' + (sc > 0 ? '★' + esc(fmtScore(sc)) : '0') + '" title="직접 입력하면 수동 총점을 사용합니다. 비워 두면 태그별 1~3점을 합산합니다."></td>' +
         '<td data-label="수정" class="mobile-edit"><button class="btn sm" data-act="roster-edit" data-id="'+s.id+'">수정</button></td>' +
         '<td data-label="반드시 이 반"><select data-scope="student" data-id="' + s.id + '" data-field="fixed">' + fixedOptions(s) + '</select></td>' +
         '<td class="act"><button class="icon" type="button" data-act="del-student" data-id="' + s.id + '" title="학생 지우기">✕</button></td>' +
@@ -3463,13 +3496,13 @@ var CORE = (function () {
   }
 
   /* ---------- 배정 결과에서 학생 바로 추가 ---------- */
-  var addTargetClass = 0, addStudentDraft = null, editStudentId = null;
+  var addTargetClass = 0, addStudentDraft = null, editStudentId = null, addScoreRendered='', addScoreTouched=false;
   function editableStars(s) { return s && s.transfer ? Object.assign({},s,{transfer:false}) : s; }
   function renderAddStars() {
     if (!addStudentDraft) return;
     $('#addStuTags').innerHTML = tagChips(addStudentDraft);
     $('#addStuScore').value = scoreOf(editableStars(addStudentDraft));
-    $('#addStuScore').disabled = !addStudentDraft.tags.length;
+    $('#addStuScore').disabled = !addStudentDraft.tags.length;addScoreRendered=$('#addStuScore').value;addScoreTouched=false;
   }
   function openAddStudent(k, id) {
     if (!S.result && id==null) { toast('먼저 배정을 실행하세요.', 'err'); return; }
@@ -3502,14 +3535,14 @@ var CORE = (function () {
       nowSel.disabled = !existing || !S.result;
     }
     $('#addStuTitle').textContent = existing ? '학생 수정' : '학생 추가';
-    $('#addStuHint').textContent = existing ? '이 학생의 정보와 별 점수를 수정합니다. 별 총합은 최대 5점입니다.' : '명단에 넣는 동시에 이 반으로 배정됩니다. 4학년 반은 나중에 명단 탭에서 채워도 됩니다.';
+    $('#addStuHint').textContent = existing ? '이 학생의 정보와 별 점수를 수정합니다. 태그별 별은 1~3점이며, 총점은 비워 두면 자동 합산됩니다.' : '명단에 넣는 동시에 이 반으로 배정됩니다. 4학년 반은 나중에 명단 탭에서 채워도 됩니다.';
     $('#addStuApply').textContent = existing ? '수정' : '추가';
     var msg = $('#addStuMsg');
     if (msg) { msg.className = 'msg'; msg.textContent = ''; }
     $('#addStudentModal').classList.add('show');
     setTimeout(function () {
       var m = $('#addStudentModal');
-      if (m && m.classList.contains('show')) { var e = $('#addStuName'); if (e && e.focus) e.focus(); }
+      if (m && m.classList.contains('show') && !m.contains(document.activeElement)) { var e = $('#addStuName'); if (e && e.focus) e.focus(); }
     }, 30);
   }
   function closeAddStudent() {
@@ -3526,6 +3559,7 @@ var CORE = (function () {
     var k = Number(addTargetClass);
     if (!(k >= 0 && k < S.classes.length)) k = 0;
     var gender = ($('#addStuGender').value === '여') ? '여' : '남';
+    if(addScoreTouched || $('#addStuScore').value!==addScoreRendered){var entered=num($('#addStuScore').value);addStudentDraft.score=entered!=null&&isFinite(entered)&&entered>0?Math.max(1,Math.floor(entered)):null;CORE.normalizeStars(addStudentDraft);}
     if (editStudentId != null) {
       var existing = findStudent(editStudentId), oldGender = existing.gender;
       var fixed=$('#addStuFixed').value===''?null:Number($('#addStuFixed').value);
@@ -3577,12 +3611,12 @@ var CORE = (function () {
   }
 
   /* ---------- 내보내기 ---------- */
-  function downloadCSV() {
+  function downloadXLSX() {
     if (!S.result) { toast('먼저 배정을 실행하세요.', 'err'); return; }
-    var text = '\ufeff' + CORE.csv(S.students, S.classes, S.result.assign);
+    var bytes = CORE.xlsx(S.students, S.classes, S.result.assign);
     var d = new Date();
-    var name = '반배정결과_' + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + '_' + pad2(d.getHours()) + pad2(d.getMinutes()) + '.csv';
-    var blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
+    var name = '반배정결과_' + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + '_' + pad2(d.getHours()) + pad2(d.getMinutes()) + '.xlsx';
+    var blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = name;
@@ -4090,7 +4124,7 @@ var CORE = (function () {
     else if (f === 'fixed') s.fixed = el.value === '' ? null : Number(el.value);
     else if (f === 'score') {
       var v = num(el.value);
-      s.score = (v == null || isNaN(v) || v <= 0) ? null : Math.min(5, Math.floor(v));
+      s.score = (v == null || isNaN(v) || v <= 0) ? null : Math.max(1,Math.floor(v));
       CORE.normalizeStars(s);
       el.value = s.score == null ? '' : s.score;
     }
@@ -4098,7 +4132,7 @@ var CORE = (function () {
   }
   document.addEventListener('input', function (e) {
     var el = e.target;
-    if (el.id === 'addStuScore' && addStudentDraft) { addStudentDraft.score = Math.min(5,Math.max(1,Math.floor(Number(el.value)||1))); CORE.normalizeStars(addStudentDraft); el.value = scoreOf(editableStars(addStudentDraft)); $('#addStuTags').innerHTML = tagChips(addStudentDraft); return; }
+    if (el.id === 'addStuScore' && addStudentDraft) { addScoreTouched=true;var entered=num(el.value);addStudentDraft.score=entered!=null&&entered>0?Math.floor(entered):null; CORE.normalizeStars(addStudentDraft); $('#addStuTags').innerHTML = tagChips(addStudentDraft); return; }
     if (el.id === 'pickerSearch') { renderPicker(); return; }
     if (el.id === 'search') { renderStudents(); return; }
     if (el.id === 'deduct') { onDeductField(el); return; }
@@ -4115,7 +4149,7 @@ var CORE = (function () {
       if (!ms.w || typeof ms.w !== 'object') ms.w = {};
       if (ms.score != null) { var existing = {}; (ms.tags || []).forEach(function (t) { existing[t] = CORE.starsOf(editableStars(ms),t); }); ms.w = existing; }
       ms.score = null;
-      if (isFinite(mv) && mv >= 0) ms.w[el.dataset.tag] = Math.min(5, Math.max(1, Math.floor(mv))); else delete ms.w[el.dataset.tag];
+      if (isFinite(mv) && mv >= 0) ms.w[el.dataset.tag] = Math.min(3, Math.max(1, Math.floor(mv))); else delete ms.w[el.dataset.tag];
       CORE.normalizeStars(ms);
       if (ms === addStudentDraft) { renderAddStars(); return; }
       invalidate(); renderTags(); renderStudents();
@@ -4171,7 +4205,6 @@ var CORE = (function () {
       var name = t.dataset.tag;
       var idx = (s.tags || []).indexOf(name);
       if (s.score != null) { var personal = {}; (s.tags || []).forEach(function (t) { personal[t] = CORE.starsOf(editableStars(s),t); }); s.w = personal; }
-      if (idx === -1 && s.tags.length >= 5) { toast('학생별 별 총합은 최대 5점입니다. 태그는 최대 5개까지 선택할 수 있습니다.', 'err'); return; }
       if (idx === -1) { s.tags = (s.tags || []).concat([name]); if (!s.w) s.w = {}; s.w[name] = 1; s.score = null; t.classList.add('on'); }
       else { s.tags.splice(idx, 1); if (s.w) delete s.w[name]; s.score = null; t.classList.remove('on'); }
       CORE.normalizeStars(s);
@@ -4495,7 +4528,7 @@ var CORE = (function () {
   $('#scoreGap').addEventListener('blur',function(){this.value=S.scoreGap;});
   $('#scoreGap').addEventListener('input',function(){var v=Number(this.value);if(isFinite(v)&&v>0){S.scoreThreshold=v;S.scoreGap=v;renderResult();save();}});
   $('#btnRun').addEventListener('click', requestRun);
-  $('#btnBarCSV').addEventListener('click', downloadCSV);
+  $('#btnBarCSV').addEventListener('click', downloadXLSX);
   $('#btnRerun').addEventListener('click', requestRun);
   $('#btnRepair').addEventListener('click',function(){
     if(!S.result)return;var button=this;button.disabled=true;button.textContent='경고 조정 중…';

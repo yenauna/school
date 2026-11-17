@@ -18,7 +18,7 @@ const fs=require('node:fs'),path=require('node:path'),os=require('node:os');
  await page.waitForFunction(()=>window.__bbj&&__bbj.cloud.entered());
  await page.evaluate(()=>{
   const s=__bbj.state();s.students=Array.from({length:8},(_,i)=>({id:i+1,name:'학생'+(i+1),no:i+1,gender:i%2?'여':'남',g4:'',g5:'1반',tags:[],w:{},fixed:i===0?0:null}));
-  [5,5,3,0,5,5,5,0].forEach((score,i)=>{if(score){s.students[i].tags=['학습'];s.students[i].w={학습:score};}});
+  [5,5,3,0,5,5,5,0].forEach((score,i)=>{if(score){s.students[i].tags=['학습'];s.students[i].w={학습:Math.min(3,score)};s.students[i].score=score;}});
   s.classes=[{name:'가반',total:4,special:false},{name:'나반',total:4,special:false}];s.classCount=2;s.useY3=false;s.pairs=[];s.requiredGroups=[[2,3],[3,4]];s.wishGroups=[];
   s.result={assign:[0,0,0,0,1,1,1,1],ids:s.students.map(s=>s.id),moves:0};s.scoreThreshold=2;__bbj.renderAll();
  });

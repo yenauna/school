@@ -13,14 +13,14 @@ test('default and legacy tag names distinguish student tags from class options',
  assert.deepEqual(plain(C.DEFAULT_TAGS),['특수','학습','생활','학부모']);
  for(const name of ['특수','특수반','통합학급']) assert.equal(C.tagName(name),'특수');
 });
-test('individual stars, default one, manual total and five-star limit',()=>{
+test('individual tag stars 1..3, unrestricted manual total and no tag-default weighting',()=>{
  const s={tags:['학습','생활'],w:{학습:2,생활:1}};
  assert.equal(C.studentScore(s),3);
  assert.equal(C.studentScore({tags:['특수']}),1);
- assert.equal(C.studentScore({...s,score:1}),2);
- assert.equal(C.studentScore({...s,score:6}),5);
- assert.equal(C.starsOf({tags:['특수'],score:6},'특수'),5);
- assert.equal(C.studentScore(s,{tagWeights:{학습:3,생활:2}}),5);
+ assert.equal(C.studentScore({...s,score:1}),1);
+ assert.equal(C.studentScore({...s,score:6}),6);
+ assert.equal(C.starsOf({tags:['특수'],score:6},'특수'),1);
+ assert.equal(C.studentScore(s,{tagWeights:{학습:3,생활:2}}),3);
 });
 test('separation groups expand into all unique pairs and retain two-member support',()=>{
  const st=roster(8);
@@ -46,7 +46,7 @@ test('individual star totals balance and special pinning/wishes remain supported
  st.slice(0,3).forEach(s=>{s.tags=['특수'];s.w={특수:6}});
  const opts={threeYear:false,pinned:{특수:[0,1,2]},wishGroups:[[8,9]],seed:15,restarts:16,iters:4000};
  const result=C.assign(st,cls,[],opts),rep=C.evaluate(st,cls,[],result.assign,opts);
- assert.deepEqual(plain(rep.per.map(p=>p.score)),[5,5,5]);
+ assert.deepEqual(plain(rep.per.map(p=>p.score)),[3,3,3]);
  assert.equal(rep.wishGroups[0].ok,true);
  const pinned=C.assign(st,cls,[],{...opts,pinned:{특수:[0,1]}});
  assert.ok(pinned.assign.slice(0,3).every(k=>k===0||k===1));
@@ -59,25 +59,19 @@ test('CSV export API and core markers remain compatible',()=>{
  assert.doesNotMatch(html,/pairBulk|wishBulk/);
 });
 
-test('loaded, imported, manual and automatic personal scores cannot exceed five',()=>{
- for (const st of [
-  {tags:['특수'],w:{특수:50}},
-  {tags:['학습','생활'],w:{학습:5,생활:5}},
-  {tags:['생활'],score:99,w:{}},
-  {tags:[],score:99,w:{생활:8}}
- ]) {
-  C.normalizeStars(st);
-  assert.ok(C.studentScore(st)<=5);
-  assert.ok(Object.values(st.w).every(v=>v>=1&&v<=5));
- }
- assert.equal(C.studentScore({tags:[],score:5}),0);
+test('normalization clamps each tag to 1..3 without clamping student totals or tag counts',()=>{
+ const tags=['특수','학습','생활','폭력','학부모','추가'];
+ const st={tags,w:Object.fromEntries(tags.map(t=>[t,50]))};C.normalizeStars(st);
+ assert.equal(st.tags.length,6);assert.equal(C.studentScore(st),18);assert.ok(Object.values(st.w).every(v=>v===3));
+ const manual={tags:['생활'],score:99,w:{생활:2}};C.normalizeStars(manual);assert.equal(C.studentScore(manual),99);assert.equal(manual.w.생활,2);
+ assert.equal(C.studentScore({tags:[],score:99}),0);
 });
 test('score differences, gender imbalance and ordinary tag clustering produce no warnings',()=>{
  const st=roster(4),cls=classes(2).map(c=>({...c,male:0,female:2}));
  st.forEach(s=>s.gender='남');
  st.slice(0,2).forEach(s=>{s.tags=['학습'];s.w={학습:5}});
  const rep=C.evaluate(st,cls,[],[0,0,1,1],{threeYear:false});
- assert.equal(rep.verdict.scoreSpread,10);
+ assert.equal(rep.verdict.scoreSpread,6);
  assert.ok(rep.genderBad.length>0);
  assert.deepEqual(plain(rep.problems),[]);
  assert.equal(rep.tagBad.length,0);
@@ -151,7 +145,7 @@ test('required wishes merge transitively, duplicate names split, and special cap
  assert.equal(result.assign[0],result.assign[1]);assert.equal(result.assign[1],result.assign[2]);
  assert.notEqual(result.assign[4],result.assign[6]);assert.equal(result.assign[4],0);
  assert.equal(new Set([6,7,8].map(i=>result.assign[i])).size,3);
- assert.equal(rep.verdict.scoreTotal,5);assert.equal(C.studentScore(st[6]),0);
+ assert.equal(rep.verdict.scoreTotal,3);assert.equal(C.studentScore(st[6]),0);
  assert.equal(C.starsOf(st[6],'특수'),0);
  assert.deepEqual(plain(rep.problems),[]);
  rep.per.forEach(p=>{assert.equal(p.count,4);assert.equal(p.male,2);assert.equal(p.female,2);assert.ok((p.tags.특수||0)<=1)});
@@ -174,7 +168,7 @@ test('special students in unchecked classes and overlaps in checked classes are 
 test('transfer score exclusion preserves saved personal stars and removes them from score summaries',()=>{
  const st=roster(4),cls=classes(2);
  Object.assign(st[0],{transfer:true,tags:['학습'],w:{학습:5},score:5});
- C.normalizeStars(st[0]);assert.equal(st[0].w.학습,5);
+ C.normalizeStars(st[0]);assert.equal(st[0].w.학습,3);
  const rep=C.evaluate(st,cls,[],[0,0,1,1],{threeYear:false});
  assert.equal(rep.verdict.scoreTotal,0);assert.equal(rep.per[0].tagScore.학습,0);
  st[0].transfer=false;assert.equal(C.studentScore(st[0]),5);
@@ -264,7 +258,7 @@ test('reduced total targets lose one boy and one girl despite competing star pre
  }
 });
 test('star references flag excessive highs/lows without adding problems and exclude transfers',()=>{
- const st=roster(12);st.forEach(s=>{s.tags=['학습'];s.w={학습:5}});
+ const st=roster(12);st.forEach(s=>{s.tags=['학습'];s.w={학습:3};s.score=5;});
  const rep={per:[{k:0,name:'가반',count:4,male:2,female:2,score:20},{k:1,name:'나반',count:4,male:2,female:2,score:10},{k:2,name:'다반',count:4,male:2,female:2,score:0}]};
  assert.deepEqual(plain(C.balanceAdvice(st,rep,{scoreThreshold:2}).score).map(v=>v.text),['가반 20점','다반 0점']);
  const single={per:rep.per.map((p,i)=>({...p,score:i===0?5:0}))};
