@@ -4,7 +4,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os');
 const clone=x=>JSON.parse(JSON.stringify(x));
 (async()=>{
- const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});
+ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});
  const artifacts=fs.mkdtempSync(path.join(os.tmpdir(),'bbj-field-')),errors=[],contexts=[],pages=[];
  const server={state:{},revision:1,reads:0,writes:0,conflicts:0,offline:false};
  const url=process.env.BBJ_URL||'http://127.0.0.1:4190/banbaejeong/';
@@ -148,7 +148,10 @@ const clone=x=>JSON.parse(JSON.stringify(x));
  const original=await pc.evaluate(()=>__bbj.state().result.assign.slice());
  await pc.click('#btnRepair');await pc.waitForFunction(()=>!document.querySelector('#btnRepair').disabled);
  const repaired=await pc.evaluate(()=>({place:__bbj.state().result.assign,problems:__bbj.state().result.report.problems}));
- assert.ok((await pc.locator('.stu[data-id="'+fixture.students[2].id+'"]').boundingBox()).height<=31,'pin caused wrapped row');
+ // 이름은 어떤 폭에서도 잘리면 안 된다. 자리가 모자라면 고정 아이콘·태그가 다음 줄로 내려가므로 칩 높이는 두 줄(≈52px)까지 허용한다.
+ const fixedChip=pc.locator('.stu[data-id="'+fixture.students[2].id+'"]');
+ assert.ok((await fixedChip.boundingBox()).height<=52,'pin caused wrapped row');
+ assert.equal(await fixedChip.locator('button.nm').evaluate(el=>el.scrollWidth<=el.clientWidth+1),true,'학생 이름이 잘렸습니다');
  assert.equal(repaired.problems.length,0);assert.equal(repaired.place.filter((k,i)=>k!==original[i]).length,2);assert.equal(repaired.place[2],0);
  await pc.screenshot({path:path.join(artifacts,'minimal-repair-desktop.png')});
  await pc.click('#btnUndo');assert.deepEqual(await pc.evaluate(()=>__bbj.state().result.assign),original);

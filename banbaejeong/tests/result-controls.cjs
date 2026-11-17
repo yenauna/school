@@ -2,7 +2,7 @@
 const {chromium}=require('playwright'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os');
 (async()=>{
- const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});
+ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});
  const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];
  const artifacts=fs.mkdtempSync(path.join(os.tmpdir(),'bbj-result-'));
  page.on('pageerror',e=>errors.push(e.message));

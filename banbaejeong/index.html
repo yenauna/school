@@ -262,7 +262,7 @@
   .picker-split{display:grid;grid-template-columns:90px 1fr;gap:12px;height:380px;margin-top:12px}
   #pickerClasses,#pickerStudents{display:flex;flex-direction:column;gap:6px;overflow:auto}#pickerStudents .btn{text-align:left}#pickerSearch{width:100%}
   .chiplist{padding:4px;gap:2px}.stu{padding:3px 4px;border-radius:5px;font-size:12px;min-height:27px}
-  .stu .l1{flex-wrap:nowrap;gap:3px}.stu .nm{white-space:nowrap}.stu .g5b{padding:0 3px;font-size:10px}
+  .stu .l1{flex-wrap:wrap;gap:3px}.stu .nm{white-space:normal}.stu .g5b{padding:0 3px;font-size:10px}
   .tag-on{display:inline-flex;flex-direction:row;padding:1px 3px;font-size:10px;line-height:1.4;white-space:nowrap;flex-shrink:0;border-radius:4px}
   .colhead{padding:6px;box-sizing:border-box}.tagsum{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
   .student-summary{display:inline-block;white-space:nowrap;background:#eef0f5;border-radius:4px;padding:1px 4px;font-size:11px}
@@ -299,7 +299,8 @@
 
   #btnCloudReload{margin-right:auto}
   .mobile-edit{display:none}.pair-modes{display:flex;gap:4px;margin:5px 0}.pair-divider{border:0;border-top:1px solid var(--line);margin:5px 0}
-  .stu .kb.fix{font-size:9px;line-height:1;padding:0 1px;flex:0 0 auto;white-space:nowrap}.stu .l1{flex-wrap:nowrap}.stu .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}.layout-two .stu .l1,.layout-sex .stu .l1{flex-wrap:nowrap}.stu .g5b{flex:0 0 auto}
+  /* 학생 이름은 어떤 폭에서도 말줄임(...)하지 않는다. 이름이 들어갈 자리가 모자라면 옆의 하트·고정 아이콘·태그·5학년 반 배지가 다음 줄로 내려간다. 이름 자체가 카드보다 길 때만 이름 안에서 줄을 바꾼다. */
+  .stu .kb.fix{font-size:9px;line-height:1;padding:0 1px;flex:0 0 auto;white-space:nowrap}.stu .l1{flex-wrap:wrap}.stu .nm{flex:0 0 auto;min-width:0;max-width:100%;overflow:visible;text-overflow:clip;white-space:normal;word-break:keep-all;overflow-wrap:anywhere;text-align:left}.layout-two .stu .l1,.layout-sex .stu .l1{flex-wrap:wrap}.stu .g5b{flex:0 0 auto}
   @media(max-width:640px){
     #studentTable tr{display:flex;align-items:center;flex-wrap:wrap;gap:3px;padding:3px 5px;margin:0 0 3px;border-radius:5px}
     #studentTable td{display:none!important;min-height:0;padding:0}
